@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HYPERtrends Live</title>
+    <title>HYPER - Real Market Data</title>
     <style>
         * {
             margin: 0;
@@ -36,11 +36,19 @@
             50% { background-position: 100% 50%; }
         }
         
+        .subtitle {
+            text-align: center;
+            color: #00ff80;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 300px 1fr;
+            grid-template-columns: 320px 1fr;
             gap: 30px;
         }
         
@@ -90,6 +98,17 @@
         .status-dot.active {
             background: #00ff80;
             box-shadow: 0 0 20px #00ff80;
+        }
+        
+        .data-source {
+            background: rgba(0, 255, 128, 0.2);
+            color: #00ff80;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         @keyframes pulse {
@@ -144,6 +163,49 @@
             50% { box-shadow: 0 0 30px rgba(0, 255, 128, 0.6); }
         }
         
+        .market-data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .market-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .market-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        .market-ticker {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 8px;
+        }
+        
+        .market-price {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .market-change {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .market-change.positive { color: #00ff80; }
+        .market-change.negative { color: #ff4757; }
+        .market-change.neutral { color: #ffd700; }
+        
         .signals-container {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px);
@@ -157,6 +219,9 @@
             font-size: 1.5rem;
             margin-bottom: 20px;
             text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .signal-card {
@@ -165,8 +230,9 @@
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
             align-items: center;
             transition: all 0.3s ease;
         }
@@ -190,18 +256,50 @@
         
         .signal-info h4 {
             font-size: 1.2rem;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .signal-action {
+            background: rgba(0, 255, 128, 0.2);
+            color: #00ff80;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .signal-action.sell {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+        }
+        
+        .signal-action.hold {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
         }
         
         .signal-info p {
             font-size: 0.9rem;
             color: #cccccc;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
         
-        .signal-models {
+        .signal-indicators {
             font-size: 0.8rem;
             color: #888;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .indicator-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px 8px;
+            border-radius: 6px;
         }
         
         .signal-confidence {
@@ -209,23 +307,29 @@
         }
         
         .confidence-value {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: 700;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
         
         .confidence-bar {
-            width: 100px;
-            height: 6px;
+            width: 120px;
+            height: 8px;
             background: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
+            margin-bottom: 5px;
         }
         
         .confidence-fill {
             height: 100%;
-            border-radius: 3px;
+            border-radius: 4px;
             transition: all 0.3s ease;
+        }
+        
+        .signal-timestamp {
+            font-size: 0.7rem;
+            color: #666;
         }
         
         .bullish .confidence-value { color: #00ff80; }
@@ -253,11 +357,12 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            z-index: 1000;
         }
         
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -284,6 +389,28 @@
             letter-spacing: 1px;
         }
         
+        .data-freshness {
+            font-size: 0.7rem;
+            color: #666;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .loading-indicator {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 255, 128, 0.3);
+            border-top: 2px solid #00ff80;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
@@ -292,6 +419,10 @@
             
             .header {
                 font-size: 2rem;
+            }
+            
+            .market-data-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             }
         }
     </style>
@@ -302,7 +433,8 @@
         <span id="connectionText">Connecting...</span>
     </div>
     
-    <div class="header">🚀 HYPERtrends LIVE</div>
+    <div class="header">🚀 HYPER</div>
+    <div class="subtitle">Real Market Data Trading Engine</div>
     
     <div class="container">
         <div class="sidebar">
@@ -315,34 +447,61 @@
                     </div>
                 </div>
                 
+                <div class="data-source" id="dataSource">REAL MARKET</div>
                 <div class="portfolio-value" id="portfolioValue">$100,000</div>
                 <div class="portfolio-change" id="portfolioChange">Ready to trade</div>
             </div>
             
             <div style="margin-top: 20px;">
-                <h4 style="color: #00ff80; margin-bottom: 15px;">Controls</h4>
-                <button class="btn" id="startBtn" onclick="startTrading()">Start Trading</button>
+                <h4 style="color: #00ff80; margin-bottom: 15px;">🎛️ Controls</h4>
+                <button class="btn" id="startBtn" onclick="startTrading()">Start Real Trading</button>
                 <button class="btn" onclick="stopTrading()">Stop Trading</button>
+                <button class="btn" onclick="updateData()">🔄 Update Data</button>
                 <button class="btn danger" onclick="emergencyStop()">Emergency Stop</button>
             </div>
             
             <div class="metrics-grid" style="margin-top: 20px;">
                 <div class="metric-card">
                     <div class="metric-value" id="signalCount">0</div>
-                    <div class="metric-label">Active Signals</div>
+                    <div class="metric-label">Live Signals</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="tickerCount">8</div>
+                    <div class="metric-label">Tickers</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-value" id="uptime">00:00</div>
                     <div class="metric-label">Uptime</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="dataAge">--</div>
+                    <div class="metric-label">Data Age</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h4 style="color: #00ff80; margin-bottom: 15px;">📊 Live Market Data</h4>
+                <div class="market-data-grid" id="marketDataGrid">
+                    <div class="market-card">
+                        <div class="market-ticker">Loading...</div>
+                        <div class="market-price">$--</div>
+                        <div class="market-change">--%</div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="main-content">
             <div class="signals-container">
-                <div class="signals-header">🎯 Live Trading Signals</div>
+                <div class="signals-header">
+                    <span>🎯 Real Market Signals</span>
+                    <div class="loading-indicator" id="loadingIndicator" style="display: none;"></div>
+                </div>
                 <div id="signalsList">
-                    <div class="no-signals">Waiting for signals...</div>
+                    <div class="no-signals">Connecting to real market data...</div>
+                </div>
+                <div class="data-freshness" id="dataFreshness">
+                    Waiting for data update...
                 </div>
             </div>
         </div>
@@ -353,6 +512,7 @@
         let isConnected = false;
         let isTrading = false;
         let startTime = null;
+        let lastDataUpdate = null;
 
         function connect() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -361,9 +521,9 @@
             socket = new WebSocket(wsUrl);
             
             socket.onopen = function() {
-                console.log('🔗 Connected to HYPERtrends Engine');
+                console.log('🔗 Connected to HYPER Engine');
                 isConnected = true;
-                updateConnectionStatus('Connected', true);
+                updateConnectionStatus('Connected to Real Data', true);
                 socket.send(JSON.stringify({type: 'request_update'}));
             };
             
@@ -386,18 +546,24 @@
         }
 
         function handleMessage(data) {
+            console.log('📨 Received:', data.type);
+            
             switch(data.type) {
                 case 'full_update':
                     updateUI(data);
                     break;
                 case 'signals_update':
                     updateSignals(data.signals);
+                    updateDataFreshness();
                     break;
                 case 'trading_status':
                     updateTradingStatus(data.status === 'started');
                     break;
                 case 'emergency_stop':
                     handleEmergencyStop();
+                    break;
+                case 'market_data':
+                    updateMarketData(data.data);
                     break;
             }
         }
@@ -407,6 +573,37 @@
                 '$' + data.portfolio.value.toLocaleString();
             updateTradingStatus(data.is_trading);
             updateSignals(data.signals);
+            
+            if (data.market_data) {
+                updateMarketDataGrid(data.market_data);
+            }
+            
+            lastDataUpdate = new Date();
+            updateDataFreshness();
+        }
+
+        function updateMarketDataGrid(marketData) {
+            const grid = document.getElementById('marketDataGrid');
+            
+            if (!marketData || Object.keys(marketData).length === 0) {
+                grid.innerHTML = '<div class="market-card"><div class="market-ticker">No Data</div></div>';
+                return;
+            }
+            
+            grid.innerHTML = Object.entries(marketData).map(([ticker, data]) => {
+                const changeClass = data.change > 0 ? 'positive' : data.change < 0 ? 'negative' : 'neutral';
+                const changeSymbol = data.change > 0 ? '+' : '';
+                
+                return `
+                    <div class="market-card">
+                        <div class="market-ticker">${ticker}</div>
+                        <div class="market-price">$${data.latest_price.toFixed(2)}</div>
+                        <div class="market-change ${changeClass}">
+                            ${changeSymbol}${data.change.toFixed(2)}%
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function updateSignals(signals) {
@@ -414,7 +611,7 @@
             document.getElementById('signalCount').textContent = signals ? signals.length : 0;
             
             if (!signals || signals.length === 0) {
-                container.innerHTML = '<div class="no-signals">No signals yet...</div>';
+                container.innerHTML = '<div class="no-signals">No signals from real market data yet...</div>';
                 return;
             }
             
@@ -422,19 +619,38 @@
                 const signalType = signal.confidence > 70 ? 'bullish' : 
                                  signal.confidence < 60 ? 'bearish' : 'neutral';
                 
+                const actionClass = signal.action === 'BUY' ? 'buy' : 
+                                   signal.action === 'SELL' ? 'sell' : 'hold';
+                
+                const indicators = signal.indicators || {};
+                const models = signal.models || {};
+                
                 return `
                     <div class="signal-card ${signalType}">
                         <div class="signal-info">
-                            <h4>${signal.ticker}</h4>
-                            <p>${signal.action} Signal - $${signal.price}</p>
-                            <div class="signal-models">
-                                RF: ${signal.models.rf}% | XGB: ${signal.models.xgb}% | LSTM: ${signal.models.lstm}%
+                            <h4>
+                                ${signal.ticker}
+                                <span class="signal-action ${actionClass}">${signal.action}</span>
+                            </h4>
+                            <p>Price: $${signal.price} | Real Market Data</p>
+                            <div class="signal-indicators">
+                                ${indicators.rsi ? `<div class="indicator-item">RSI: ${indicators.rsi}</div>` : ''}
+                                ${indicators.macd_diff ? `<div class="indicator-item">MACD: ${indicators.macd_diff}</div>` : ''}
+                                ${indicators.bb_position ? `<div class="indicator-item">BB: ${indicators.bb_position}</div>` : ''}
+                                ${indicators.volume_ratio ? `<div class="indicator-item">Vol: ${indicators.volume_ratio}x</div>` : ''}
+                                ${indicators.adx ? `<div class="indicator-item">ADX: ${indicators.adx}</div>` : ''}
+                            </div>
+                            <div style="font-size: 0.8rem; color: #666; margin-top: 8px;">
+                                Tech: ${models.technical || '--'}% | Vol: ${models.volume || '--'}% | Trend: ${models.trend || '--'}%
                             </div>
                         </div>
                         <div class="signal-confidence">
                             <div class="confidence-value">${signal.confidence}%</div>
                             <div class="confidence-bar">
                                 <div class="confidence-fill" style="width: ${signal.confidence}%"></div>
+                            </div>
+                            <div class="signal-timestamp">
+                                ${new Date(signal.timestamp).toLocaleTimeString()}
                             </div>
                         </div>
                     </div>
@@ -450,14 +666,14 @@
             
             if (trading) {
                 statusDot.classList.add('active');
-                statusText.textContent = 'Trading Active';
-                startBtn.textContent = 'Trading Active';
+                statusText.textContent = 'Trading Live Data';
+                startBtn.textContent = 'Real Trading Active';
                 startBtn.classList.add('active');
                 if (!startTime) startTime = Date.now();
             } else {
                 statusDot.classList.remove('active');
                 statusText.textContent = 'Stopped';
-                startBtn.textContent = 'Start Trading';
+                startBtn.textContent = 'Start Real Trading';
                 startBtn.classList.remove('active');
                 startTime = null;
             }
@@ -472,6 +688,29 @@
                 dot.classList.add('active');
             } else {
                 dot.classList.remove('active');
+            }
+        }
+
+        function updateDataFreshness() {
+            const freshnessEl = document.getElementById('dataFreshness');
+            const dataAgeEl = document.getElementById('dataAge');
+            
+            if (lastDataUpdate) {
+                const now = new Date();
+                const ageMs = now - lastDataUpdate;
+                const ageSeconds = Math.floor(ageMs / 1000);
+                const ageMinutes = Math.floor(ageSeconds / 60);
+                
+                if (ageMinutes > 0) {
+                    dataAgeEl.textContent = `${ageMinutes}m`;
+                    freshnessEl.textContent = `Last update: ${ageMinutes} minute${ageMinutes > 1 ? 's' : ''} ago`;
+                } else {
+                    dataAgeEl.textContent = `${ageSeconds}s`;
+                    freshnessEl.textContent = `Last update: ${ageSeconds} second${ageSeconds > 1 ? 's' : ''} ago`;
+                }
+            } else {
+                dataAgeEl.textContent = '--';
+                freshnessEl.textContent = 'Waiting for real market data...';
             }
         }
 
@@ -490,13 +729,15 @@
         async function startTrading() {
             if (isTrading) return;
             
+            showLoading(true);
             try {
                 const response = await fetch('/api/trading/start', { method: 'POST' });
                 const result = await response.json();
-                console.log('✅ Trading started:', result);
+                console.log('✅ Real trading started:', result);
             } catch (error) {
                 console.error('❌ Error starting trading:', error);
             }
+            showLoading(false);
         }
 
         async function stopTrading() {
@@ -507,6 +748,18 @@
             } catch (error) {
                 console.error('❌ Error stopping trading:', error);
             }
+        }
+
+        async function updateData() {
+            showLoading(true);
+            try {
+                const response = await fetch('/api/update-data', { method: 'POST' });
+                const result = await response.json();
+                console.log('🔄 Data updated:', result);
+            } catch (error) {
+                console.error('❌ Error updating data:', error);
+            }
+            showLoading(false);
         }
 
         async function emergencyStop() {
@@ -530,9 +783,15 @@
             }, 500);
         }
 
+        function showLoading(show) {
+            const indicator = document.getElementById('loadingIndicator');
+            indicator.style.display = show ? 'block' : 'none';
+        }
+
         // Initialize
         connect();
         setInterval(updateUptime, 1000);
+        setInterval(updateDataFreshness, 1000);
 
         // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
@@ -550,6 +809,10 @@
                         e.preventDefault();
                         emergencyStop();
                         break;
+                    case 'r':
+                        e.preventDefault();
+                        updateData();
+                        break;
                 }
             }
         });
@@ -564,6 +827,8 @@
             }
         `;
         document.head.appendChild(style);
+
+        console.log('🚀 HYPER Real Market Data Interface Ready!');
     </script>
 </body>
 </html>
