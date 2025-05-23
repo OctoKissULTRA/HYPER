@@ -418,12 +418,47 @@ async def websocket_endpoint(websocket: WebSocket):
 # STARTUP/SHUTDOWN EVENTS
 # ========================================
 
+def is_market_hours():
+    """Check if markets are currently open (US Eastern Time)"""
+    try:
+        import pytz
+        from datetime import datetime, time
+        
+        # US Eastern timezone
+        eastern = pytz.timezone('US/Eastern')
+        now_eastern = datetime.now(eastern)
+        
+        # Market hours: Monday-Friday, 9:30 AM - 4:00 PM ET
+        weekday = now_eastern.weekday()  # 0=Monday, 6=Sunday
+        current_time = now_eastern.time()
+        
+        # Weekend check
+        if weekday >= 5:  # Saturday or Sunday
+            return False
+        
+        # Market hours check
+        market_open = time(9, 30)   # 9:30 AM
+        market_close = time(16, 0)  # 4:00 PM
+        
+        return market_open <= current_time <= market_close
+    except ImportError:
+        # If pytz not available, assume markets are open for demo
+        logger.warning("pytz not available, assuming markets open for demo")
+        return True
+    except Exception as e:
+        logger.error(f"Error checking market hours: {e}")
+        return True  # Default to open for demo
+
 @app.on_event("startup")
 async def startup_event():
     """Application startup tasks"""
     logger.info("🚀 Starting HYPER Trading System...")
     logger.info(f"Tracking tickers: {', '.join(config.TICKERS)}")
     logger.info(f"Alpha Vantage API configured: {'✅' if config.ALPHA_VANTAGE_API_KEY else '❌'}")
+    
+    # Check market status
+    market_open = is_market_hours()
+    logger.info(f"📈 Market status: {'OPEN' if market_open else 'CLOSED'}")
     
     # Log path information
     logger.info(f"🔧 Running from: {current_dir}")
@@ -436,7 +471,7 @@ async def startup_event():
     except Exception as e:
         logger.error(f"❌ Configuration validation failed: {e}")
     
-    # Pre-generate initial signals
+    # Pre-generate initial signals (works even when markets closed)
     logger.info("Generating initial signals...")
     try:
         initial_signals = await hyper_state.signal_engine.generate_all_signals()
@@ -445,6 +480,18 @@ async def startup_event():
         logger.info("✅ Initial signals generated successfully")
     except Exception as e:
         logger.error(f"❌ Failed to generate initial signals: {e}")
+    
+    # AUTO-START THE SYSTEM (works 24/7 for demo purposes)
+    hyper_state.is_running = True
+    hyper_state.stats["uptime_start"] = datetime.now()
+    
+    # Start background signal generation
+    asyncio.create_task(signal_generation_loop())
+    
+    if market_open:
+        logger.info("🔥 HYPER signal generation auto-started! (Markets OPEN)")
+    else:
+        logger.info("🔥 HYPER signal generation auto-started! (Markets CLOSED - using cached/demo data)")
     
     logger.info("🎯 HYPER Trading System ready!")
 
