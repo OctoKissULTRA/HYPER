@@ -16,9 +16,9 @@ import uvicorn
 import os
 from pathlib import Path
 
-from .config import config
-from .signal_engine import HYPERSignalEngine, HYPERSignal
-from .data_sources import HYPERDataAggregator
+from config import config
+from signal_engine import HYPERSignalEngine, HYPERSignal
+from data_sources import HYPERDataAggregator
 
 # ========================================
 # LOGGING SETUP
@@ -34,21 +34,13 @@ logger = logging.getLogger(__name__)
 # FRONTEND PATH CONFIGURATION
 # ========================================
 
-# Get the correct paths for organized structure
-backend_dir = Path(__file__).parent
-project_root = backend_dir.parent
-frontend_dir = project_root / "frontend"
+# Simple path for flat structure
+current_dir = Path(__file__).parent
+index_file = current_dir / "index.html"
 
-logger.info(f"🔧 Backend directory: {backend_dir}")
-logger.info(f"🔧 Project root: {project_root}")
-logger.info(f"🔧 Frontend directory: {frontend_dir}")
-logger.info(f"🔧 Frontend exists: {frontend_dir.exists()}")
-
-if frontend_dir.exists():
-    index_file = frontend_dir / "index.html"
-    logger.info(f"🔧 Index file exists: {index_file.exists()}")
-else:
-    logger.warning("⚠️ Frontend directory not found!")
+logger.info(f"🔧 Current directory: {current_dir}")
+logger.info(f"🔧 Index file: {index_file}")
+logger.info(f"🔧 Index file exists: {index_file.exists()}")
 
 # ========================================
 # FASTAPI APPLICATION
@@ -68,17 +60,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ========================================
-# SERVE FRONTEND FILES
-# ========================================
-
-# Mount static files if frontend directory exists
-if frontend_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(frontend_dir)), name="frontend")
-    logger.info("✅ Frontend files mounted at /static")
-else:
-    logger.warning("⚠️ Frontend directory not found - static files not mounted")
 
 # ========================================
 # GLOBAL STATE
@@ -241,24 +222,22 @@ async def signal_generation_loop():
 async def get_trading_interface():
     """Serve the main trading interface"""
     try:
-        index_path = frontend_dir / "index.html"
-        
-        if index_path.exists():
-            logger.info(f"📁 Serving index.html from: {index_path}")
-            with open(index_path, "r", encoding="utf-8") as f:
+        if index_file.exists():
+            logger.info(f"📁 Serving index.html from: {index_file}")
+            with open(index_file, "r", encoding="utf-8") as f:
                 content = f.read()
                 logger.info(f"✅ Successfully loaded index.html ({len(content)} characters)")
                 return HTMLResponse(content=content)
         else:
-            logger.error(f"❌ index.html not found at: {index_path}")
-            logger.info(f"📁 Files in frontend dir: {list(frontend_dir.iterdir()) if frontend_dir.exists() else 'Directory does not exist'}")
+            logger.error(f"❌ index.html not found at: {index_file}")
             
             return HTMLResponse(
                 content="""
                 <h1>🚀 HYPER Trading System</h1>
                 <p>❌ Frontend index.html not found</p>
-                <p>Expected location: """ + str(index_path) + """</p>
-                <p>Directory exists: """ + str(frontend_dir.exists()) + """</p>
+                <p>Expected location: """ + str(index_file) + """</p>
+                <p>Current directory: """ + str(current_dir) + """</p>
+                <p>Files in directory: """ + str(list(current_dir.iterdir())) + """</p>
                 """,
                 status_code=404
             )
@@ -269,8 +248,7 @@ async def get_trading_interface():
             content=f"""
             <h1>🚀 HYPER Trading System</h1>
             <p>❌ Error loading frontend: {str(e)}</p>
-            <p>Backend directory: {backend_dir}</p>
-            <p>Frontend directory: {frontend_dir}</p>
+            <p>Current directory: {current_dir}</p>
             """,
             status_code=500
         )
@@ -286,9 +264,8 @@ async def health_check():
         "last_update": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
         "total_signals": hyper_state.stats["total_signals_generated"],
         "tickers": config.TICKERS,
-        "backend_dir": str(backend_dir),
-        "frontend_dir": str(frontend_dir),
-        "frontend_exists": frontend_dir.exists()
+        "current_dir": str(current_dir),
+        "index_file_exists": index_file.exists()
     }
 
 @app.get("/api/signals")
@@ -449,9 +426,8 @@ async def startup_event():
     logger.info(f"Alpha Vantage API configured: {'✅' if config.ALPHA_VANTAGE_API_KEY else '❌'}")
     
     # Log path information
-    logger.info(f"🔧 Backend running from: {backend_dir}")
-    logger.info(f"🔧 Frontend directory: {frontend_dir}")
-    logger.info(f"🔧 Frontend exists: {frontend_dir.exists()}")
+    logger.info(f"🔧 Running from: {current_dir}")
+    logger.info(f"🔧 Index file exists: {index_file.exists()}")
     
     # Validate configuration
     try:
