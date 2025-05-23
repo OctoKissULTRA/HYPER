@@ -2,7 +2,7 @@ services:
   - type: web
     name: hyper-trading-system
     env: python
-    buildCommand: pip install -r deployment/requirements.txt
+    buildCommand: pip install -r requirements.txt
     startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: ALPHA_VANTAGE_API_KEY
