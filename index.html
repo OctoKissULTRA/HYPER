@@ -1,1 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYPERtrends Live</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 25%, #16213e 50%, #0f3460 100%);
+            color: white; 
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .header { 
+            text-align: center; 
+            font-size: 3rem; 
+            font-weight: 800;
+            background: linear-gradient(45deg, #00ff80, #00d4ff, #ff00d4);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient 3s ease-in-out infinite;
+            margin-bottom: 30px;
+        }
+        
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+        }
+        
+        .sidebar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            height: fit-content;
+        }
+        
+        .main-content {
+            display: grid;
+            gap: 25px;
+        }
+        
+        .status-card { 
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+        }
+        
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4757;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.active {
+            background: #00ff80;
+            box-shadow: 0 0 20px #00ff80;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        .portfolio-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #00ff80;
+            margin-bottom: 10px;
+        }
+        
+        .portfolio-change {
+            color: #888;
+            font-size: 1rem;
+        }
+        
+        .btn { 
+            background: linear-gradient(45deg, #00ff80, #00d4ff);
+            color: #000;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 128, 0.3);
+        }
+        
+        .btn.danger {
+            background: linear-gradient(45deg, #ff4757, #ff6b6b);
+            color: white;
+        }
+        
+        .btn.active {
+            background: linear-gradient(45deg, #00ff80, #00d4ff);
+            animation: pulse-btn 2s infinite;
+        }
+        
+        @keyframes pulse-btn {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 128, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 128, 0.6); }
+        }
+        
+        .signals-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+        }
+        
+        .signals-header {
+            color: #00ff80;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .signal-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .signal-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        .signal-card.bullish {
+            border-left: 4px solid #00ff80;
+        }
+        
+        .signal-card.bearish {
+            border-left: 4px solid #ff4757;
+        }
+        
+        .signal-card.neutral {
+            border-left: 4px solid #ffd700;
+        }
+        
+        .signal-info h4 {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .signal-info p {
+            font-size: 0.9rem;
+            color: #cccccc;
+            margin-bottom: 5px;
+        }
+        
+        .signal-models {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .signal-confidence {
+            text-align: right;
+        }
+        
+        .confidence-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .confidence-bar {
+            width: 100px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .bullish .confidence-value { color: #00ff80; }
+        .bullish .confidence-fill { background: #00ff80; }
+        .bearish .confidence-value { color: #ff4757; }
+        .bearish .confidence-fill { background: #ff4757; }
+        .neutral .confidence-value { color: #ffd700; }
+        .neutral .confidence-fill { background: #ffd700; }
+        
+        .no-signals {
+            text-align: center;
+            color: #888;
+            font-style: italic;
+            padding: 40px;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">
+        <div class="status-dot" id="connectionDot"></div>
+        <span id="connectionText">Connecting...</span>
+    </div>
+    
+    <div class="header">🚀 HYPERtrends LIVE</div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="status-card">
+                <div class="status-header">
+                    <h3>System Status</h3>
+                    <div class="status-indicator">
+                        <div class="status-dot" id="tradingStatus"></div>
+                        <span id="statusText">Stopped</span>
+                    </div>
+                </div>
+                
+                <div class="portfolio-value" id="portfolioValue">$100,000</div>
+                <div class="portfolio-change" id="portfolioChange">Ready to trade</div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h4 style="color: #00ff80; margin-bottom: 15px;">Controls</h4>
+                <button class="btn" id="startBtn" onclick="startTrading()">Start Trading</button>
+                <button class="btn" onclick="stopTrading()">Stop Trading</button>
+                <button class="btn danger" onclick="emergencyStop()">Emergency Stop</button>
+            </div>
+            
+            <div class="metrics-grid" style="margin-top: 20px;">
+                <div class="metric-card">
+                    <div class="metric-value" id="signalCount">0</div>
+                    <div class="metric-label">Active Signals</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="uptime">00:00</div>
+                    <div class="metric-label">Uptime</div>
+                </div>
+            </div>
+        </div>
 
+        <div class="main-content">
+            <div class="signals-container">
+                <div class="signals-header">🎯 Live Trading Signals</div>
+                <div id="signalsList">
+                    <div class="no-signals">Waiting for signals...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let socket;
+        let isConnected = false;
+        let isTrading = false;
+        let startTime = null;
+
+        function connect() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function() {
+                console.log('🔗 Connected to HYPERtrends Engine');
+                isConnected = true;
+                updateConnectionStatus('Connected', true);
+                socket.send(JSON.stringify({type: 'request_update'}));
+            };
+            
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            };
+            
+            socket.onclose = function() {
+                console.log('📡 Connection closed');
+                isConnected = false;
+                updateConnectionStatus('Disconnected', false);
+                setTimeout(connect, 3000);
+            };
+            
+            socket.onerror = function(error) {
+                console.error('🚨 WebSocket error:', error);
+                updateConnectionStatus('Error', false);
+            };
+        }
+
+        function handleMessage(data) {
+            switch(data.type) {
+                case 'full_update':
+                    updateUI(data);
+                    break;
+                case 'signals_update':
+                    updateSignals(data.signals);
+                    break;
+                case 'trading_status':
+                    updateTradingStatus(data.status === 'started');
+                    break;
+                case 'emergency_stop':
+                    handleEmergencyStop();
+                    break;
+            }
+        }
+
+        function updateUI(data) {
+            document.getElementById('portfolioValue').textContent = 
+                '$' + data.portfolio.value.toLocaleString();
+            updateTradingStatus(data.is_trading);
+            updateSignals(data.signals);
+        }
+
+        function updateSignals(signals) {
+            const container = document.getElementById('signalsList');
+            document.getElementById('signalCount').textContent = signals ? signals.length : 0;
+            
+            if (!signals || signals.length === 0) {
+                container.innerHTML = '<div class="no-signals">No signals yet...</div>';
+                return;
+            }
+            
+            container.innerHTML = signals.map(signal => {
+                const signalType = signal.confidence > 70 ? 'bullish' : 
+                                 signal.confidence < 60 ? 'bearish' : 'neutral';
+                
+                return `
+                    <div class="signal-card ${signalType}">
+                        <div class="signal-info">
+                            <h4>${signal.ticker}</h4>
+                            <p>${signal.action} Signal - $${signal.price}</p>
+                            <div class="signal-models">
+                                RF: ${signal.models.rf}% | XGB: ${signal.models.xgb}% | LSTM: ${signal.models.lstm}%
+                            </div>
+                        </div>
+                        <div class="signal-confidence">
+                            <div class="confidence-value">${signal.confidence}%</div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${signal.confidence}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateTradingStatus(trading) {
+            isTrading = trading;
+            const statusDot = document.getElementById('tradingStatus');
+            const statusText = document.getElementById('statusText');
+            const startBtn = document.getElementById('startBtn');
+            
+            if (trading) {
+                statusDot.classList.add('active');
+                statusText.textContent = 'Trading Active';
+                startBtn.textContent = 'Trading Active';
+                startBtn.classList.add('active');
+                if (!startTime) startTime = Date.now();
+            } else {
+                statusDot.classList.remove('active');
+                statusText.textContent = 'Stopped';
+                startBtn.textContent = 'Start Trading';
+                startBtn.classList.remove('active');
+                startTime = null;
+            }
+        }
+
+        function updateConnectionStatus(text, connected) {
+            const dot = document.getElementById('connectionDot');
+            const textEl = document.getElementById('connectionText');
+            
+            textEl.textContent = text;
+            if (connected) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
+        }
+
+        function updateUptime() {
+            if (startTime) {
+                const elapsed = Date.now() - startTime;
+                const minutes = Math.floor(elapsed / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                document.getElementById('uptime').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                document.getElementById('uptime').textContent = '00:00';
+            }
+        }
+
+        async function startTrading() {
+            if (isTrading) return;
+            
+            try {
+                const response = await fetch('/api/trading/start', { method: 'POST' });
+                const result = await response.json();
+                console.log('✅ Trading started:', result);
+            } catch (error) {
+                console.error('❌ Error starting trading:', error);
+            }
+        }
+
+        async function stopTrading() {
+            try {
+                const response = await fetch('/api/trading/stop', { method: 'POST' });
+                const result = await response.json();
+                console.log('⏸️ Trading stopped:', result);
+            } catch (error) {
+                console.error('❌ Error stopping trading:', error);
+            }
+        }
+
+        async function emergencyStop() {
+            try {
+                const response = await fetch('/api/emergency-stop', { method: 'POST' });
+                const result = await response.json();
+                console.log('🛑 Emergency stop:', result);
+            } catch (error) {
+                console.error('❌ Error with emergency stop:', error);
+            }
+        }
+
+        function handleEmergencyStop() {
+            isTrading = false;
+            updateTradingStatus(false);
+            
+            // Visual feedback
+            document.body.style.animation = 'shake 0.5s';
+            setTimeout(() => {
+                document.body.style.animation = '';
+            }, 500);
+        }
+
+        // Initialize
+        connect();
+        setInterval(updateUptime, 1000);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        if (isTrading) {
+                            stopTrading();
+                        } else {
+                            startTrading();
+                        }
+                        break;
+                    case 'e':
+                        e.preventDefault();
+                        emergencyStop();
+                        break;
+                }
+            }
+        });
+
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                75% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
