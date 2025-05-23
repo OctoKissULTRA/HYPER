@@ -27,6 +27,8 @@ share/python-wheels/
 .venv
 env/
 venv/
+backend/.env
+backend/.venv
 
 # IDE
 .vscode/
@@ -41,6 +43,13 @@ Thumbs.db
 # Logs
 *.log
 hyper.log*
+backend/*.log
+backend/hyper.log*
 
 # Cache
 .cache/
+backend/.cache/
+
+# Development
+node_modules/
+frontend/node_modules/
