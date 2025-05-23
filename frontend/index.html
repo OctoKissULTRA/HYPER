@@ -1,1 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYPER Trading System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Orbitron', monospace;
+            background: #0a0a0a;
+            color: #00ff80;
+            overflow-x: hidden;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(0, 255, 128, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 0, 212, 0.05) 0%, transparent 50%);
+        }
+        
+        /* Animated background particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ff80;
+            border-radius: 50%;
+            animation: float 6s infinite linear;
+            opacity: 0.3;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0px); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-100px) translateX(100px); opacity: 0; }
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid #00ff80;
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 255, 128, 0.3);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ff80, #00d4ff, #ff00d4);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-shift 3s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(0, 255, 128, 0.5);
+        }
+        
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4757;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 20px currentColor;
+        }
+        
+        .status-dot.connected {
+            background: #00ff80;
+            color: #00ff80;
+        }
+        
+        .status-dot.running {
+            background: #00d4ff;
+            color: #00d4ff;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            min-height: calc(100vh - 100px);
+        }
+        
+        /* Control Panel */
+        .control-panel {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 128, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            height: fit-content;
+            position: sticky;
+            top: 120px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .control-panel h3 {
+            color: #00ff80;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(0, 255, 128, 0.5);
+        }
+        
+        .control-btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, rgba(0, 255, 128, 0.1), rgba(0, 212, 255, 0.1));
+            border: 1px solid #00ff80;
+            border-radius: 10px;
+            color: #00ff80;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .control-btn:hover {
+            background: linear-gradient(45deg, rgba(0, 255, 128, 0.2), rgba(0, 212, 255, 0.2));
+            box-shadow: 0 0 20px rgba(0, 255, 128, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.active {
+            background: linear-gradient(45deg, #00ff80, #00d4ff);
+            color: #000;
+            animation: btn-pulse 2s infinite;
+        }
+        
+        .control-btn.danger {
+            border-color: #ff4757;
+            color: #ff4757;
+            background: linear-gradient(45deg, rgba(255, 71, 87, 0.1), rgba(255, 107, 107, 0.1));
+        }
+        
+        .control-btn.danger:hover {
+            background: linear-gradient(45deg, rgba(255, 71, 87, 0.2), rgba(255, 107, 107, 0.2));
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.4);
+        }
+        
+        @keyframes btn-pulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 128, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 128, 0.8); }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 128, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Trading Signals Grid */
+        .signals-container {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .signals-header {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #00ff80;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(0, 255, 128, 0.6);
+        }
+        
+        .ticker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .signal-card {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+            border: 2px solid transparent;
+            border-radius: 20px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            min-height: 200px;
+        }
+        
+        .signal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+        
+        .signal-card:hover::before {
+            transform: translateX(100%);
+        }
+        
+        /* Signal Type Styles */
+        .signal-card.hyper-buy {
+            border-color: #00ff80;
+            box-shadow: 0 0 30px rgba(0, 255, 128, 0.4);
+            animation: hyper-pulse-green 2s infinite;
+        }
+        
+        .signal-card.soft-buy {
+            border-color: #00ff80;
+            box-shadow: 0 0 20px rgba(0, 255, 128, 0.3);
+        }
+        
+        .signal-card.hold {
+            border-color: #888;
+            box-shadow: 0 0 15px rgba(136, 136, 136, 0.2);
+        }
+        
+        .signal-card.soft-sell {
+            border-color: #ff4757;
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
+        }
+        
+        .signal-card.hyper-sell {
+            border-color: #ff4757;
+            box-shadow: 0 0 30px rgba(255, 71, 87, 0.4);
+            animation: hyper-pulse-red 2s infinite;
+        }
+        
+        @keyframes hyper-pulse-green {
+            0%, 100% { 
+                box-shadow: 0 0 30px rgba(0, 255, 128, 0.4);
+                border-color: #00ff80;
+            }
+            50% { 
+                box-shadow: 0 0 50px rgba(0, 255, 128, 0.8);
+                border-color: #00ff40;
+            }
+        }
+        
+        @keyframes hyper-pulse-red {
+            0%, 100% { 
+                box-shadow: 0 0 30px rgba(255, 71, 87, 0.4);
+                border-color: #ff4757;
+            }
+            50% { 
+                box-shadow: 0 0 50px rgba(255, 71, 87, 0.8);
+                border-color: #ff2030;
+            }
+        }
+        
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .ticker-symbol {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #00d4ff;
+            text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+        }
+        
+        .signal-type {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .signal-type.hyper-buy {
+            background: linear-gradient(45deg, #00ff80, #00ff40);
+            color: #000;
+            animation: type-pulse-green 2s infinite;
+        }
+        
+        .signal-type.soft-buy {
+            background: rgba(0, 255, 128, 0.2);
+            color: #00ff80;
+            border: 1px solid #00ff80;
+        }
+        
+        .signal-type.hold {
+            background: rgba(136, 136, 136, 0.2);
+            color: #888;
+            border: 1px solid #888;
+        }
+        
+        .signal-type.soft-sell {
+            background: rgba(255, 71, 87, 0.2);
+            color: #ff4757;
+            border: 1px solid #ff4757;
+        }
+        
+        .signal-type.hyper-sell {
+            background: linear-gradient(45deg, #ff4757, #ff2030);
+            color: #fff;
+            animation: type-pulse-red 2s infinite;
+        }
+        
+        @keyframes type-pulse-green {
+            0%, 100% { background: linear-gradient(45deg, #00ff80, #00ff40); }
+            50% { background: linear-gradient(45deg, #00ff40, #00ff80); }
+        }
+        
+        @keyframes type-pulse-red {
+            0%, 100% { background: linear-gradient(45deg, #ff4757, #ff2030); }
+            50% { background: linear-gradient(45deg, #ff2030, #ff4757); }
+        }
+        
+        .price-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .current-price {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        
+        .confidence-container {
+            text-align: right;
+        }
+        
+        .confidence-value {
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+        
+        .confidence-value.hyper-buy,
+        .confidence-value.soft-buy {
+            color: #00ff80;
+            text-shadow: 0 0 10px rgba(0, 255, 128, 0.6);
+        }
+        
+        .confidence-value.hyper-sell,
+        .confidence-value.soft-sell {
+            color: #ff4757;
+            text-shadow: 0 0 10px rgba(255, 71, 87, 0.6);
+        }
+        
+        .confidence-value.hold {
+            color: #888;
+        }
+        
+        .confidence-bar {
+            width: 100px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-left: auto;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .confidence-fill.hyper-buy,
+        .confidence-fill.soft-buy {
+            background: linear-gradient(90deg, #00ff80, #00ff40);
+        }
+        
+        .confidence-fill.hyper-sell,
+        .confidence-fill.soft-sell {
+            background: linear-gradient(90deg, #ff4757, #ff2030);
+        }
+        
+        .confidence-fill.hold {
+            background: linear-gradient(90deg, #888, #666);
+        }
+        
+        .signal-breakdown {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .breakdown-item {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .breakdown-label {
+            font-size: 0.7rem;
+            color: #888;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+        }
+        
+        .breakdown-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #00d4ff;
+        }
+        
+        .signal-reasons {
+            font-size: 0.8rem;
+            color: #aaa;
+            line-height: 1.4;
+        }
+        
+        .signal-warnings {
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #ff4757;
+        }
+        
+        .last-update {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+            color: #00ff80;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 128, 0.3);
+            border-top: 3px solid #00ff80;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            
+            .control-panel {
+                position: static;
+                margin-bottom: 20px;
+            }
+            
+            .ticker-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                padding: 0 15px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background Particles -->
+    <div class="particles" id="particles"></div>
 
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">⚡ HYPER</div>
+            <div class="system-status">
+                <div class="status-indicator">
+                    <div class="status-dot" id="connectionStatus"></div>
+                    <span id="connectionText">Connecting...</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot" id="systemStatus"></div>
+                    <span id="systemText">Stopped</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Control Panel -->
+        <aside class="control-panel">
+            <h3>🎛️ Control Center</h3>
+            
+            <button class="control-btn" id="startBtn" onclick="startSystem()">
+                🚀 Start HYPER
+            </button>
+            <button class="control-btn" onclick="stopSystem()">
+                ⏸️ Stop System
+            </button>
+            <button class="control-btn danger" onclick="emergencyStop()">
+                🚨 Emergency Stop
+            </button>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="signalCount">0</div>
+                    <div class="stat-label">Active Signals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="clientCount">0</div>
+                    <div class="stat-label">Connected</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalSignals">0</div>
+                    <div class="stat-label">Total Generated</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="uptime">00:00</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Trading Signals -->
+        <main class="signals-container">
+            <h1 class="signals-header">🎯 LIVE TRADING SIGNALS</h1>
+            
+            <div class="ticker-grid" id="signalsGrid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Connecting to HYPER Engine...
+                </div>
+            </div>
+            
+            <div class="last-update" id="lastUpdate">
+                Waiting for data...
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Global variables
+        let socket;
+        let isConnected = false;
+        let isSystemRunning = false;
+        let currentSignals = {};
+        let systemStats = {};
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            createParticles();
+            connectWebSocket();
+            updateTime();
+            setInterval(updateTime, 1000);
+        });
+
+        // Create animated background particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // WebSocket connection management
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            console.log('🔗 Connecting to HYPER Engine...');
+            
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function() {
+                console.log('✅ Connected to HYPER Engine');
+                isConnected = true;
+                reconnectAttempts = 0;
+                updateConnectionStatus(true);
+                
+                // Request initial data
+                sendMessage({ type: 'request_signals' });
+                sendMessage({ type: 'request_stats' });
+            };
+            
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleMessage(data);
+            };
+            
+            socket.onclose = function() {
+                console.log('📡 Connection closed');
+                isConnected = false;
+                updateConnectionStatus(false);
+                attemptReconnect();
+            };
+            
+            socket.onerror = function(error) {
+                console.error('🚨 WebSocket error:', error);
+                updateConnectionStatus(false);
+            };
+        }
+
+        function attemptReconnect() {
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                console.log(`🔄 Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
+                
+                setTimeout(() => {
+                    connectWebSocket();
+                }, 2000 * reconnectAttempts); // Exponential backoff
+            } else {
+                console.error('❌ Max reconnection attempts reached');
+                updateConnectionStatus(false, 'Connection Failed');
+            }
+        }
+
+        function sendMessage(message) {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(message));
+            }
+        }
+
+        // Message handling
+        function handleMessage(data) {
+            console.log('📨 Received:', data.type);
+            
+            switch(data.type) {
+                case 'connection_established':
+                    if (data.current_signals) {
+                        updateSignalsDisplay(data.current_signals);
+                    }
+                    if (data.stats) {
+                        updateStats(data.stats);
+                    }
+                    break;
+                    
+                case 'signal_update':
+                    updateSignalsDisplay(data.signals);
+                    if (data.stats) {
+                        updateStats(data.stats);
+                    }
+                    updateLastUpdate();
+                    break;
+                    
+                case 'system_status':
+                    updateSystemStatus(data.status === 'started');
+                    showNotification(data.message, data.status === 'started' ? 'success' : 'info');
+                    break;
+                    
+                case 'emergency_stop':
+                    updateSystemStatus(false);
+                    showNotification(data.message, 'error');
+                    break;
+                    
+                case 'stats_update':
+                    updateStats(data.stats);
+                    break;
+            }
+        }
+
+        // Update signals display
+        function updateSignalsDisplay(signals) {
+            currentSignals = signals;
+            const grid = document.getElementById('signalsGrid');
+            
+            if (!signals || Object.keys(signals).length === 0) {
+                grid.innerHTML = '<div class="loading"><div class="spinner"></div>No signals available</div>';
+                return;
+            }
+            
+            const signalsHtml = Object.entries(signals).map(([symbol, signal]) => {
+                const signalClass = signal.signal_type.toLowerCase().replace('_', '-');
+                const confidenceClass = signal.signal_type.toLowerCase().replace('_', '-');
+                
+                return `
+                    <div class="signal-card ${signalClass}">
+                        <div class="signal-header">
+                            <div class="ticker-symbol">${symbol}</div>
+                            <div class="signal-type ${signalClass}">${signal.signal_type.replace('_', ' ')}</div>
+                        </div>
+                        
+                        <div class="price-info">
+                            <div class="current-price">$${signal.price.toFixed(2)}</div>
+                            <div class="confidence-container">
+                                <div class="confidence-value ${confidenceClass}">${signal.confidence}%</div>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill ${confidenceClass}" style="width: ${signal.confidence}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="signal-breakdown">
+                            <div class="breakdown-item">
+                                <div class="breakdown-label">Technical</div>
+                                <div class="breakdown-value">${signal.technical_score.toFixed(0)}%</div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="breakdown-label">Momentum</div>
+                                <div class="breakdown-value">${signal.momentum_score.toFixed(0)}%</div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="breakdown-label">Trends</div>
+                                <div class="breakdown-value">${signal.trends_score.toFixed(0)}%</div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="breakdown-label">Volume</div>
+                                <div class="breakdown-value">${signal.volume_score.toFixed(0)}%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="signal-reasons">
+                            ${signal.reasons.slice(0, 3).join(' • ')}
+                        </div>
+                        
+                        ${signal.warnings.length > 0 ? `
+                            <div class="signal-warnings">
+                                ⚠️ ${signal.warnings.join(' • ')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            grid.innerHTML = signalsHtml;
+            document.getElementById('signalCount').textContent = Object.keys(signals).length;
+        }
+
+        // Update statistics
+        function updateStats(stats) {
+            systemStats = stats;
+            document.getElementById('totalSignals').textContent = stats.total_signals_generated || 0;
+            document.getElementById('clientCount').textContent = stats.clients_connected || 0;
+        }
+
+        // Update connection status
+        function updateConnectionStatus(connected, customText = null) {
+            const statusDot = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('connectionText');
+            
+            if (connected) {
+                statusDot.classList.add('connected');
+                statusText.textContent = customText || 'Connected';
+            } else {
+                statusDot.classList.remove('connected');
+                statusText.textContent = customText || 'Disconnected';
+            }
+        }
+
+        // Update system status
+        function updateSystemStatus(running) {
+            isSystemRunning = running;
+            const statusDot =
