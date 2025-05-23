@@ -16,9 +16,9 @@ import uvicorn
 import os
 from pathlib import Path
 
-from config import config
-from signal_engine import HYPERSignalEngine, HYPERSignal
-from data_sources import HYPERDataAggregator
+from .config import config
+from .signal_engine import HYPERSignalEngine, HYPERSignal
+from .data_sources import HYPERDataAggregator
 
 # ========================================
 # LOGGING SETUP
