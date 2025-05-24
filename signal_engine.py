@@ -270,8 +270,9 @@ class HYPERSignalEngine:
     
     def __init__(self):
         # Import here to avoid circular imports
+        import config
         from data_sources import HYPERDataAggregator
-        self.data_aggregator = HYPERDataAggregator()
+        self.data_aggregator = HYPERDataAggregator(config.ALPHA_VANTAGE_API_KEY)
         
         self.technical_analyzer = TechnicalAnalyzer()
         self.sentiment_analyzer = SentimentAnalyzer()
