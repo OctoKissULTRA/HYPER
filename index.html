@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HYPER Trading System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HYPER Mobile</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
         
@@ -11,6 +11,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
@@ -21,68 +22,30 @@
             min-height: 100vh;
             background-image: 
                 radial-gradient(circle at 20% 80%, rgba(0, 255, 128, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(255, 0, 212, 0.05) 0%, transparent 50%);
+                radial-gradient(circle at 80% 20%, rgba(0, 212, 255, 0.1) 0%, transparent 50%);
+            touch-action: manipulation;
         }
         
-        /* Animated background particles */
-        .particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
-        }
-        
-        .particle {
-            position: absolute;
-            width: 2px;
-            height: 2px;
-            background: #00ff80;
-            border-radius: 50%;
-            animation: float 6s infinite linear;
-            opacity: 0.3;
-        }
-        
-        @keyframes float {
-            0% { transform: translateY(100vh) translateX(0px); opacity: 0; }
-            10% { opacity: 0.3; }
-            90% { opacity: 0.3; }
-            100% { transform: translateY(-100px) translateX(100px); opacity: 0; }
-        }
-        
-        /* Header */
         .header {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             backdrop-filter: blur(20px);
             border-bottom: 2px solid #00ff80;
-            padding: 15px 0;
+            padding: 15px;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 4px 20px rgba(0, 255, 128, 0.3);
-        }
-        
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 30px;
         }
         
         .logo {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             font-weight: 900;
-            background: linear-gradient(45deg, #00ff80, #00d4ff, #ff00d4);
-            background-size: 400% 400%;
+            background: linear-gradient(45deg, #00ff80, #00d4ff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: gradient-shift 3s ease-in-out infinite;
-            text-shadow: 0 0 30px rgba(0, 255, 128, 0.5);
         }
         
         @keyframes gradient-shift {
@@ -90,134 +53,76 @@
             50% { background-position: 100% 50%; }
         }
         
-        .system-status {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            font-size: 1rem;
-            font-weight: 700;
-        }
-        
-        .status-indicator {
+        .status {
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 0.8rem;
         }
         
         .status-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: #ff4757;
             animation: pulse 2s infinite;
-            box-shadow: 0 0 20px currentColor;
         }
         
-        .status-dot.connected {
-            background: #00ff80;
-            color: #00ff80;
-        }
-        
-        .status-dot.running {
-            background: #00d4ff;
-            color: #00d4ff;
-        }
+        .status-dot.connected { background: #00ff80; }
+        .status-dot.polling { background: #00d4ff; }
         
         @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
         
-        /* Main Container */
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 30px;
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 30px;
-            min-height: calc(100vh - 100px);
+            padding: 15px;
         }
         
-        /* Control Panel */
-        .control-panel {
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 255, 128, 0.3);
-            border-radius: 20px;
-            padding: 25px;
-            height: fit-content;
-            position: sticky;
-            top: 120px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-        
-        .control-panel h3 {
-            color: #00ff80;
+        .controls {
+            display: flex;
+            gap: 10px;
             margin-bottom: 20px;
-            font-size: 1.2rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-align: center;
-            text-shadow: 0 0 10px rgba(0, 255, 128, 0.5);
         }
         
-        .control-btn {
-            width: 100%;
+        .btn {
+            flex: 1;
             padding: 12px;
-            margin-bottom: 10px;
             background: linear-gradient(45deg, rgba(0, 255, 128, 0.1), rgba(0, 212, 255, 0.1));
             border: 1px solid #00ff80;
             border-radius: 10px;
             color: #00ff80;
             font-family: 'Orbitron', monospace;
             font-weight: 600;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
         
-        .control-btn:hover {
-            background: linear-gradient(45deg, rgba(0, 255, 128, 0.2), rgba(0, 212, 255, 0.2));
-            box-shadow: 0 0 20px rgba(0, 255, 128, 0.4);
-            transform: translateY(-2px);
+        .btn:active {
+            transform: scale(0.95);
+            background: linear-gradient(45deg, rgba(0, 255, 128, 0.3), rgba(0, 212, 255, 0.3));
         }
         
-        .control-btn.active {
+        .btn.active {
             background: linear-gradient(45deg, #00ff80, #00d4ff);
             color: #000;
-            animation: btn-pulse 2s infinite;
         }
         
-        .control-btn.danger {
-            border-color: #ff4757;
-            color: #ff4757;
-            background: linear-gradient(45deg, rgba(255, 71, 87, 0.1), rgba(255, 107, 107, 0.1));
-        }
-        
-        .control-btn.danger:hover {
-            background: linear-gradient(45deg, rgba(255, 71, 87, 0.2), rgba(255, 107, 107, 0.2));
-            box-shadow: 0 0 20px rgba(255, 71, 87, 0.4);
-        }
-        
-        @keyframes btn-pulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 128, 0.4); }
-            50% { box-shadow: 0 0 30px rgba(0, 255, 128, 0.8); }
-        }
-        
-        .stats-grid {
+        .stats {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            margin-top: 20px;
+            margin-bottom: 20px;
         }
         
-        .stat-card {
-            background: rgba(0, 0, 0, 0.4);
+        .stat {
+            background: rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(0, 255, 128, 0.2);
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: 10px;
+            padding: 12px 8px;
             text-align: center;
         }
         
@@ -225,116 +130,68 @@
             font-size: 1.2rem;
             font-weight: 700;
             color: #00d4ff;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
         
         .stat-label {
             font-size: 0.7rem;
             color: #888;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
-
-        /* CONTINUE WITH CHUNK 2... */
-        /* Trading Signals Grid */
-        .signals-container {
+        
+        .signals {
             display: grid;
-            gap: 20px;
+            gap: 15px;
         }
         
-        .signals-header {
-            text-align: center;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #00ff80;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            text-shadow: 0 0 20px rgba(0, 255, 128, 0.6);
-        }
-        
-        .ticker-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-        }
-        
-        .signal-card {
-            background: rgba(0, 0, 0, 0.7);
+        .signal {
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(20px);
             border: 2px solid transparent;
-            border-radius: 20px;
-            padding: 25px;
-            position: relative;
-            overflow: hidden;
+            border-radius: 15px;
+            padding: 20px;
             transition: all 0.3s ease;
-            min-height: 200px;
         }
         
-        .signal-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s;
+        .signal:active {
+            transform: scale(0.98);
         }
         
-        .signal-card:hover::before {
-            transform: translateX(100%);
-        }
-        
-        /* Signal Type Styles */
-        .signal-card.hyper-buy {
+        .signal.hyper-buy {
             border-color: #00ff80;
-            box-shadow: 0 0 30px rgba(0, 255, 128, 0.4);
-            animation: hyper-pulse-green 2s infinite;
+            box-shadow: 0 0 20px rgba(0, 255, 128, 0.4);
+            animation: pulse-green 2s infinite;
         }
         
-        .signal-card.soft-buy {
+        .signal.soft-buy {
             border-color: #00ff80;
-            box-shadow: 0 0 20px rgba(0, 255, 128, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 128, 0.3);
         }
         
-        .signal-card.hold {
+        .signal.hold {
             border-color: #888;
-            box-shadow: 0 0 15px rgba(136, 136, 136, 0.2);
+            box-shadow: 0 0 10px rgba(136, 136, 136, 0.2);
         }
         
-        .signal-card.soft-sell {
+        .signal.soft-sell {
             border-color: #ff4757;
-            box-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
+            box-shadow: 0 0 15px rgba(255, 71, 87, 0.3);
         }
         
-        .signal-card.hyper-sell {
+        .signal.hyper-sell {
             border-color: #ff4757;
-            box-shadow: 0 0 30px rgba(255, 71, 87, 0.4);
-            animation: hyper-pulse-red 2s infinite;
+            box-shadow: 0 0 20px rgba(255, 71, 87, 0.4);
+            animation: pulse-red 2s infinite;
         }
         
-        @keyframes hyper-pulse-green {
-            0%, 100% { 
-                box-shadow: 0 0 30px rgba(0, 255, 128, 0.4);
-                border-color: #00ff80;
-            }
-            50% { 
-                box-shadow: 0 0 50px rgba(0, 255, 128, 0.8);
-                border-color: #00ff40;
-            }
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 128, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 128, 0.8); }
         }
         
-        @keyframes hyper-pulse-red {
-            0%, 100% { 
-                box-shadow: 0 0 30px rgba(255, 71, 87, 0.4);
-                border-color: #ff4757;
-            }
-            50% { 
-                box-shadow: 0 0 50px rgba(255, 71, 87, 0.8);
-                border-color: #ff2030;
-            }
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 71, 87, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(255, 71, 87, 0.8); }
         }
         
         .signal-header {
@@ -344,26 +201,23 @@
             margin-bottom: 15px;
         }
         
-        .ticker-symbol {
-            font-size: 1.8rem;
+        .symbol {
+            font-size: 1.6rem;
             font-weight: 900;
             color: #00d4ff;
-            text-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
         }
         
         .signal-type {
             padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
         }
         
         .signal-type.hyper-buy {
             background: linear-gradient(45deg, #00ff80, #00ff40);
             color: #000;
-            animation: type-pulse-green 2s infinite;
         }
         
         .signal-type.soft-buy {
@@ -387,38 +241,27 @@
         .signal-type.hyper-sell {
             background: linear-gradient(45deg, #ff4757, #ff2030);
             color: #fff;
-            animation: type-pulse-red 2s infinite;
         }
         
-        @keyframes type-pulse-green {
-            0%, 100% { background: linear-gradient(45deg, #00ff80, #00ff40); }
-            50% { background: linear-gradient(45deg, #00ff40, #00ff80); }
-        }
-        
-        @keyframes type-pulse-red {
-            0%, 100% { background: linear-gradient(45deg, #ff4757, #ff2030); }
-            50% { background: linear-gradient(45deg, #ff2030, #ff4757); }
-        }
-        
-        .price-info {
+        .price-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
         }
         
-        .current-price {
-            font-size: 1.4rem;
+        .price {
+            font-size: 1.3rem;
             font-weight: 700;
             color: #fff;
         }
         
-        .confidence-container {
+        .confidence {
             text-align: right;
         }
         
         .confidence-value {
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: 900;
             margin-bottom: 5px;
         }
@@ -426,13 +269,11 @@
         .confidence-value.hyper-buy,
         .confidence-value.soft-buy {
             color: #00ff80;
-            text-shadow: 0 0 10px rgba(0, 255, 128, 0.6);
         }
         
         .confidence-value.hyper-sell,
         .confidence-value.soft-sell {
             color: #ff4757;
-            text-shadow: 0 0 10px rgba(255, 71, 87, 0.6);
         }
         
         .confidence-value.hold {
@@ -440,17 +281,17 @@
         }
         
         .confidence-bar {
-            width: 100px;
-            height: 8px;
+            width: 80px;
+            height: 6px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
             margin-left: auto;
         }
         
         .confidence-fill {
             height: 100%;
-            border-radius: 4px;
+            border-radius: 3px;
             transition: width 0.5s ease;
         }
         
@@ -468,15 +309,15 @@
             background: linear-gradient(90deg, #888, #666);
         }
         
-        .signal-breakdown {
+        .breakdown {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 15px;
         }
         
         .breakdown-item {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             padding: 8px;
@@ -484,7 +325,7 @@
         }
         
         .breakdown-label {
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             color: #888;
             margin-bottom: 3px;
             text-transform: uppercase;
@@ -496,44 +337,39 @@
             color: #00d4ff;
         }
         
-        .signal-reasons {
-            font-size: 0.8rem;
+        .reasons {
+            font-size: 0.7rem;
             color: #aaa;
-            line-height: 1.4;
+            text-align: center;
+            line-height: 1.3;
         }
         
-        .signal-warnings {
+        .warnings {
             margin-top: 10px;
             padding: 8px;
             background: rgba(255, 71, 87, 0.1);
             border: 1px solid rgba(255, 71, 87, 0.3);
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: #ff4757;
-        }
-        
-        .last-update {
             text-align: center;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #666;
         }
         
         .loading {
             text-align: center;
-            padding: 50px;
-            font-size: 1.2rem;
+            padding: 40px 20px;
+            font-size: 1rem;
             color: #00ff80;
         }
         
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(0, 255, 128, 0.3);
-            border-top: 3px solid #00ff80;
+            width: 30px;
+            height: 30px;
+            border: 2px solid rgba(0, 255, 128, 0.3);
+            border-top: 2px solid #00ff80;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 20px auto;
+            margin: 15px auto;
         }
         
         @keyframes spin {
@@ -541,272 +377,213 @@
             100% { transform: rotate(360deg); }
         }
         
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-                padding: 15px;
+        .last-update {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #666;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 80px;
+            left: 15px;
+            right: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-family: 'Orbitron', monospace;
+            font-weight: 600;
+            font-size: 0.9rem;
+            z-index: 10000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+        
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .notification-success {
+            background: linear-gradient(45deg, rgba(0, 255, 128, 0.9), rgba(0, 212, 170, 0.9));
+            border: 1px solid #00ff80;
+        }
+        
+        .notification-error {
+            background: linear-gradient(45deg, rgba(255, 71, 87, 0.9), rgba(255, 107, 107, 0.9));
+            border: 1px solid #ff4757;
+        }
+        
+        .notification-info {
+            background: linear-gradient(45deg, rgba(0, 212, 255, 0.9), rgba(116, 185, 255, 0.9));
+            border: 1px solid #00d4ff;
+        }
+        
+        @media (min-width: 768px) {
+            .signals {
+                grid-template-columns: repeat(2, 1fr);
             }
-            
-            .control-panel {
-                position: static;
-                margin-bottom: 20px;
-            }
-            
-            .ticker-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .header-content {
-                padding: 0 15px;
-            }
-            
-            .logo {
-                font-size: 2rem;
-            }
+        }
+        
+        @media (max-width: 320px) {
+            .logo { font-size: 1.5rem; }
+            .btn { font-size: 0.8rem; }
+            .symbol { font-size: 1.4rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Animated Background Particles -->
-    <div class="particles" id="particles"></div>
-
-    <!-- Header -->
     <header class="header">
-        <div class="header-content">
-            <div class="logo">⚡ HYPER</div>
-            <div class="system-status">
-                <div class="status-indicator">
-                    <div class="status-dot" id="connectionStatus"></div>
-                    <span id="connectionText">Connecting...</span>
-                </div>
-                <div class="status-indicator">
-                    <div class="status-dot" id="systemStatus"></div>
-                    <span id="systemText">Stopped</span>
-                </div>
-            </div>
+        <div class="logo">⚡ HYPER</div>
+        <div class="status">
+            <div class="status-dot" id="status"></div>
+            <span id="statusText">Connecting...</span>
         </div>
     </header>
 
-    <!-- Main Container -->
     <div class="container">
-        <!-- Control Panel -->
-        <aside class="control-panel">
-            <h3>🎛️ Control Center</h3>
-            
-            <button class="control-btn" id="startBtn" onclick="startSystem()">
-                🚀 Start HYPER
-            </button>
-            <button class="control-btn" onclick="stopSystem()">
-                ⏸️ Stop System
-            </button>
-            <button class="control-btn danger" onclick="emergencyStop()">
-                🚨 Emergency Stop
-            </button>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="signalCount">0</div>
-                    <div class="stat-label">Active Signals</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="clientCount">0</div>
-                    <div class="stat-label">Connected</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalSignals">0</div>
-                    <div class="stat-label">Total Generated</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="uptime">00:00</div>
-                    <div class="stat-label">Uptime</div>
-                </div>
-            </div>
-        </aside>
+        <div class="controls">
+            <button class="btn" id="startBtn" onclick="startSystem()">Start</button>
+            <button class="btn" onclick="stopSystem()">Stop</button>
+            <button class="btn" onclick="refresh()">Refresh</button>
+        </div>
 
-        <!-- Trading Signals -->
-        <main class="signals-container">
-            <h1 class="signals-header">🎯 LIVE TRADING SIGNALS</h1>
-            
-            <div class="ticker-grid" id="signalsGrid">
-                <div class="loading">
-                    <div class="spinner"></div>
-                    Connecting to HYPER Engine...
-                </div>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="signals">0</div>
+                <div class="stat-label">Signals</div>
             </div>
-            
-            <div class="last-update" id="lastUpdate">
-                Waiting for data...
+            <div class="stat">
+                <div class="stat-value" id="total">0</div>
+                <div class="stat-label">Total</div>
             </div>
-        </main>
+            <div class="stat">
+                <div class="stat-value" id="uptime">00:00</div>
+                <div class="stat-label">Uptime</div>
+            </div>
+        </div>
+
+        <div class="signals" id="signalsGrid">
+            <div class="loading">
+                <div class="spinner"></div>
+                Connecting...
+            </div>
+        </div>
+        
+        <div class="last-update" id="lastUpdate">
+            Waiting for data...
+        </div>
     </div>
 
     <script>
-        // CONTINUE WITH CHUNK 4 FOR JAVASCRIPT...
-    </script>
-</body>
-</html>
-// Global variables
-        let socket;
-        let isConnected = false;
-        let isSystemRunning = false;
-        let currentSignals = {};
-        let systemStats = {};
-        let reconnectAttempts = 0;
-        const maxReconnectAttempts = 5;
+        let socket, isConnected = false, usePolling = false, pollingInterval;
+        let currentSignals = {}, systemStats = {};
 
-        // Initialize the application
-        document.addEventListener('DOMContentLoaded', function() {
-            createParticles();
-            connectWebSocket();
-            updateTime();
-            setInterval(updateTime, 1000);
-        });
+        document.addEventListener('DOMContentLoaded', connect);
 
-        // Create animated background particles
-        function createParticles() {
-            const particlesContainer = document.getElementById('particles');
-            const particleCount = 50;
-
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 6 + 's';
-                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
-                particlesContainer.appendChild(particle);
-            }
-        }
-
-        // WebSocket connection management
-        function connectWebSocket() {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws`;
-            
-            console.log('🔗 Connecting to HYPER Engine...');
+        function connect() {
+            const wsUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`;
             
             socket = new WebSocket(wsUrl);
             
-            socket.onopen = function() {
-                console.log('✅ Connected to HYPER Engine');
+            const timeout = setTimeout(() => {
+                socket.close();
+                startPolling();
+            }, 3000);
+            
+            socket.onopen = () => {
+                clearTimeout(timeout);
                 isConnected = true;
-                reconnectAttempts = 0;
-                updateConnectionStatus(true);
-                
-                // Request initial data
-                sendMessage({ type: 'request_signals' });
-                sendMessage({ type: 'request_stats' });
+                updateStatus(true, 'Live');
+                socket.send(JSON.stringify({type: 'request_signals'}));
             };
             
-            socket.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                handleMessage(data);
+            socket.onmessage = (e) => handleMessage(JSON.parse(e.data));
+            
+            socket.onclose = () => {
+                clearTimeout(timeout);
+                if (!usePolling) startPolling();
             };
             
-            socket.onclose = function() {
-                console.log('📡 Connection closed');
-                isConnected = false;
-                updateConnectionStatus(false);
-                attemptReconnect();
-            };
-            
-            socket.onerror = function(error) {
-                console.error('🚨 WebSocket error:', error);
-                updateConnectionStatus(false);
+            socket.onerror = () => {
+                clearTimeout(timeout);
+                startPolling();
             };
         }
 
-        function attemptReconnect() {
-            if (reconnectAttempts < maxReconnectAttempts) {
-                reconnectAttempts++;
-                console.log(`🔄 Attempting to reconnect... (${reconnectAttempts}/${maxReconnectAttempts})`);
+        function startPolling() {
+            usePolling = true;
+            isConnected = true;
+            updateStatus(true, 'Polling');
+            showNotification('Using polling mode', 'info');
+            
+            fetchSignals();
+            pollingInterval = setInterval(fetchSignals, 6000);
+        }
+
+        async function fetchSignals() {
+            try {
+                const response = await fetch('/api/signals');
+                const data = await response.json();
                 
-                setTimeout(() => {
-                    connectWebSocket();
-                }, 2000 * reconnectAttempts);
-            } else {
-                console.error('❌ Max reconnection attempts reached');
-                updateConnectionStatus(false, 'Connection Failed');
+                handleMessage({
+                    type: 'signal_update',
+                    signals: data.signals,
+                    timestamp: data.timestamp,
+                    stats: data.stats || {}
+                });
+                
+                updateLastUpdate();
+                
+            } catch (error) {
+                updateStatus(false, 'Offline');
             }
         }
 
-        function sendMessage(message) {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify(message));
-            }
-        }
-
-        // Message handling
         function handleMessage(data) {
-            console.log('📨 Received:', data.type);
-            
-            switch(data.type) {
-                case 'connection_established':
-                    if (data.current_signals) {
-                        updateSignalsDisplay(data.current_signals);
-                    }
-                    if (data.stats) {
-                        updateStats(data.stats);
-                    }
-                    break;
-                    
-                case 'signal_update':
-                    updateSignalsDisplay(data.signals);
-                    if (data.stats) {
-                        updateStats(data.stats);
-                    }
-                    updateLastUpdate();
-                    break;
-                    
-                case 'system_status':
-                    updateSystemStatus(data.status === 'started');
-                    showNotification(data.message, data.status === 'started' ? 'success' : 'info');
-                    break;
-                    
-                case 'emergency_stop':
-                    updateSystemStatus(false);
-                    showNotification(data.message, 'error');
-                    break;
-                    
-                case 'stats_update':
-                    updateStats(data.stats);
-                    break;
+            if (data.type === 'signal_update') {
+                updateSignals(data.signals);
+                if (data.stats) updateStats(data.stats);
             }
         }
-                // Update signals display
-        function updateSignalsDisplay(signals) {
+
+        function updateSignals(signals) {
             currentSignals = signals;
             const grid = document.getElementById('signalsGrid');
             
             if (!signals || Object.keys(signals).length === 0) {
-                grid.innerHTML = '<div class="loading"><div class="spinner"></div>No signals available</div>';
+                grid.innerHTML = '<div class="loading"><div class="spinner"></div>No signals</div>';
                 return;
             }
             
-            const signalsHtml = Object.entries(signals).map(([symbol, signal]) => {
-                const signalClass = signal.signal_type.toLowerCase().replace('_', '-');
-                const confidenceClass = signal.signal_type.toLowerCase().replace('_', '-');
+            grid.innerHTML = Object.entries(signals).map(([symbol, signal]) => {
+                const type = signal.signal_type.toLowerCase().replace('_', '-');
                 
                 return `
-                    <div class="signal-card ${signalClass}">
+                    <div class="signal ${type}">
                         <div class="signal-header">
-                            <div class="ticker-symbol">${symbol}</div>
-                            <div class="signal-type ${signalClass}">${signal.signal_type.replace('_', ' ')}</div>
+                            <div class="symbol">${symbol}</div>
+                            <div class="signal-type ${type}">${signal.signal_type.replace('_', ' ')}</div>
                         </div>
                         
-                        <div class="price-info">
-                            <div class="current-price">$${signal.price.toFixed(2)}</div>
-                            <div class="confidence-container">
-                                <div class="confidence-value ${confidenceClass}">${signal.confidence}%</div>
+                        <div class="price-row">
+                            <div class="price">$${signal.price.toFixed(2)}</div>
+                            <div class="confidence">
+                                <div class="confidence-value ${type}">${signal.confidence}%</div>
                                 <div class="confidence-bar">
-                                    <div class="confidence-fill ${confidenceClass}" style="width: ${signal.confidence}%"></div>
+                                    <div class="confidence-fill ${type}" style="width: ${signal.confidence}%"></div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="signal-breakdown">
+                        <div class="breakdown">
                             <div class="breakdown-item">
-                                <div class="breakdown-label">Technical</div>
+                                <div class="breakdown-label">Tech</div>
                                 <div class="breakdown-value">${signal.technical_score.toFixed(0)}%</div>
                             </div>
                             <div class="breakdown-item">
@@ -823,247 +600,92 @@
                             </div>
                         </div>
                         
-                        <div class="signal-reasons">
-                            ${signal.reasons.slice(0, 3).join(' • ')}
+                        <div class="reasons">
+                            ${signal.reasons.slice(0, 2).join(' • ')}
                         </div>
                         
                         ${signal.warnings.length > 0 ? `
-                            <div class="signal-warnings">
-                                ⚠️ ${signal.warnings.join(' • ')}
-                            </div>
+                            <div class="warnings">⚠️ ${signal.warnings[0]}</div>
                         ` : ''}
                     </div>
                 `;
             }).join('');
             
-            grid.innerHTML = signalsHtml;
-            document.getElementById('signalCount').textContent = Object.keys(signals).length;
+            document.getElementById('signals').textContent = Object.keys(signals).length;
         }
 
-        // Update statistics
+        function updateStatus(connected, text) {
+            const dot = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            
+            dot.className = 'status-dot';
+            if (connected) {
+                dot.classList.add(usePolling ? 'polling' : 'connected');
+                statusText.textContent = text || (usePolling ? 'Polling' : 'Live');
+            } else {
+                statusText.textContent = text || 'Offline';
+            }
+        }
+
         function updateStats(stats) {
             systemStats = stats;
-            document.getElementById('totalSignals').textContent = stats.total_signals_generated || 0;
-            document.getElementById('clientCount').textContent = stats.clients_connected || 0;
-        }
-
-        // Update connection status
-        function updateConnectionStatus(connected, customText = null) {
-            const statusDot = document.getElementById('connectionStatus');
-            const statusText = document.getElementById('connectionText');
+            document.getElementById('total').textContent = stats.total_signals_generated || 0;
             
-            if (connected) {
-                statusDot.classList.add('connected');
-                statusText.textContent = customText || 'Connected';
-            } else {
-                statusDot.classList.remove('connected');
-                statusText.textContent = customText || 'Disconnected';
+            if (stats.uptime_start) {
+                const start = new Date(stats.uptime_start);
+                const diff = new Date() - start;
+                const hours = Math.floor(diff / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                document.getElementById('uptime').textContent = `${hours}:${minutes.toString().padStart(2, '0')}`;
             }
         }
 
-        // Update system status
-        function updateSystemStatus(running) {
-            isSystemRunning = running;
-            const statusDot = document.getElementById('systemStatus');
-            const statusText = document.getElementById('systemText');
-            const startBtn = document.getElementById('startBtn');
-            
-            if (running) {
-                statusDot.classList.add('running');
-                statusText.textContent = 'Running';
-                startBtn.classList.add('active');
-                startBtn.textContent = '🔥 HYPER ACTIVE';
-            } else {
-                statusDot.classList.remove('running');
-                statusText.textContent = 'Stopped';
-                startBtn.classList.remove('active');
-                startBtn.textContent = '🚀 Start HYPER';
-            }
-        }
-
-        // Update last update time
         function updateLastUpdate() {
-            const now = new Date();
-            const timeString = now.toLocaleTimeString();
-            document.getElementById('lastUpdate').textContent = `Last update: ${timeString}`;
+            document.getElementById('lastUpdate').textContent = `Last update: ${new Date().toLocaleTimeString()}`;
         }
 
-        // Update uptime display
-        function updateTime() {
-            if (systemStats.uptime_start) {
-                const start = new Date(systemStats.uptime_start);
-                const now = new Date();
-                const diff = now - start;
-                
-                const hours = Math.floor(diff / (1000 * 60 * 60));
-                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                
-                document.getElementById('uptime').textContent = 
-                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            }
-        }
-
-        // Control functions
         async function startSystem() {
             try {
-                const response = await fetch('/api/start', { method: 'POST' });
-                const data = await response.json();
-                
-                if (data.status === 'started') {
-                    showNotification('🚀 HYPER Engine Started!', 'success');
-                } else {
-                    showNotification(data.message, 'info');
-                }
+                await fetch('/api/start', {method: 'POST'});
+                document.getElementById('startBtn').classList.add('active');
+                showNotification('🚀 Started!', 'success');
             } catch (error) {
-                showNotification('❌ Failed to start system', 'error');
-                console.error('Start error:', error);
+                showNotification('❌ Start failed', 'error');
             }
         }
 
         async function stopSystem() {
             try {
-                const response = await fetch('/api/stop', { method: 'POST' });
-                const data = await response.json();
-                showNotification('⏸️ System Stopped', 'info');
+                await fetch('/api/stop', {method: 'POST'});
+                document.getElementById('startBtn').classList.remove('active');
+                showNotification('⏸️ Stopped', 'info');
             } catch (error) {
-                showNotification('❌ Failed to stop system', 'error');
-                console.error('Stop error:', error);
+                showNotification('❌ Stop failed', 'error');
             }
         }
 
-        async function emergencyStop() {
-            if (confirm('⚠️ Are you sure you want to perform an emergency stop?')) {
-                try {
-                    const response = await fetch('/api/emergency-stop', { method: 'POST' });
-                    const data = await response.json();
-                    showNotification('🚨 EMERGENCY STOP ACTIVATED', 'error');
-                } catch (error) {
-                    showNotification('❌ Emergency stop failed', 'error');
-                    console.error('Emergency stop error:', error);
-                }
+        function refresh() {
+            if (usePolling) {
+                fetchSignals();
+            } else if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({type: 'request_signals'}));
             }
+            showNotification('🔄 Refreshing...', 'info');
         }
 
-        // Notification system
-        function showNotification(message, type = 'info') {
+        function showNotification(message, type) {
             const notification = document.createElement('div');
             notification.className = `notification notification-${type}`;
             notification.textContent = message;
-            
-            // Add notification styles
-            notification.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 15px 25px;
-                border-radius: 10px;
-                color: white;
-                font-family: 'Orbitron', monospace;
-                font-weight: 600;
-                z-index: 10000;
-                opacity: 0;
-                transform: translateX(100%);
-                transition: all 0.3s ease;
-                max-width: 400px;
-                word-wrap: break-word;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-                backdrop-filter: blur(10px);
-            `;
-            
-            // Set colors based on type
-            switch(type) {
-                case 'success':
-                    notification.style.background = 'linear-gradient(45deg, rgba(0, 255, 128, 0.9), rgba(0, 212, 170, 0.9))';
-                    notification.style.border = '1px solid #00ff80';
-                    break;
-                case 'error':
-                    notification.style.background = 'linear-gradient(45deg, rgba(255, 71, 87, 0.9), rgba(255, 107, 107, 0.9))';
-                    notification.style.border = '1px solid #ff4757';
-                    break;
-                case 'info':
-                default:
-                    notification.style.background = 'linear-gradient(45deg, rgba(0, 212, 255, 0.9), rgba(116, 185, 255, 0.9))';
-                    notification.style.border = '1px solid #00d4ff';
-                    break;
-            }
-            
             document.body.appendChild(notification);
             
-            // Animate in
-            setTimeout(() => {
-                notification.style.opacity = '1';
-                notification.style.transform = 'translateX(0)';
-            }, 10);
+            setTimeout(() => notification.classList.add('show'), 10);
             
-            // Remove after 4 seconds
             setTimeout(() => {
-                notification.style.opacity = '0';
-                notification.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 4000);
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey || e.metaKey) {
-                switch(e.key) {
-                    case 's':
-                        e.preventDefault();
-                        if (isSystemRunning) {
-                            stopSystem();
-                        } else {
-                            startSystem();
-                        }
-                        break;
-                    case 'r':
-                        e.preventDefault();
-                        if (isConnected) {
-                            sendMessage({ type: 'request_signals' });
-                            showNotification('🔄 Refreshing signals...', 'info');
-                        }
-                        break;
-                    case 'e':
-                        e.preventDefault();
-                        emergencyStop();
-                        break;
-                }
-            }
-        });
-
-        // Periodic health check
-        setInterval(async () => {
-            try {
-                const response = await fetch('/health');
-                const health = await response.json();
-                
-                if (health.is_running !== isSystemRunning) {
-                    updateSystemStatus(health.is_running);
-                }
-                
-            } catch (error) {
-                console.warn('Health check failed:', error);
-            }
-        }, 10000);
-
-        // Console welcome message
-        console.log(`
-        🚀 HYPER Trading System v2.0
-        ================================
-        
-        💎 Keyboard Shortcuts:
-        Ctrl+S: Start/Stop System  
-        Ctrl+R: Refresh Signals
-        Ctrl+E: Emergency Stop
-        
-        🔥 System Status: Loading...
-        🎯 Ready to trade like a pro!
-        `);
     </script>
 </body>
 </html>
-            
