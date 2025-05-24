@@ -268,8 +268,11 @@ class RiskAnalyzer:
 class HYPERSignalEngine:
     """Main signal generation engine"""
     
-    def __init__(self, data_aggregator):
-        self.data_aggregator = data_aggregator
+    def __init__(self):
+        # Import here to avoid circular imports
+        from data_sources import HYPERDataAggregator
+        self.data_aggregator = HYPERDataAggregator()
+        
         self.technical_analyzer = TechnicalAnalyzer()
         self.sentiment_analyzer = SentimentAnalyzer()
         self.risk_analyzer = RiskAnalyzer()
@@ -380,4 +383,114 @@ class HYPERSignalEngine:
         except Exception as e:
             logger.error(f"💥 Signal generation error for {symbol}: {e}")
             import traceback
-            logger.error(f"📋 Traceback:
+            logger.error(f"📋 Traceback: {traceback.format_exc()}")
+            return self._create_error_signal(symbol, f"Generation error: {str(e)}")
+    
+    def _calculate_momentum_score(self, quote_data: Dict) -> float:
+        """Calculate momentum score from price data"""
+        try:
+            change_percent = float(quote_data.get('change_percent', 0))
+            # Convert change percent to 0-100 score
+            score = 50 + (change_percent * 10)  # Each 1% = 10 points
+            return max(0, min(100, score))
+        except:
+            return 50
+    
+    def _calculate_volume_score(self, quote_data: Dict) -> float:
+        """Calculate volume score"""
+        try:
+            volume = quote_data.get('volume', 0)
+            if volume > 20000000:
+                return 90  # Very high volume
+            elif volume > 10000000:
+                return 75  # High volume
+            elif volume > 5000000:
+                return 60  # Normal volume
+            elif volume > 1000000:
+                return 45  # Low volume
+            else:
+                return 25  # Very low volume
+        except:
+            return 50
+    
+    def _determine_direction(self, technical: Dict, sentiment: Dict, momentum: float) -> str:
+        """Determine overall signal direction"""
+        directions = []
+        
+        if technical.get('direction') == 'UP':
+            directions.append('UP')
+        elif technical.get('direction') == 'DOWN':
+            directions.append('DOWN')
+        
+        if sentiment.get('direction') == 'UP':
+            directions.append('UP')
+        elif sentiment.get('direction') == 'DOWN':
+            directions.append('DOWN')
+        
+        if momentum > 60:
+            directions.append('UP')
+        elif momentum < 40:
+            directions.append('DOWN')
+        
+        up_count = directions.count('UP')
+        down_count = directions.count('DOWN')
+        
+        if up_count > down_count:
+            return 'UP'
+        elif down_count > up_count:
+            return 'DOWN'
+        else:
+            return 'NEUTRAL'
+    
+    def _classify_signal(self, confidence: float, direction: str) -> str:
+        """Classify signal based on confidence and direction"""
+        if direction == 'UP':
+            if confidence >= self.thresholds['HYPER_BUY']:
+                return 'HYPER_BUY'
+            elif confidence >= self.thresholds['SOFT_BUY']:
+                return 'SOFT_BUY'
+        elif direction == 'DOWN':
+            if confidence >= self.thresholds['HYPER_SELL']:
+                return 'HYPER_SELL'
+            elif confidence >= self.thresholds['SOFT_SELL']:
+                return 'SOFT_SELL'
+        
+        return 'HOLD'
+    
+    def _create_error_signal(self, symbol: str, error_reason: str) -> HYPERSignal:
+        """Create an error/fallback signal"""
+        return HYPERSignal(
+            symbol=symbol,
+            signal_type='HOLD',
+            confidence=0.0,
+            direction='NEUTRAL',
+            price=0.0,
+            timestamp=datetime.now().isoformat(),
+            technical_score=50,
+            momentum_score=50,
+            trends_score=50,
+            volume_score=50,
+            ml_score=50,
+            indicators={},
+            reasons=[error_reason],
+            warnings=['Data unavailable'],
+            data_quality='error'
+        )
+    
+    async def generate_all_signals(self) -> Dict[str, HYPERSignal]:
+        """Generate signals for all tickers"""
+        import config
+        tickers = config.TICKERS
+        logger.info(f"🎯 Generating signals for {len(tickers)} tickers: {tickers}")
+        
+        signals = {}
+        for ticker in tickers:
+            try:
+                signal = await self.generate_signal(ticker)
+                signals[ticker] = signal
+            except Exception as e:
+                logger.error(f"❌ Failed to generate signal for {ticker}: {e}")
+                signals[ticker] = self._create_error_signal(ticker, f"Generation failed: {str(e)}")
+        
+        logger.info(f"✅ Generated {len(signals)} signals")
+        return signals
