@@ -11,47 +11,19 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-# Import our fixed modules
-from fixed_data_sources import HYPERDataAggregator
-from fixed_signal_engine import HYPERSignalEngine, HYPERSignal
+# Import existing modules with enhanced debugging
+import config
+from data_sources import HYPERDataAggregator
+from signal_engine import HYPERSignalEngine
 
 # ========================================
-# LOGGING SETUP
+# ENHANCED LOGGING SETUP
 # ========================================
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-# ========================================
-# CONFIGURATION
-# ========================================
-class Config:
-    # API Configuration
-    ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "OKUH0GNJE410ONTC")
-    
-    # Target tickers
-    TICKERS = ["QQQ", "SPY", "NVDA", "AAPL", "MSFT"]
-    
-    # Server configuration
-    HOST = "0.0.0.0"
-    PORT = int(os.getenv("PORT", 8000))
-    DEBUG = os.getenv("DEBUG", "false").lower() == "true"
-    
-    # Update intervals
-    SIGNAL_UPDATE_INTERVAL = 30  # seconds
-    
-    @classmethod
-    def validate(cls):
-        """Validate configuration"""
-        if not cls.ALPHA_VANTAGE_API_KEY:
-            raise ValueError("ALPHA_VANTAGE_API_KEY not configured")
-        logger.info(f"✅ Configuration validated")
-        logger.info(f"🔑 API Key: {cls.ALPHA_VANTAGE_API_KEY[:10]}...")
-        logger.info(f"📊 Tickers: {', '.join(cls.TICKERS)}")
-
-config = Config()
 
 # ========================================
 # FRONTEND CONFIGURATION
@@ -69,7 +41,7 @@ logger.info(f"🔧 Index file exists: {index_file.exists()}")
 app = FastAPI(
     title="HYPER Trading System",
     description="Advanced AI-powered trading signals with real-time intelligence",
-    version="2.1.0"
+    version="2.0.0"
 )
 
 app.add_middleware(
@@ -81,52 +53,63 @@ app.add_middleware(
 )
 
 # ========================================
-# GLOBAL STATE
+# GLOBAL STATE WITH ENHANCED TRACKING
 # ========================================
 class HYPERState:
-    """Global application state"""
+    """Global application state with enhanced tracking"""
     def __init__(self):
         self.is_running = False
         self.data_aggregator = None
         self.signal_engine = None
-        self.current_signals: Dict[str, HYPERSignal] = {}
-        self.connected_clients: List[WebSocket] = []
+        self.current_signals = {}
+        self.connected_clients = []
         self.last_update = None
         self.update_task = None
         self.stats = {
             "total_signals_generated": 0,
             "clients_connected": 0,
             "uptime_start": datetime.now(),
-            "api_calls_made": 0
+            "api_calls_made": 0,
+            "signals_with_data": 0,
+            "fallback_signals": 0
         }
     
     async def initialize(self):
-        """Initialize the HYPER system"""
-        logger.info("🚀 Initializing HYPER system...")
+        """Initialize the HYPER system with enhanced debugging"""
+        logger.info("🚀 Starting HYPER Trading System...")
+        logger.info(f"Tracking tickers: {', '.join(config.TICKERS)}")
+        logger.info(f"Alpha Vantage API configured: {'✅' if config.ALPHA_VANTAGE_API_KEY else '❌'}")
         
         try:
-            self.data_aggregator = HYPERDataAggregator(config.ALPHA_VANTAGE_API_KEY)
-            self.signal_engine = HYPERSignalEngine(self.data_aggregator)
+            # Initialize data aggregator
+            self.data_aggregator = HYPERDataAggregator()
+            logger.info("✅ Data aggregator initialized")
             
-            logger.info("✅ HYPER system initialized successfully")
+            # Initialize signal engine  
+            self.signal_engine = HYPERSignalEngine()
+            logger.info("✅ Signal engine initialized")
+            
+            # Validate configuration
+            logger.info(f"🔧 Running from: {os.getcwd()}")
+            logger.info(f"🔧 Index file exists: {index_file.exists()}")
+            
+            config.validate_config()
+            logger.info("✅ Configuration validated successfully")
+            
             return True
         except Exception as e:
             logger.error(f"❌ Failed to initialize HYPER system: {e}")
+            import traceback
+            logger.error(f"📋 Traceback: {traceback.format_exc()}")
             return False
-    
-    async def cleanup(self):
-        """Cleanup resources"""
-        if self.data_aggregator:
-            await self.data_aggregator.close()
-        logger.info("🔒 HYPER system cleaned up")
 
 hyper_state = HYPERState()
 
 # ========================================
-# WEBSOCKET CONNECTION MANAGER
+# ENHANCED WEBSOCKET CONNECTION MANAGER
 # ========================================
 class ConnectionManager:
-    """Manages WebSocket connections"""
+    """Enhanced WebSocket connection manager"""
     
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -137,14 +120,13 @@ class ConnectionManager:
         self.active_connections.append(websocket)
         hyper_state.stats["clients_connected"] = len(self.active_connections)
         
-        logger.info(f"🔌 New client connected. Total: {len(self.active_connections)}")
+        logger.info(f"New client connected. Total: {len(self.active_connections)}")
         
         # Send current data to new client
         await self.send_personal_message(websocket, {
-            "type": "connection_established",
-            "message": "Connected to HYPER Trading System",
+            "type": "signal_update",
             "signals": self._serialize_signals(hyper_state.current_signals),
-            "stats": self._serialize_stats(),
+            "stats": hyper_state.stats.copy(),
             "timestamp": datetime.now().isoformat()
         })
     
@@ -153,14 +135,14 @@ class ConnectionManager:
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
             hyper_state.stats["clients_connected"] = len(self.active_connections)
-            logger.info(f"🔌 Client disconnected. Total: {len(self.active_connections)}")
+            logger.info(f"Client disconnected. Total: {len(self.active_connections)}")
     
     async def send_personal_message(self, websocket: WebSocket, message: dict):
         """Send message to specific client"""
         try:
-            await websocket.send_text(json.dumps(message, default=self._serialize_datetime))
+            await websocket.send_text(json.dumps(message, default=str))
         except Exception as e:
-            logger.error(f"❌ Error sending personal message: {e}")
+            logger.error(f"Error sending personal message: {e}")
     
     async def broadcast(self, message: dict):
         """Broadcast message to all connected clients"""
@@ -168,102 +150,113 @@ class ConnectionManager:
             return
         
         disconnected = []
-        message_json = json.dumps(message, default=self._serialize_datetime)
+        message_json = json.dumps(message, default=str)
         
         for connection in self.active_connections:
             try:
                 await connection.send_text(message_json)
             except Exception as e:
-                logger.error(f"❌ Error broadcasting to client: {e}")
+                logger.error(f"Error broadcasting to client: {e}")
                 disconnected.append(connection)
         
         # Remove disconnected clients
         for conn in disconnected:
             self.disconnect(conn)
+        
+        if self.active_connections:
+            logger.info(f"Broadcasted signals to {len(self.active_connections)} clients")
     
-    def _serialize_signals(self, signals: Dict[str, HYPERSignal]) -> Dict[str, Dict]:
-        """Convert HYPERSignal objects to JSON-serializable dict"""
+    def _serialize_signals(self, signals):
+        """Convert signals to JSON-serializable format"""
+        if not signals:
+            return {}
+        
         serialized = {}
         for symbol, signal in signals.items():
-            serialized[symbol] = {
-                "symbol": signal.symbol,
-                "signal_type": signal.signal_type,
-                "confidence": signal.confidence,
-                "direction": signal.direction,
-                "price": signal.price,
-                "timestamp": signal.timestamp,
-                "technical_score": signal.technical_score,
-                "momentum_score": signal.momentum_score,
-                "trends_score": signal.trends_score,
-                "volume_score": signal.volume_score,
-                "ml_score": signal.ml_score,
-                "indicators": signal.indicators,
-                "reasons": signal.reasons,
-                "warnings": signal.warnings,
-                "data_quality": signal.data_quality
-            }
+            if hasattr(signal, '__dict__'):
+                # It's a HYPERSignal object
+                serialized[symbol] = {
+                    "symbol": signal.symbol,
+                    "signal": getattr(signal, 'signal_type', 'HOLD'),
+                    "confidence": getattr(signal, 'confidence', 0.0),
+                    "price": getattr(signal, 'price', 0.0),
+                    "change": getattr(signal, 'change_percent', 0.0),
+                    "volume": getattr(signal, 'volume', 0),
+                    "trend_score": getattr(signal, 'trends_score', 0.0),
+                    "timestamp": getattr(signal, 'timestamp', datetime.now().isoformat())
+                }
+            else:
+                # It's already a dict
+                serialized[symbol] = signal
+        
         return serialized
-    
-    def _serialize_stats(self) -> Dict:
-        """Serialize stats with datetime handling"""
-        return {
-            "total_signals_generated": hyper_state.stats["total_signals_generated"],
-            "clients_connected": hyper_state.stats["clients_connected"],
-            "uptime_start": self._serialize_datetime(hyper_state.stats["uptime_start"]),
-            "api_calls_made": hyper_state.stats.get("api_calls_made", 0)
-        }
-    
-    def _serialize_datetime(self, obj):
-        """Convert datetime objects to ISO format strings"""
-        if isinstance(obj, datetime):
-            return obj.isoformat()
-        return obj
 
 manager = ConnectionManager()
 
 # ========================================
-# BACKGROUND SIGNAL GENERATION
+# ENHANCED SIGNAL GENERATION LOOP
 # ========================================
 async def signal_generation_loop():
-    """Background task that generates signals continuously"""
-    logger.info("🔄 Starting signal generation loop...")
+    """Enhanced background signal generation with debugging"""
+    logger.info("🚀 Starting HYPER signal generation loop...")
     
     while hyper_state.is_running:
         try:
-            logger.info("🎯 Generating signals for all tickers...")
+            logger.info("Generating signals for all tickers...")
             
             if not hyper_state.signal_engine:
                 logger.error("❌ Signal engine not initialized")
                 await asyncio.sleep(30)
                 continue
             
-            # Generate signals
-            new_signals = await hyper_state.signal_engine.generate_all_signals(config.TICKERS)
+            # Generate signals with timing
+            start_time = datetime.now()
+            signals = await hyper_state.signal_engine.generate_all_signals()
+            generation_time = (datetime.now() - start_time).total_seconds()
             
-            # Update state
-            hyper_state.current_signals = new_signals
+            # Update state and stats
+            hyper_state.current_signals = signals
             hyper_state.last_update = datetime.now()
-            hyper_state.stats["total_signals_generated"] += len(new_signals)
+            hyper_state.stats["total_signals_generated"] += len(signals)
             
-            # Log signal summary
-            signal_summary = []
-            for symbol, signal in new_signals.items():
-                signal_summary.append(f"{symbol}: {signal.signal_type} ({signal.confidence}%)")
+            # Analyze signal quality
+            signals_with_data = 0
+            fallback_signals = 0
             
-            logger.info(f"📊 Generated signals: {', '.join(signal_summary)}")
+            for symbol, signal in signals.items():
+                if hasattr(signal, 'price') and signal.price > 0:
+                    signals_with_data += 1
+                else:
+                    fallback_signals += 1
             
-            # Broadcast to WebSocket clients
-            if manager.active_connections:
-                await manager.broadcast({
-                    "type": "signal_update",
-                    "signals": manager._serialize_signals(new_signals),
-                    "timestamp": hyper_state.last_update.isoformat(),
-                    "stats": manager._serialize_stats()
-                })
-                logger.info(f"📡 Broadcasted to {len(manager.active_connections)} clients")
+            hyper_state.stats["signals_with_data"] = signals_with_data
+            hyper_state.stats["fallback_signals"] = fallback_signals
             
-            # Wait before next update
-            await asyncio.sleep(config.SIGNAL_UPDATE_INTERVAL)
+            # Log detailed signal information
+            signal_details = []
+            for symbol, signal in signals.items():
+                if hasattr(signal, '__dict__'):
+                    signal_type = getattr(signal, 'signal_type', 'HOLD')
+                    confidence = getattr(signal, 'confidence', 0.0)
+                    price = getattr(signal, 'price', 0.0)
+                    signal_details.append(f"{symbol}: {signal_type} ({confidence:.1f}%) ${price:.2f}")
+                else:
+                    signal_details.append(f"{symbol}: {signal}")
+            
+            logger.info(f"Generated signals: {', '.join(signal_details)}")
+            logger.info(f"⏱️ Generation time: {generation_time:.2f}s")
+            logger.info(f"📊 Data quality: {signals_with_data}/{len(signals)} with real data")
+            
+            # Broadcast to clients
+            await manager.broadcast({
+                "type": "signal_update",
+                "signals": manager._serialize_signals(signals),
+                "timestamp": hyper_state.last_update.isoformat(),
+                "stats": hyper_state.stats.copy()
+            })
+            
+            # Wait for next update
+            await asyncio.sleep(config.UPDATE_INTERVALS["signal_generation"])
             
         except Exception as e:
             logger.error(f"💥 Error in signal generation loop: {e}")
@@ -282,36 +275,32 @@ async def get_frontend():
             logger.info(f"📁 Serving index.html from: {index_file}")
             with open(index_file, "r", encoding="utf-8") as f:
                 content = f.read()
-                logger.info(f"✅ Loaded index.html ({len(content)} characters)")
+                logger.info(f"✅ Successfully loaded index.html ({len(content)} characters)")
                 return HTMLResponse(content=content)
         else:
             logger.error(f"❌ index.html not found at: {index_file}")
             return HTMLResponse(
-                content=f"""
-                <h1>🚀 HYPER Trading System</h1>
-                <p>❌ Frontend not found at: {index_file}</p>
-                <p>Files in directory: {list(current_dir.iterdir())}</p>
-                """,
+                content="<h1>HYPER Trading System</h1><p>Frontend not found</p>",
                 status_code=404
             )
     except Exception as e:
         logger.error(f"❌ Error serving frontend: {e}")
-        return HTMLResponse(
-            content=f"<h1>Error: {str(e)}</h1>",
-            status_code=500
-        )
+        return HTMLResponse(content=f"<h1>Error: {str(e)}</h1>", status_code=500)
 
 @app.get("/health")
 async def health_check():
-    """System health check"""
+    """Enhanced system health check"""
     return {
         "status": "healthy",
         "is_running": hyper_state.is_running,
         "connected_clients": len(manager.active_connections),
         "last_update": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
         "total_signals": hyper_state.stats["total_signals_generated"],
+        "signals_with_data": hyper_state.stats.get("signals_with_data", 0),
+        "fallback_signals": hyper_state.stats.get("fallback_signals", 0),
         "tickers": config.TICKERS,
         "system_initialized": hyper_state.signal_engine is not None,
+        "index_file_exists": index_file.exists(),
         "api_key_configured": bool(config.ALPHA_VANTAGE_API_KEY),
         "timestamp": datetime.now().isoformat()
     }
@@ -322,7 +311,7 @@ async def get_current_signals():
     return {
         "signals": manager._serialize_signals(hyper_state.current_signals),
         "timestamp": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
-        "stats": manager._serialize_stats()
+        "stats": hyper_state.stats.copy()
     }
 
 @app.get("/api/signals/{symbol}")
@@ -355,14 +344,6 @@ async def start_system():
     # Start background task
     asyncio.create_task(signal_generation_loop())
     
-    # Broadcast status change
-    await manager.broadcast({
-        "type": "system_status",
-        "status": "started",
-        "message": "HYPER signal generation started",
-        "timestamp": datetime.now().isoformat()
-    })
-    
     logger.info("🚀 HYPER signal generation started")
     return {"status": "started", "message": "HYPER signal generation started"}
 
@@ -373,14 +354,6 @@ async def stop_system():
         return {"status": "not_running", "message": "HYPER is not running"}
     
     hyper_state.is_running = False
-    
-    await manager.broadcast({
-        "type": "system_status",
-        "status": "stopped",
-        "message": "HYPER signal generation stopped",
-        "timestamp": datetime.now().isoformat()
-    })
-    
     logger.info("⏸️ HYPER signal generation stopped")
     return {"status": "stopped", "message": "HYPER signal generation stopped"}
 
@@ -388,13 +361,6 @@ async def stop_system():
 async def emergency_stop():
     """Emergency stop all operations"""
     hyper_state.is_running = False
-    
-    await manager.broadcast({
-        "type": "emergency_stop",
-        "message": "🚨 EMERGENCY STOP ACTIVATED",
-        "timestamp": datetime.now().isoformat()
-    })
-    
     logger.warning("🚨 EMERGENCY STOP ACTIVATED")
     return {"status": "emergency_stopped", "message": "Emergency stop activated"}
 
@@ -422,7 +388,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "type": "signal_update",
                     "signals": manager._serialize_signals(hyper_state.current_signals),
                     "timestamp": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
-                    "stats": manager._serialize_stats()
+                    "stats": hyper_state.stats.copy()
                 })
     
     except WebSocketDisconnect:
@@ -436,15 +402,17 @@ async def websocket_endpoint(websocket: WebSocket):
 # ========================================
 @app.on_event("startup")
 async def startup_event():
-    """Application startup"""
+    """Application startup with market status detection"""
     logger.info("🚀 Starting HYPER Trading System...")
     
-    # Validate configuration
-    try:
-        config.validate()
-    except Exception as e:
-        logger.error(f"❌ Configuration error: {e}")
-        return
+    # Market status check (simple version)
+    current_hour = datetime.now().hour
+    if 9 <= current_hour <= 16:  # Market hours (rough)
+        market_status = "OPEN"
+    else:
+        market_status = "CLOSED"
+    
+    logger.info(f"📈 Market status: {market_status}")
     
     # Initialize the system
     success = await hyper_state.initialize()
@@ -453,19 +421,12 @@ async def startup_event():
         return
     
     # Generate initial signals
-    logger.info("🎯 Generating initial signals...")
+    logger.info("Generating initial signals...")
     try:
-        initial_signals = await hyper_state.signal_engine.generate_all_signals(config.TICKERS)
+        initial_signals = await hyper_state.signal_engine.generate_all_signals()
         hyper_state.current_signals = initial_signals
         hyper_state.last_update = datetime.now()
-        logger.info("✅ Initial signals generated")
-        
-        # Log signal summary
-        signal_summary = []
-        for symbol, signal in initial_signals.items():
-            signal_summary.append(f"{symbol}: {signal.signal_type} ({signal.confidence}%)")
-        logger.info(f"📊 Initial signals: {', '.join(signal_summary)}")
-        
+        logger.info("✅ Initial signals generated successfully")
     except Exception as e:
         logger.error(f"❌ Failed to generate initial signals: {e}")
     
@@ -474,7 +435,9 @@ async def startup_event():
     hyper_state.stats["uptime_start"] = datetime.now()
     asyncio.create_task(signal_generation_loop())
     
-    logger.info("🎯 HYPER Trading System ready and running!")
+    status_msg = f"Markets {market_status} - using {'live' if market_status == 'OPEN' else 'cached/demo'} data"
+    logger.info(f"🔥 HYPER signal generation auto-started! ({status_msg})")
+    logger.info("🎯 HYPER Trading System ready!")
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -489,9 +452,6 @@ async def shutdown_event():
         except:
             pass
     
-    # Cleanup resources
-    await hyper_state.cleanup()
-    
     logger.info("👋 HYPER shutdown complete")
 
 # ========================================
@@ -502,8 +462,8 @@ if __name__ == "__main__":
     
     uvicorn.run(
         "main:app",
-        host=config.HOST,
-        port=config.PORT,
-        reload=config.DEBUG,
+        host=config.SERVER_CONFIG["host"],
+        port=config.SERVER_CONFIG["port"],
+        reload=config.SERVER_CONFIG.get("reload", False),
         log_level="info"
     )
