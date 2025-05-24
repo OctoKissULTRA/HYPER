@@ -177,18 +177,23 @@ class ConnectionManager:
                 # It's a HYPERSignal object
                 serialized[symbol] = {
                     "symbol": signal.symbol,
-                    "signal": getattr(signal, 'signal_type', 'HOLD'),
-                    "confidence": getattr(signal, 'confidence', 0.0),
-                    "price": getattr(signal, 'price', 0.0),
-                    "change": getattr(signal, 'change_percent', 0.0),
-                    "volume": getattr(signal, 'volume', 0),
-                    "trend_score": getattr(signal, 'trends_score', 0.0),
+                    "signal_type": getattr(signal, 'signal_type', 'HOLD'),
+                    "confidence": float(getattr(signal, 'confidence', 0.0)),
+                    "price": float(getattr(signal, 'price', 0.0)),
+                    "change_percent": float(getattr(signal, 'indicators', {}).get('change_percent', 0.0)),
+                    "volume": int(getattr(signal, 'indicators', {}).get('volume', 0)),
+                    "trend_score": float(getattr(signal, 'trends_score', 0.0)),
+                    "technical_score": float(getattr(signal, 'technical_score', 0.0)),
+                    "momentum_score": float(getattr(signal, 'momentum_score', 0.0)),
+                    "reasons": getattr(signal, 'reasons', []),
+                    "warnings": getattr(signal, 'warnings', []),
                     "timestamp": getattr(signal, 'timestamp', datetime.now().isoformat())
                 }
             else:
                 # It's already a dict
                 serialized[symbol] = signal
         
+        logger.info(f"📡 Serialized {len(serialized)} signals for frontend")
         return serialized
 
 manager = ConnectionManager()
