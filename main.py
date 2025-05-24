@@ -82,7 +82,7 @@ class HYPERState:
         
         try:
             # Initialize data aggregator
-            self.data_aggregator = HYPERDataAggregator()
+            self.data_aggregator = HYPERDataAggregator(config.ALPHA_VANTAGE_API_KEY)
             logger.info("✅ Data aggregator initialized")
             
             # Initialize signal engine  
