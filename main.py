@@ -62,6 +62,25 @@ app.add_middleware(
 )
 
 # ========================================
+# UTILITY FUNCTIONS FOR JSON SERIALIZATION
+# ========================================
+
+def serialize_datetime(obj):
+    """Convert datetime objects to ISO format strings"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    return obj
+
+def serialize_stats(stats: Dict) -> Dict:
+    """Serialize stats dictionary, converting datetime objects to strings"""
+    return {
+        "total_signals_generated": stats.get("total_signals_generated", 0),
+        "clients_connected": stats.get("clients_connected", 0),
+        "uptime_start": serialize_datetime(stats.get("uptime_start")),
+        "api_calls_made": stats.get("api_calls_made", 0)
+    }
+
+# ========================================
 # GLOBAL STATE
 # ========================================
 
@@ -107,7 +126,7 @@ class ConnectionManager:
             "type": "connection_established",
             "message": "Connected to HYPER Trading System",
             "current_signals": self._serialize_signals(hyper_state.current_signals),
-            "stats": hyper_state.stats,
+            "stats": serialize_stats(hyper_state.stats),
             "timestamp": datetime.now().isoformat()
         })
     
@@ -122,7 +141,7 @@ class ConnectionManager:
     async def send_personal_message(self, websocket: WebSocket, message: dict):
         """Send message to specific client"""
         try:
-            await websocket.send_text(json.dumps(message))
+            await websocket.send_text(json.dumps(message, default=serialize_datetime))
         except Exception as e:
             logger.error(f"Error sending personal message: {e}")
     
@@ -132,7 +151,13 @@ class ConnectionManager:
             return
         
         disconnected = []
-        message_json = json.dumps(message)
+        
+        try:
+            # Use json.dumps with datetime serialization
+            message_json = json.dumps(message, default=serialize_datetime)
+        except Exception as e:
+            logger.error(f"Error serializing message: {e}")
+            return
         
         for connection in self.active_connections:
             try:
@@ -154,7 +179,7 @@ class ConnectionManager:
                 "confidence": signal.confidence,
                 "direction": signal.direction,
                 "price": signal.price,
-                "timestamp": signal.timestamp,
+                "timestamp": serialize_datetime(signal.timestamp) if hasattr(signal, 'timestamp') else datetime.now().isoformat(),
                 "technical_score": signal.technical_score,
                 "momentum_score": signal.momentum_score,
                 "trends_score": signal.trends_score,
@@ -189,15 +214,16 @@ async def signal_generation_loop():
             hyper_state.last_update = datetime.now()
             hyper_state.stats["total_signals_generated"] += len(new_signals)
             
-            # Broadcast to all connected clients
+            # Broadcast to all connected clients with proper serialization
             if manager.active_connections:
-                await manager.broadcast({
+                broadcast_message = {
                     "type": "signal_update",
                     "signals": manager._serialize_signals(new_signals),
                     "timestamp": hyper_state.last_update.isoformat(),
-                    "stats": hyper_state.stats
-                })
+                    "stats": serialize_stats(hyper_state.stats)
+                }
                 
+                await manager.broadcast(broadcast_message)
                 logger.info(f"Broadcasted signals to {len(manager.active_connections)} clients")
             
             # Log signal summary
@@ -212,7 +238,44 @@ async def signal_generation_loop():
             
         except Exception as e:
             logger.error(f"Error in signal generation loop: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             await asyncio.sleep(30)  # Wait 30 seconds on error
+
+# ========================================
+# MARKET HOURS CHECK
+# ========================================
+
+def is_market_hours():
+    """Check if markets are currently open (US Eastern Time)"""
+    try:
+        import pytz
+        from datetime import datetime, time
+        
+        # US Eastern timezone
+        eastern = pytz.timezone('US/Eastern')
+        now_eastern = datetime.now(eastern)
+        
+        # Market hours: Monday-Friday, 9:30 AM - 4:00 PM ET
+        weekday = now_eastern.weekday()  # 0=Monday, 6=Sunday
+        current_time = now_eastern.time()
+        
+        # Weekend check
+        if weekday >= 5:  # Saturday or Sunday
+            return False
+        
+        # Market hours check
+        market_open = time(9, 30)   # 9:30 AM
+        market_close = time(16, 0)  # 4:00 PM
+        
+        return market_open <= current_time <= market_close
+    except ImportError:
+        # If pytz not available, assume markets are open for demo
+        logger.warning("pytz not available, assuming markets open for demo")
+        return True
+    except Exception as e:
+        logger.error(f"Error checking market hours: {e}")
+        return True  # Default to open for demo
 
 # ========================================
 # API ROUTES
@@ -232,12 +295,12 @@ async def get_trading_interface():
             logger.error(f"❌ index.html not found at: {index_file}")
             
             return HTMLResponse(
-                content="""
+                content=f"""
                 <h1>🚀 HYPER Trading System</h1>
                 <p>❌ Frontend index.html not found</p>
-                <p>Expected location: """ + str(index_file) + """</p>
-                <p>Current directory: """ + str(current_dir) + """</p>
-                <p>Files in directory: """ + str(list(current_dir.iterdir())) + """</p>
+                <p>Expected location: {index_file}</p>
+                <p>Current directory: {current_dir}</p>
+                <p>Files in directory: {list(current_dir.iterdir())}</p>
                 """,
                 status_code=404
             )
@@ -265,7 +328,8 @@ async def health_check():
         "total_signals": hyper_state.stats["total_signals_generated"],
         "tickers": config.TICKERS,
         "current_dir": str(current_dir),
-        "index_file_exists": index_file.exists()
+        "index_file_exists": index_file.exists(),
+        "market_open": is_market_hours()
     }
 
 @app.get("/api/signals")
@@ -274,7 +338,7 @@ async def get_current_signals():
     return {
         "signals": manager._serialize_signals(hyper_state.current_signals),
         "timestamp": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
-        "stats": hyper_state.stats
+        "stats": serialize_stats(hyper_state.stats)
     }
 
 @app.get("/api/signals/{symbol}")
@@ -364,7 +428,7 @@ async def get_system_stats():
     uptime = datetime.now() - hyper_state.stats["uptime_start"]
     
     return {
-        **hyper_state.stats,
+        **serialize_stats(hyper_state.stats),
         "uptime_seconds": uptime.total_seconds(),
         "uptime_formatted": str(uptime),
         "signals_per_minute": hyper_state.stats["total_signals_generated"] / max(1, uptime.total_seconds() / 60),
@@ -398,13 +462,14 @@ async def websocket_endpoint(websocket: WebSocket):
                 await manager.send_personal_message(websocket, {
                     "type": "signal_update",
                     "signals": manager._serialize_signals(hyper_state.current_signals),
-                    "timestamp": hyper_state.last_update.isoformat() if hyper_state.last_update else None
+                    "timestamp": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
+                    "stats": serialize_stats(hyper_state.stats)
                 })
             
             elif message.get("type") == "request_stats":
                 await manager.send_personal_message(websocket, {
                     "type": "stats_update",
-                    "stats": hyper_state.stats,
+                    "stats": serialize_stats(hyper_state.stats),
                     "timestamp": datetime.now().isoformat()
                 })
             
@@ -417,37 +482,6 @@ async def websocket_endpoint(websocket: WebSocket):
 # ========================================
 # STARTUP/SHUTDOWN EVENTS
 # ========================================
-
-def is_market_hours():
-    """Check if markets are currently open (US Eastern Time)"""
-    try:
-        import pytz
-        from datetime import datetime, time
-        
-        # US Eastern timezone
-        eastern = pytz.timezone('US/Eastern')
-        now_eastern = datetime.now(eastern)
-        
-        # Market hours: Monday-Friday, 9:30 AM - 4:00 PM ET
-        weekday = now_eastern.weekday()  # 0=Monday, 6=Sunday
-        current_time = now_eastern.time()
-        
-        # Weekend check
-        if weekday >= 5:  # Saturday or Sunday
-            return False
-        
-        # Market hours check
-        market_open = time(9, 30)   # 9:30 AM
-        market_close = time(16, 0)  # 4:00 PM
-        
-        return market_open <= current_time <= market_close
-    except ImportError:
-        # If pytz not available, assume markets are open for demo
-        logger.warning("pytz not available, assuming markets open for demo")
-        return True
-    except Exception as e:
-        logger.error(f"Error checking market hours: {e}")
-        return True  # Default to open for demo
 
 @app.on_event("startup")
 async def startup_event():
@@ -480,6 +514,8 @@ async def startup_event():
         logger.info("✅ Initial signals generated successfully")
     except Exception as e:
         logger.error(f"❌ Failed to generate initial signals: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
     
     # AUTO-START THE SYSTEM (works 24/7 for demo purposes)
     hyper_state.is_running = True
