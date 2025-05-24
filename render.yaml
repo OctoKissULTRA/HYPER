@@ -6,6 +6,10 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: ALPHA_VANTAGE_API_KEY
-        value: RXV371OVWXK6BQ17
+        value: OKUH0GNJE410ONTC
+      - key: DEBUG
+        value: true
+      - key: LOG_LEVEL
+        value: INFO
     healthCheckPath: /health
     plan: starter
