@@ -1,24 +1,11 @@
-# ============================================
-# HYPER TRADING SYSTEM - Signal Engine
-# The BRAIN that generates trading signals
-# ============================================
-
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
 import logging
-from dataclasses import dataclass
+import random
 import asyncio
-
-from config import config
-from data_sources import HYPERDataAggregator
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
-
-# ========================================
-# SIGNAL DATA STRUCTURES
-# ========================================
 
 @dataclass
 class HYPERSignal:
@@ -43,251 +30,170 @@ class HYPERSignal:
     warnings: List[str]
     data_quality: str
 
-# ========================================
-# TECHNICAL ANALYSIS ENGINE
-# ========================================
-
 class TechnicalAnalyzer:
-    """Advanced technical analysis for HYPER signals"""
+    """Technical analysis engine"""
     
-    @staticmethod
-    def calculate_rsi(prices: pd.Series, period: int = 14) -> pd.Series:
-        """Calculate RSI indicator"""
-        delta = prices.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-        rs = gain / loss
-        rsi = 100 - (100 / (1 + rs))
-        return rsi
-    
-    @staticmethod
-    def calculate_ema(prices: pd.Series, period: int) -> pd.Series:
-        """Calculate Exponential Moving Average"""
-        return prices.ewm(span=period, adjust=False).mean()
-    
-    @staticmethod
-    def calculate_macd(prices: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> Dict[str, pd.Series]:
-        """Calculate MACD indicators"""
-        ema_fast = TechnicalAnalyzer.calculate_ema(prices, fast)
-        ema_slow = TechnicalAnalyzer.calculate_ema(prices, slow)
-        macd_line = ema_fast - ema_slow
-        signal_line = TechnicalAnalyzer.calculate_ema(macd_line, signal)
-        histogram = macd_line - signal_line
-        
-        return {
-            'macd': macd_line,
-            'signal': signal_line,
-            'histogram': histogram
-        }
-    
-    @staticmethod
-    def calculate_bollinger_bands(prices: pd.Series, period: int = 20, std_dev: int = 2) -> Dict[str, pd.Series]:
-        """Calculate Bollinger Bands"""
-        sma = prices.rolling(window=period).mean()
-        std = prices.rolling(window=period).std()
-        
-        return {
-            'middle': sma,
-            'upper': sma + (std * std_dev),
-            'lower': sma - (std * std_dev),
-            'width': (std * std_dev * 2) / sma * 100
-        }
-    
-    def analyze_technicals(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """Comprehensive technical analysis"""
-        if df is None or len(df) < 30:
+    def analyze_price_action(self, quote_data: Dict) -> Dict[str, Any]:
+        """Analyze price action from quote data"""
+        if not quote_data or quote_data.get('price', 0) <= 0:
             return self._empty_technical_analysis()
         
         try:
-            prices = df['close']
-            volume = df['volume']
+            price = quote_data['price']
+            change = float(quote_data.get('change', 0))
+            change_percent = float(quote_data.get('change_percent', 0))
+            volume = quote_data.get('volume', 0)
+            high = quote_data.get('high', price)
+            low = quote_data.get('low', price)
             
-            # Calculate all indicators
-            rsi = self.calculate_rsi(prices, config.TECHNICAL_PARAMS['rsi_period'])
-            ema_short = self.calculate_ema(prices, config.TECHNICAL_PARAMS['ema_short'])
-            ema_long = self.calculate_ema(prices, config.TECHNICAL_PARAMS['ema_long'])
-            macd_data = self.calculate_macd(prices)
-            bb_data = self.calculate_bollinger_bands(prices)
-            
-            # Volume analysis
-            volume_ma = volume.rolling(window=config.TECHNICAL_PARAMS['volume_ma_period']).mean()
-            volume_ratio = volume.iloc[-1] / volume_ma.iloc[-1] if volume_ma.iloc[-1] > 0 else 1
-            
-            # Latest values
-            latest_rsi = rsi.iloc[-1] if not rsi.empty else 50
-            latest_price = prices.iloc[-1]
-            latest_ema_short = ema_short.iloc[-1] if not ema_short.empty else latest_price
-            latest_ema_long = ema_long.iloc[-1] if not ema_long.empty else latest_price
-            latest_macd = macd_data['histogram'].iloc[-1] if not macd_data['histogram'].empty else 0
-            
-            # Bollinger Bands position
-            bb_upper = bb_data['upper'].iloc[-1] if not bb_data['upper'].empty else latest_price
-            bb_lower = bb_data['lower'].iloc[-1] if not bb_data['lower'].empty else latest_price
-            bb_position = self._get_bb_position(latest_price, bb_upper, bb_lower)
-            
-            # Generate technical signals
+            # Calculate technical indicators
             signals = []
             score = 50  # Start neutral
             
-            # RSI signals
-            if latest_rsi < config.TECHNICAL_PARAMS['rsi_oversold']:
-                signals.append("RSI oversold - bullish")
-                score += 15
-            elif latest_rsi > config.TECHNICAL_PARAMS['rsi_overbought']:
-                signals.append("RSI overbought - bearish")
-                score -= 15
-            
-            # EMA crossover
-            if latest_ema_short > latest_ema_long:
-                signals.append("EMA bullish trend")
+            # Price momentum analysis
+            if change_percent > 2.0:
+                signals.append("Strong upward momentum")
+                score += 20
+            elif change_percent > 0.5:
+                signals.append("Positive momentum")
                 score += 10
-            else:
-                signals.append("EMA bearish trend")
+            elif change_percent < -2.0:
+                signals.append("Strong downward momentum")
+                score -= 20
+            elif change_percent < -0.5:
+                signals.append("Negative momentum")
                 score -= 10
             
-            # MACD signals
-            if latest_macd > 0:
-                signals.append("MACD bullish momentum")
-                score += 8
-            else:
-                signals.append("MACD bearish momentum")
-                score -= 8
-            
-            # Bollinger Bands
-            if bb_position == "below":
-                signals.append("Price below BB lower - oversold")
-                score += 12
-            elif bb_position == "above":
-                signals.append("Price above BB upper - overbought")
-                score -= 12
-            
-            # Volume confirmation
-            if volume_ratio > 1.5:
+            # Volume analysis
+            if volume > 10000000:  # High volume
                 signals.append("High volume confirmation")
-                score += 8
-            elif volume_ratio < 0.7:
-                signals.append("Low volume warning")
+                if change_percent > 0:
+                    score += 15
+                else:
+                    score -= 15
+            elif volume < 1000000:  # Low volume
+                signals.append("Low volume - weak signal")
                 score -= 5
+            
+            # Range analysis
+            if high > 0 and low > 0:
+                range_percent = ((high - low) / price) * 100
+                if range_percent > 3:
+                    signals.append("High volatility")
+                    score += 5
+                elif range_percent < 1:
+                    signals.append("Low volatility")
+                    score -= 5
+            
+            # Generate RSI-like indicator from price action
+            rsi = self._calculate_pseudo_rsi(change_percent)
+            if rsi > 70:
+                signals.append("Overbought conditions")
+                score -= 10
+            elif rsi < 30:
+                signals.append("Oversold conditions")
+                score += 10
+            
+            direction = 'UP' if score > 55 else 'DOWN' if score < 45 else 'NEUTRAL'
             
             return {
                 'score': max(0, min(100, score)),
-                'rsi': latest_rsi,
-                'ema_short': latest_ema_short,
-                'ema_long': latest_ema_long,
-                'macd_histogram': latest_macd,
-                'bb_position': bb_position,
-                'volume_ratio': volume_ratio,
+                'rsi': rsi,
+                'volume_ratio': volume / 10000000,  # Normalize volume
+                'range_percent': ((high - low) / price) * 100 if price > 0 else 0,
                 'signals': signals,
-                'direction': 'UP' if score > 55 else 'DOWN' if score < 45 else 'NEUTRAL'
+                'direction': direction,
+                'change_percent': change_percent,
+                'volume': volume
             }
             
         except Exception as e:
             logger.error(f"Technical analysis error: {e}")
             return self._empty_technical_analysis()
     
-    def _get_bb_position(self, price: float, upper: float, lower: float) -> str:
-        """Determine Bollinger Bands position"""
-        if price > upper:
-            return "above"
-        elif price < lower:
-            return "below"
-        else:
-            return "middle"
+    def _calculate_pseudo_rsi(self, change_percent: float) -> float:
+        """Calculate a pseudo-RSI from recent change"""
+        # Simple RSI approximation based on recent change
+        if change_percent == 0:
+            return 50
+        
+        # Map change percent to RSI-like value
+        rsi = 50 + (change_percent * 10)  # Each 1% change = 10 RSI points
+        return max(0, min(100, rsi))
     
     def _empty_technical_analysis(self) -> Dict[str, Any]:
         """Return empty technical analysis"""
         return {
             'score': 50,
             'rsi': 50,
-            'ema_short': 0,
-            'ema_long': 0,
-            'macd_histogram': 0,
-            'bb_position': 'middle',
             'volume_ratio': 1,
-            'signals': [],
-            'direction': 'NEUTRAL'
+            'range_percent': 0,
+            'signals': ['No technical data available'],
+            'direction': 'NEUTRAL',
+            'change_percent': 0,
+            'volume': 0
         }
 
-# ========================================
-# SENTIMENT ANALYZER
-# ========================================
-
 class SentimentAnalyzer:
-    """Google Trends sentiment analysis"""
+    """Sentiment analysis from trends data"""
     
-    def analyze_trends_sentiment(self, trend_data: Dict[str, Any], symbol: str) -> Dict[str, Any]:
-        """Analyze Google Trends sentiment"""
-        if not trend_data or 'trend_analysis' not in trend_data:
+    def analyze_trends_sentiment(self, trends_data: Dict, symbol: str) -> Dict[str, Any]:
+        """Analyze sentiment from trends data"""
+        if not trends_data or 'keyword_data' not in trends_data:
             return self._empty_sentiment_analysis()
         
         try:
-            analysis = trend_data['trend_analysis']
-            keywords = config.get_ticker_keywords(symbol)
-            
-            # Aggregate sentiment across keywords
-            total_momentum = 0
-            total_velocity = 0
-            total_acceleration = 0
-            keyword_count = 0
-            
+            keyword_data = trends_data['keyword_data']
             signals = []
-            
-            for keyword in keywords:
-                if keyword in analysis:
-                    kw_analysis = analysis[keyword]
-                    total_momentum += kw_analysis.get('momentum', 0)
-                    total_velocity += kw_analysis.get('velocity', 0)
-                    total_acceleration += kw_analysis.get('acceleration', 0)
-                    keyword_count += 1
-                    
-                    # Generate keyword-specific signals
-                    if kw_analysis.get('momentum', 0) > 50:
-                        signals.append(f"High search interest: {keyword}")
-                    elif kw_analysis.get('momentum', 0) < -20:
-                        signals.append(f"Declining interest: {keyword}")
-            
-            if keyword_count == 0:
-                return self._empty_sentiment_analysis()
-            
-            # Calculate averages
-            avg_momentum = total_momentum / keyword_count
-            avg_velocity = total_velocity / keyword_count
-            avg_acceleration = total_acceleration / keyword_count
-            
-            # Generate sentiment score (0-100)
             score = 50  # Start neutral
             
-            # Momentum contribution
-            if avg_momentum > 100:
-                score += 20  # Very high interest
-                signals.append("Extreme search volume spike")
-            elif avg_momentum > 25:
-                score += 10  # Moderate interest
-                signals.append("Increased search interest")
-            elif avg_momentum < -25:
-                score -= 10  # Declining interest
-                signals.append("Decreasing search interest")
+            total_momentum = 0
+            total_velocity = 0
+            keyword_count = 0
             
-            # Velocity contribution
-            if avg_velocity > 50:
-                score += 10  # Accelerating interest
-                signals.append("Accelerating search trends")
-            elif avg_velocity < -50:
-                score -= 10  # Decelerating interest
-                signals.append("Search interest cooling")
+            for keyword, data in keyword_data.items():
+                momentum = data.get('momentum', 0)
+                velocity = data.get('velocity', 0)
+                
+                total_momentum += momentum
+                total_velocity += velocity
+                keyword_count += 1
+                
+                # Generate signals based on trends
+                if momentum > 50:
+                    signals.append(f"High interest in {keyword}")
+                    score += 10
+                elif momentum < -20:
+                    signals.append(f"Declining interest in {keyword}")
+                    score -= 8
+                
+                if velocity > 20:
+                    signals.append(f"Accelerating interest in {keyword}")
+                    score += 5
             
-            # Contrarian indicators (extreme sentiment warning)
-            if avg_momentum > 300:  # Extreme spike
-                score -= 15  # Potential top
-                signals.append("⚠️ Extreme hype detected - contrarian signal")
-            
-            direction = 'UP' if score > 55 else 'DOWN' if score < 45 else 'NEUTRAL'
+            if keyword_count > 0:
+                avg_momentum = total_momentum / keyword_count
+                avg_velocity = total_velocity / keyword_count
+                
+                # Apply sentiment scoring
+                if avg_momentum > 100:
+                    signals.append("Extreme hype detected")
+                    score -= 15  # Contrarian signal
+                elif avg_momentum > 25:
+                    score += 15
+                elif avg_momentum < -25:
+                    score -= 10
+                
+                direction = 'UP' if score > 55 else 'DOWN' if score < 45 else 'NEUTRAL'
+            else:
+                avg_momentum = 0
+                avg_velocity = 0
+                direction = 'NEUTRAL'
             
             return {
                 'score': max(0, min(100, score)),
                 'momentum': avg_momentum,
                 'velocity': avg_velocity,
-                'acceleration': avg_acceleration,
                 'signals': signals,
                 'direction': direction,
                 'keywords_analyzed': keyword_count
@@ -303,157 +209,154 @@ class SentimentAnalyzer:
             'score': 50,
             'momentum': 0,
             'velocity': 0,
-            'acceleration': 0,
-            'signals': [],
+            'signals': ['No sentiment data available'],
             'direction': 'NEUTRAL',
             'keywords_analyzed': 0
         }
 
-# ========================================
-# FAKE-OUT DETECTOR
-# ========================================
-
-class FakeOutDetector:
-    """Detects manipulation and fake signals"""
+class RiskAnalyzer:
+    """Risk and fake-out detection"""
     
-    def detect_fake_patterns(self, technical_data: Dict, sentiment_data: Dict, market_data: Dict) -> Dict[str, Any]:
-        """Detect potential fake-out patterns"""
+    def analyze_risk(self, technical_data: Dict, sentiment_data: Dict, quote_data: Dict) -> Dict[str, Any]:
+        """Analyze risk factors"""
         warnings = []
-        suspicion_score = 0
         confidence_penalty = 0
         
         try:
-            # Check volume divergence
-            volume_ratio = technical_data.get('volume_ratio', 1)
-            if volume_ratio < config.FAKE_OUT_FILTERS['volume_threshold']:
-                warnings.append("Low volume breakout - potential fake-out")
-                suspicion_score += 25
+            # Volume analysis
+            volume = quote_data.get('volume', 0) if quote_data else 0
+            if volume < 1000000:
+                warnings.append("Low volume - potential fake breakout")
                 confidence_penalty += 0.15
             
-            # Check extreme sentiment
-            sentiment_momentum = sentiment_data.get('momentum', 0)
-            if abs(sentiment_momentum) > 400:  # Extreme spike
-                warnings.append("Extreme sentiment spike - manipulation risk")
-                suspicion_score += 30
+            # Extreme price movements
+            change_percent = abs(float(quote_data.get('change_percent', 0))) if quote_data else 0
+            if change_percent > 5:
+                warnings.append("Extreme price movement - high risk")
                 confidence_penalty += 0.20
             
-            # Check technical divergences
-            rsi = technical_data.get('rsi', 50)
-            bb_position = technical_data.get('bb_position', 'middle')
+            # Sentiment extremes
+            sentiment_momentum = abs(sentiment_data.get('momentum', 0))
+            if sentiment_momentum > 200:
+                warnings.append("Extreme sentiment - contrarian risk")
+                confidence_penalty += 0.25
             
-            if rsi > 85 and bb_position == 'above':
-                warnings.append("Extreme overbought conditions")
-                suspicion_score += 20
-                confidence_penalty += 0.10
-            elif rsi < 15 and bb_position == 'below':
-                warnings.append("Extreme oversold conditions")
-                suspicion_score += 20
-                confidence_penalty += 0.10
-            
-            # Check sentiment vs price divergence
+            # Technical divergence
             tech_direction = technical_data.get('direction', 'NEUTRAL')
             sentiment_direction = sentiment_data.get('direction', 'NEUTRAL')
             
-            if tech_direction != sentiment_direction and tech_direction != 'NEUTRAL' and sentiment_direction != 'NEUTRAL':
+            if (tech_direction != sentiment_direction and 
+                tech_direction != 'NEUTRAL' and 
+                sentiment_direction != 'NEUTRAL'):
                 warnings.append("Technical vs sentiment divergence")
-                suspicion_score += 15
                 confidence_penalty += 0.10
             
             return {
-                'suspicion_score': suspicion_score,
-                'confidence_penalty': confidence_penalty,
                 'warnings': warnings,
-                'is_suspicious': suspicion_score > 50
+                'confidence_penalty': confidence_penalty,
+                'risk_score': min(100, confidence_penalty * 100)
             }
             
         except Exception as e:
-            logger.error(f"Fake-out detection error: {e}")
+            logger.error(f"Risk analysis error: {e}")
             return {
-                'suspicion_score': 0,
-                'confidence_penalty': 0,
-                'warnings': [],
-                'is_suspicious': False
+                'warnings': ['Risk analysis failed'],
+                'confidence_penalty': 0.1,
+                'risk_score': 10
             }
-
-# ========================================
-# MAIN SIGNAL ENGINE
-# ========================================
 
 class HYPERSignalEngine:
     """Main signal generation engine"""
     
-    def __init__(self):
-        self.data_aggregator = HYPERDataAggregator()
+    def __init__(self, data_aggregator):
+        self.data_aggregator = data_aggregator
         self.technical_analyzer = TechnicalAnalyzer()
         self.sentiment_analyzer = SentimentAnalyzer()
-        self.fake_out_detector = FakeOutDetector()
+        self.risk_analyzer = RiskAnalyzer()
         
+        # Signal weights
+        self.weights = {
+            'technical': 0.35,
+            'momentum': 0.25,
+            'trends': 0.15,
+            'volume': 0.15,
+            'ml': 0.10
+        }
+        
+        # Confidence thresholds
+        self.thresholds = {
+            'HYPER_BUY': 85,
+            'SOFT_BUY': 65,
+            'HOLD': 35,
+            'SOFT_SELL': 65,
+            'HYPER_SELL': 85
+        }
+        
+        logger.info("🧠 HYPER Signal Engine initialized")
+    
     async def generate_signal(self, symbol: str) -> HYPERSignal:
-        """Generate comprehensive HYPER signal"""
+        """Generate a comprehensive trading signal"""
+        logger.info(f"🎯 Generating signal for {symbol}")
+        
         try:
-            # Get all data for symbol
-            comprehensive_data = await self.data_aggregator.get_comprehensive_data(symbol)
+            # Get comprehensive data
+            data = await self.data_aggregator.get_comprehensive_data(symbol)
             
-            if not comprehensive_data or comprehensive_data.get('data_quality') == 'poor':
-                return self._create_no_signal(symbol, "Insufficient data")
+            if not data or data.get('data_quality') == 'error':
+                return self._create_error_signal(symbol, "Data retrieval failed")
             
-            # Extract components
-            quote = comprehensive_data.get('quote')
-            intraday = comprehensive_data.get('intraday')
-            trends = comprehensive_data
+            quote_data = data.get('quote')
+            trends_data = data.get('trends')
             
-            if not quote:
-                return self._create_no_signal(symbol, "No quote data")
+            if not quote_data:
+                return self._create_error_signal(symbol, "No quote data available")
             
-            # Run analysis components
-            technical_analysis = self.technical_analyzer.analyze_technicals(intraday)
-            sentiment_analysis = self.sentiment_analyzer.analyze_trends_sentiment(trends, symbol)
-            fake_out_analysis = self.fake_out_detector.detect_fake_patterns(
-                technical_analysis, sentiment_analysis, quote
-            )
+            # Run all analyses
+            technical_analysis = self.technical_analyzer.analyze_price_action(quote_data)
+            sentiment_analysis = self.sentiment_analyzer.analyze_trends_sentiment(trends_data, symbol)
+            risk_analysis = self.risk_analyzer.analyze_risk(technical_analysis, sentiment_analysis, quote_data)
             
-            # Calculate weighted scores
+            # Calculate component scores
             technical_score = technical_analysis['score']
-            momentum_score = self._calculate_momentum_score(quote, intraday)
+            momentum_score = self._calculate_momentum_score(quote_data)
             trends_score = sentiment_analysis['score']
-            volume_score = self._calculate_volume_score(technical_analysis)
-            ml_score = 50  # TODO: Implement ML predictions
+            volume_score = self._calculate_volume_score(quote_data)
+            ml_score = 50 + random.uniform(-10, 10)  # Mock ML score
             
-            # Apply signal weights
-            weighted_score = (
-                technical_score * config.SIGNAL_WEIGHTS['technical_analysis'] +
-                momentum_score * config.SIGNAL_WEIGHTS['alpha_vantage_momentum'] +
-                trends_score * config.SIGNAL_WEIGHTS['google_trends'] +
-                volume_score * config.SIGNAL_WEIGHTS['volume_analysis'] +
-                ml_score * config.SIGNAL_WEIGHTS['ml_ensemble']
+            # Calculate weighted confidence
+            weighted_confidence = (
+                technical_score * self.weights['technical'] +
+                momentum_score * self.weights['momentum'] +
+                trends_score * self.weights['trends'] +
+                volume_score * self.weights['volume'] +
+                ml_score * self.weights['ml']
             )
             
-            # Apply fake-out penalty
-            confidence_penalty = fake_out_analysis['confidence_penalty']
-            final_confidence = max(0, weighted_score * (1 - confidence_penalty))
+            # Apply risk penalty
+            confidence_penalty = risk_analysis['confidence_penalty']
+            final_confidence = max(0, weighted_confidence * (1 - confidence_penalty))
             
-            # Determine direction
+            # Determine direction and signal type
             direction = self._determine_direction(technical_analysis, sentiment_analysis, momentum_score)
-            
-            # Classify signal
-            signal_type = config.is_high_confidence_signal(final_confidence, direction)
+            signal_type = self._classify_signal(final_confidence, direction)
             
             # Compile reasons
             reasons = []
             reasons.extend(technical_analysis.get('signals', []))
             reasons.extend(sentiment_analysis.get('signals', []))
-            if momentum_score > 60:
-                reasons.append("Strong price momentum")
-            elif momentum_score < 40:
+            
+            if momentum_score > 70:
+                reasons.append("Strong price momentum detected")
+            elif momentum_score < 30:
                 reasons.append("Weak price momentum")
             
-            # Create signal
-            return HYPERSignal(
+            # Create the signal
+            signal = HYPERSignal(
                 symbol=symbol,
                 signal_type=signal_type,
                 confidence=round(final_confidence, 1),
                 direction=direction,
-                price=quote['price'],
+                price=quote_data['price'],
                 timestamp=datetime.now().isoformat(),
                 technical_score=technical_score,
                 momentum_score=momentum_score,
@@ -462,109 +365,19 @@ class HYPERSignalEngine:
                 ml_score=ml_score,
                 indicators={
                     'rsi': technical_analysis.get('rsi', 50),
-                    'macd': technical_analysis.get('macd_histogram', 0),
-                    'bb_position': technical_analysis.get('bb_position', 'middle'),
                     'volume_ratio': technical_analysis.get('volume_ratio', 1),
+                    'change_percent': technical_analysis.get('change_percent', 0),
                     'trend_momentum': sentiment_analysis.get('momentum', 0)
                 },
-                reasons=reasons,
-                warnings=fake_out_analysis['warnings'],
-                data_quality=comprehensive_data.get('data_quality', 'unknown')
+                reasons=reasons[:3],  # Limit to top 3 reasons
+                warnings=risk_analysis['warnings'],
+                data_quality=data.get('data_quality', 'unknown')
             )
             
+            logger.info(f"✅ Generated {signal.signal_type} signal for {symbol} with {signal.confidence}% confidence")
+            return signal
+            
         except Exception as e:
-            logger.error(f"Signal generation error for {symbol}: {e}")
-            return self._create_no_signal(symbol, f"Error: {str(e)}")
-    
-    def _calculate_momentum_score(self, quote: Dict, intraday: pd.DataFrame) -> float:
-        """Calculate momentum score from price action"""
-        try:
-            if not quote:
-                return 50
-            
-            change_percent = quote.get('change_percent', 0)
-            
-            # Base score from daily change
-            score = 50 + (change_percent * 5)  # Each 1% = 5 points
-            
-            # Intraday momentum
-            if intraday is not None and len(intraday) > 5:
-                recent_change = ((intraday['close'].iloc[-1] / intraday['close'].iloc[-5]) - 1) * 100
-                score += recent_change * 3
-            
-            return max(0, min(100, score))
-            
-        except Exception:
-            return 50
-    
-    def _calculate_volume_score(self, technical_analysis: Dict) -> float:
-        """Calculate volume-based score"""
-        volume_ratio = technical_analysis.get('volume_ratio', 1)
-        
-        if volume_ratio > 2:
-            return 80  # High volume
-        elif volume_ratio > 1.5:
-            return 70
-        elif volume_ratio > 1.2:
-            return 60
-        elif volume_ratio < 0.7:
-            return 30  # Low volume
-        else:
-            return 50  # Normal volume
-    
-    def _determine_direction(self, technical: Dict, sentiment: Dict, momentum: float) -> str:
-        """Determine overall signal direction"""
-        directions = [
-            technical.get('direction', 'NEUTRAL'),
-            sentiment.get('direction', 'NEUTRAL')
-        ]
-        
-        if momentum > 60:
-            directions.append('UP')
-        elif momentum < 40:
-            directions.append('DOWN')
-        
-        up_count = directions.count('UP')
-        down_count = directions.count('DOWN')
-        
-        if up_count > down_count:
-            return 'UP'
-        elif down_count > up_count:
-            return 'DOWN'
-        else:
-            return 'NEUTRAL'
-    
-    def _create_no_signal(self, symbol: str, reason: str) -> HYPERSignal:
-        """Create a HOLD signal when no data available"""
-        return HYPERSignal(
-            symbol=symbol,
-            signal_type='HOLD',
-            confidence=0.0,
-            direction='NEUTRAL',
-            price=0.0,
-            timestamp=datetime.now().isoformat(),
-            technical_score=50,
-            momentum_score=50,
-            trends_score=50,
-            volume_score=50,
-            ml_score=50,
-            indicators={},
-            reasons=[reason],
-            warnings=[],
-            data_quality='poor'
-        )
-    
-    async def generate_all_signals(self) -> Dict[str, HYPERSignal]:
-        """Generate signals for all configured tickers"""
-        tasks = [self.generate_signal(ticker) for ticker in config.TICKERS]
-        signals = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        result = {}
-        for i, ticker in enumerate(config.TICKERS):
-            if not isinstance(signals[i], Exception):
-                result[ticker] = signals[i]
-            else:
-                logger.error(f"Error generating signal for {ticker}: {signals[i]}")
-                result[ticker] = self._create_no_signal(ticker, "Generation failed")
-        
-        return result
+            logger.error(f"💥 Signal generation error for {symbol}: {e}")
+            import traceback
+            logger.error(f"📋 Traceback:
