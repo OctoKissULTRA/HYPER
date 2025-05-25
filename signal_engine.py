@@ -782,4 +782,576 @@ class MLPredictor:
         anomalies = []
         
         # Price anomaly
-        change_percent = abs(float(price_data.get
+        change_percent = abs(float(price_data.get('change_percent', 0)))
+        if change_percent > 5:
+            anomaly_score += 30
+            anomalies.append('Extreme price movement')
+        
+        # Volume anomaly
+        volume = price_data.get('volume', 0)
+        avg_volume = volume * random.uniform(0.8, 1.2)
+        if volume > avg_volume * 2:
+            anomaly_score += 20
+            anomalies.append('Volume spike detected')
+        
+        return {
+            'anomaly_score': round(anomaly_score, 1),
+            'anomaly_level': 'HIGH' if anomaly_score > 40 else 'MEDIUM' if anomaly_score > 20 else 'LOW',
+            'anomalies_detected': anomalies
+        }
+    
+    def _calculate_ml_confidence(self, lstm_data: Dict, ensemble_data: Dict) -> float:
+        """Calculate overall ML confidence"""
+        lstm_conf = lstm_data.get('model_confidence', 0.5)
+        ensemble_conf = ensemble_data.get('ensemble_confidence', 0.5)
+        return round((lstm_conf + ensemble_conf) / 2 * 100, 1)
+    
+    def _empty_ml_predictions(self) -> Dict[str, Any]:
+        """Return empty ML predictions"""
+        return {
+            'lstm_predictions': {},
+            'ensemble_prediction': {'ensemble_direction': 'NEUTRAL', 'ensemble_confidence': 0.5},
+            'pattern_analysis': {'detected_pattern': 'no_pattern', 'pattern_confidence': 0.0},
+            'anomaly_data': {'anomaly_score': 0.0, 'anomaly_level': 'LOW'},
+            'ml_confidence': 50.0
+        }
+
+class EconomicAnalyzer:
+    """Economic indicators and market fundamentals"""
+    
+    def __init__(self):
+        logger.info("💼 Economic Analyzer initialized")
+    
+    def analyze_economic_indicators(self) -> Dict[str, Any]:
+        """Analyze economic indicators"""
+        try:
+            # Simulate economic data
+            indicators = {
+                'gdp_growth': random.uniform(1.5, 4.0),
+                'unemployment': random.uniform(3.5, 6.0),
+                'inflation': random.uniform(1.0, 5.0),
+                'interest_rate': random.uniform(0.25, 5.0)
+            }
+            
+            # Calculate economic sentiment
+            score = 50
+            if indicators['gdp_growth'] > 3.0:
+                score += 15
+            if indicators['unemployment'] < 4.0:
+                score += 10
+            if 2.0 <= indicators['inflation'] <= 3.0:
+                score += 10
+            else:
+                score -= 5
+            
+            return {
+                'score': max(0, min(100, score)),
+                'indicators': indicators,
+                'economic_outlook': 'POSITIVE' if score > 60 else 'NEGATIVE' if score < 40 else 'NEUTRAL'
+            }
+            
+        except Exception as e:
+            logger.error(f"Economic analysis error: {e}")
+            return {'score': 50, 'indicators': {}, 'economic_outlook': 'NEUTRAL'}
+
+class RiskAnalyzer:
+    """Enhanced risk analysis and fake-out detection"""
+    
+    def __init__(self):
+        logger.info("🛡️ Risk Analyzer initialized")
+    
+    def analyze_risk(self, technical_data: Dict, sentiment_data: Dict, quote_data: Dict, 
+                    vix_data: Dict = None, ml_data: Dict = None) -> Dict[str, Any]:
+        """Enhanced risk analysis with new factors"""
+        warnings = []
+        confidence_penalty = 0
+        
+        try:
+            # Original risk factors
+            volume = quote_data.get('volume', 0) if quote_data else 0
+            if volume < 1000000:
+                warnings.append("Low volume - potential fake breakout")
+                confidence_penalty += 0.15
+            
+            change_percent = abs(float(quote_data.get('change_percent', 0))) if quote_data else 0
+            if change_percent > 5:
+                warnings.append("Extreme price movement - high risk")
+                confidence_penalty += 0.20
+            
+            # NEW: VIX risk factors
+            if vix_data:
+                if vix_data.get('sentiment') == 'EXTREME_FEAR':
+                    warnings.append("Extreme market fear - high volatility")
+                    confidence_penalty += 0.10
+                elif vix_data.get('sentiment') == 'COMPLACENCY':
+                    warnings.append("Market complacency - potential reversal risk")
+                    confidence_penalty += 0.15
+            
+            # NEW: ML anomaly risks
+            if ml_data and ml_data.get('anomaly_data'):
+                anomaly_level = ml_data['anomaly_data'].get('anomaly_level', 'LOW')
+                if anomaly_level == 'HIGH':
+                    warnings.append("High anomaly detected - unusual market behavior")
+                    confidence_penalty += 0.25
+                elif anomaly_level == 'MEDIUM':
+                    warnings.append("Market anomaly detected - proceed with caution")
+                    confidence_penalty += 0.10
+            
+            # NEW: Technical divergence
+            tech_direction = technical_data.get('direction', 'NEUTRAL')
+            sentiment_direction = sentiment_data.get('direction', 'NEUTRAL')
+            
+            if (tech_direction != sentiment_direction and 
+                tech_direction != 'NEUTRAL' and 
+                sentiment_direction != 'NEUTRAL'):
+                warnings.append("Technical vs sentiment divergence")
+                confidence_penalty += 0.10
+            
+            # NEW: Risk metrics
+            var_95 = self._calculate_var_95(quote_data)
+            max_drawdown = self._calculate_max_drawdown_risk()
+            correlation_spy = self._calculate_spy_correlation(quote_data.get('symbol', '') if quote_data else '')
+            
+            return {
+                'warnings': warnings,
+                'confidence_penalty': confidence_penalty,
+                'risk_score': min(100, confidence_penalty * 100),
+                'var_95': var_95,
+                'max_drawdown_risk': max_drawdown,
+                'correlation_spy': correlation_spy
+            }
+            
+        except Exception as e:
+            logger.error(f"Risk analysis error: {e}")
+            return {
+                'warnings': ['Risk analysis failed'],
+                'confidence_penalty': 0.1,
+                'risk_score': 10,
+                'var_95': 5.0,
+                'max_drawdown_risk': 10.0,
+                'correlation_spy': 0.7
+            }
+    
+    def _calculate_var_95(self, quote_data: Dict) -> float:
+        """Calculate 95% Value at Risk"""
+        try:
+            change_percent = float(quote_data.get('change_percent', 0)) if quote_data else 0
+            # Simplified VaR based on recent volatility
+            volatility = abs(change_percent) * 2  # Rough estimate
+            return max(1.0, min(20.0, volatility))
+        except:
+            return 5.0
+    
+    def _calculate_max_drawdown_risk(self) -> float:
+        """Calculate maximum drawdown risk"""
+        # Simulate based on market conditions
+        return round(random.uniform(5.0, 15.0), 1)
+    
+    def _calculate_spy_correlation(self, symbol: str) -> float:
+        """Calculate correlation with SPY"""
+        correlation_map = {
+            'SPY': 1.0,
+            'QQQ': 0.85,
+            'NVDA': 0.75,
+            'AAPL': 0.80,
+            'MSFT': 0.82
+        }
+        return correlation_map.get(symbol, 0.70)
+
+class HYPERSignalEngine:
+    """Combined HYPER signal generation engine with all features"""
+    
+    def __init__(self):
+        # Import here to avoid circular imports
+        import config
+        from data_sources import HYPERDataAggregator
+        self.data_aggregator = HYPERDataAggregator(config.ALPHA_VANTAGE_API_KEY)
+        
+        # Initialize all analyzers
+        self.technical_analyzer = TechnicalAnalyzer()
+        self.sentiment_analyzer = SentimentAnalyzer()
+        self.vix_analyzer = VIXAnalyzer()
+        self.market_structure_analyzer = MarketStructureAnalyzer()
+        self.ml_predictor = MLPredictor()
+        self.economic_analyzer = EconomicAnalyzer()
+        self.risk_analyzer = RiskAnalyzer()
+        
+        # Enhanced signal weights
+        self.weights = {
+            'technical': 0.25,          # Technical analysis + advanced indicators
+            'sentiment': 0.20,          # Multi-source sentiment
+            'momentum': 0.15,           # Price momentum
+            'ml_prediction': 0.15,      # ML predictions + patterns
+            'market_structure': 0.10,   # Market breadth + sector rotation
+            'vix_sentiment': 0.08,      # VIX fear/greed
+            'economic': 0.05,           # Economic indicators
+            'risk_adjusted': 0.02       # Risk penalty
+        }
+        
+        # Confidence thresholds
+        self.thresholds = {
+            'HYPER_BUY': 85,
+            'SOFT_BUY': 65,
+            'HOLD': 35,
+            'SOFT_SELL': 65,
+            'HYPER_SELL': 85
+        }
+        
+        logger.info("🚀 Combined HYPER Signal Engine initialized with ALL features")
+    
+    async def generate_signal(self, symbol: str) -> HYPERSignal:
+        """Generate comprehensive trading signal with all enhanced features"""
+        logger.info(f"🎯 Generating combined enhanced signal for {symbol}")
+        
+        try:
+            # 1. Get comprehensive market data
+            data = await self.data_aggregator.get_comprehensive_data(symbol)
+            
+            if not data or data.get('data_quality') == 'error':
+                return self._create_error_signal(symbol, "Data retrieval failed")
+            
+            quote_data = data.get('quote')
+            trends_data = data.get('trends')
+            
+            if not quote_data:
+                return self._create_error_signal(symbol, "No quote data available")
+            
+            # 2. Run all analyses
+            technical_analysis = self.technical_analyzer.analyze_price_action(quote_data)
+            sentiment_analysis = self.sentiment_analyzer.analyze_trends_sentiment(trends_data, symbol)
+            vix_analysis = await self.vix_analyzer.get_vix_sentiment()
+            market_structure = self.market_structure_analyzer.analyze_market_breadth()
+            sector_rotation = self.market_structure_analyzer.analyze_sector_rotation()
+            ml_predictions = self.ml_predictor.generate_ml_predictions(symbol, quote_data)
+            economic_data = self.economic_analyzer.analyze_economic_indicators()
+            
+            # 3. Enhanced risk analysis
+            risk_analysis = self.risk_analyzer.analyze_risk(
+                technical_analysis, sentiment_analysis, quote_data, vix_analysis, ml_predictions
+            )
+            
+            # 4. Calculate all component scores
+            scores = self._calculate_all_scores(
+                technical_analysis, sentiment_analysis, vix_analysis, market_structure,
+                sector_rotation, ml_predictions, economic_data, quote_data
+            )
+            
+            # 5. Calculate weighted confidence with risk adjustment
+            weighted_confidence = sum(
+                scores[key] * self.weights.get(key, 0) for key in scores
+            )
+            
+            # Apply risk penalty
+            final_confidence = max(0, weighted_confidence * (1 - risk_analysis['confidence_penalty']))
+            
+            # 6. Determine direction and signal type
+            direction = self._determine_enhanced_direction(
+                technical_analysis, sentiment_analysis, ml_predictions, vix_analysis
+            )
+            signal_type = self._classify_signal(final_confidence, direction)
+            
+            # 7. Compile comprehensive reasons
+            reasons = self._generate_enhanced_reasons(
+                technical_analysis, sentiment_analysis, vix_analysis, ml_predictions,
+                market_structure, sector_rotation, economic_data
+            )
+            
+            # 8. Create enhanced signal
+            signal = HYPERSignal(
+                symbol=symbol,
+                signal_type=signal_type,
+                confidence=round(final_confidence, 1),
+                direction=direction,
+                price=quote_data['price'],
+                timestamp=datetime.now().isoformat(),
+                
+                # Core scores
+                technical_score=scores['technical'],
+                momentum_score=scores['momentum'],
+                trends_score=sentiment_analysis.get('score', 50),
+                volume_score=self._calculate_volume_score(quote_data),
+                ml_score=scores['ml_prediction'],
+                
+                # Enhanced scores
+                sentiment_score=scores['sentiment'],
+                pattern_score=ml_predictions.get('pattern_analysis', {}).get('pattern_confidence', 0) * 100,
+                market_structure_score=scores['market_structure'],
+                economic_score=scores['economic'],
+                risk_score=100 - risk_analysis['risk_score'],
+                
+                # Advanced indicators
+                williams_r=technical_analysis.get('williams_r', -50.0),
+                stochastic_k=technical_analysis.get('stochastic_k', 50.0),
+                stochastic_d=technical_analysis.get('stochastic_d', 50.0),
+                vix_sentiment=vix_analysis.get('sentiment', 'NEUTRAL'),
+                put_call_ratio=random.uniform(0.8, 1.2),  # Simulated
+                
+                # Levels and structure
+                fibonacci_levels=technical_analysis.get('fibonacci_levels', {}),
+                market_breadth=market_structure.get('breadth_thrust', 50),
+                sector_rotation=sector_rotation.get('rotation_theme', 'NEUTRAL'),
+                volume_profile=technical_analysis.get('volume_profile', {}),
+                
+                # ML predictions
+                lstm_predictions=ml_predictions.get('lstm_predictions', {}),
+                ensemble_prediction=ml_predictions.get('ensemble_prediction', {}),
+                anomaly_score=ml_predictions.get('anomaly_data', {}).get('anomaly_score', 0),
+                
+                # Economic and alternative data
+                economic_sentiment=economic_data,
+                earnings_proximity=random.randint(10, 90),  # Simulated
+                
+                # Risk metrics
+                var_95=risk_analysis.get('var_95', 5.0),
+                max_drawdown_risk=risk_analysis.get('max_drawdown_risk', 10.0),
+                correlation_spy=risk_analysis.get('correlation_spy', 0.7),
+                
+                # Supporting data
+                indicators={
+                    'rsi': technical_analysis.get('rsi', 50),
+                    'volume_ratio': technical_analysis.get('volume_ratio', 1),
+                    'change_percent': technical_analysis.get('change_percent', 0),
+                    'trend_momentum': sentiment_analysis.get('momentum', 0),
+                    'vix_value': vix_analysis.get('vix_value', 20)
+                },
+                reasons=reasons[:5],  # Top 5 reasons
+                warnings=risk_analysis['warnings'],
+                data_quality=data.get('data_quality', 'unknown')
+            )
+            
+            logger.info(f"✅ Generated {signal.signal_type} combined signal for {symbol} with {signal.confidence}% confidence")
+            logger.info(f"🎯 Enhanced features: VIX={vix_analysis.get('sentiment')}, ML={ml_predictions.get('ml_confidence')}%, Anomaly={signal.anomaly_score}")
+            
+            return signal
+            
+        except Exception as e:
+            logger.error(f"💥 Combined signal generation error for {symbol}: {e}")
+            import traceback
+            logger.error(f"📋 Traceback: {traceback.format_exc()}")
+            return self._create_error_signal(symbol, f"Generation error: {str(e)}")
+    
+    def _calculate_all_scores(self, technical_analysis: Dict, sentiment_analysis: Dict,
+                             vix_analysis: Dict, market_structure: Dict, sector_rotation: Dict,
+                             ml_predictions: Dict, economic_data: Dict, quote_data: Dict) -> Dict[str, float]:
+        """Calculate all component scores"""
+        
+        scores = {}
+        
+        # Technical score (enhanced with new indicators)
+        base_technical = technical_analysis['score']
+        williams_r = technical_analysis.get('williams_r', -50)
+        stochastic_k = technical_analysis.get('stochastic_k', 50)
+        
+        # Adjust technical score with new indicators
+        if williams_r < -80:  # Oversold
+            base_technical += 10
+        elif williams_r > -20:  # Overbought
+            base_technical -= 10
+        
+        if stochastic_k < 20:  # Oversold
+            base_technical += 8
+        elif stochastic_k > 80:  # Overbought
+            base_technical -= 8
+        
+        scores['technical'] = max(0, min(100, base_technical))
+        
+        # Enhanced sentiment score
+        base_sentiment = sentiment_analysis.get('score', 50)
+        news_sentiment = sentiment_analysis.get('news_sentiment', 50)
+        social_sentiment = sentiment_analysis.get('social_sentiment', 50)
+        
+        # Weight different sentiment sources
+        enhanced_sentiment = (base_sentiment * 0.4 + news_sentiment * 0.3 + social_sentiment * 0.3)
+        scores['sentiment'] = max(0, min(100, enhanced_sentiment))
+        
+        # Momentum score
+        change_percent = float(quote_data.get('change_percent', 0))
+        scores['momentum'] = max(0, min(100, 50 + (change_percent * 10)))
+        
+        # ML prediction score
+        ml_confidence = ml_predictions.get('ml_confidence', 50)
+        ensemble_conf = ml_predictions.get('ensemble_prediction', {}).get('ensemble_confidence', 0.5) * 100
+        scores['ml_prediction'] = (ml_confidence + ensemble_conf) / 2
+        
+        # Market structure score
+        breadth_score = market_structure.get('score', 50)
+        sector_score = sector_rotation.get('score', 50)
+        scores['market_structure'] = (breadth_score + sector_score) / 2
+        
+        # VIX sentiment score
+        scores['vix_sentiment'] = vix_analysis.get('fear_greed_score', 50)
+        
+        # Economic score
+        scores['economic'] = economic_data.get('score', 50)
+        
+        return scores
+    
+    def _determine_enhanced_direction(self, technical: Dict, sentiment: Dict, 
+                                    ml_predictions: Dict, vix: Dict) -> str:
+        """Determine direction using enhanced factors"""
+        direction_score = 0
+        
+        # Technical direction
+        if technical.get('direction') == 'UP':
+            direction_score += 2
+        elif technical.get('direction') == 'DOWN':
+            direction_score -= 2
+        
+        # Sentiment direction
+        if sentiment.get('direction') == 'UP':
+            direction_score += 2
+        elif sentiment.get('direction') == 'DOWN':
+            direction_score -= 2
+        
+        # ML ensemble direction
+        ensemble_dir = ml_predictions.get('ensemble_prediction', {}).get('ensemble_direction', 'NEUTRAL')
+        if ensemble_dir == 'UP':
+            direction_score += 3  # Higher weight for ML
+        elif ensemble_dir == 'DOWN':
+            direction_score -= 3
+        
+        # VIX contrarian signal
+        if vix.get('contrarian_bullish', False):
+            direction_score += 1
+        elif vix.get('sentiment') == 'COMPLACENCY':
+            direction_score -= 1
+        
+        if direction_score > 2:
+            return 'UP'
+        elif direction_score < -2:
+            return 'DOWN'
+        else:
+            return 'NEUTRAL'
+    
+    def _generate_enhanced_reasons(self, technical: Dict, sentiment: Dict, vix: Dict,
+                                 ml_predictions: Dict, market_structure: Dict,
+                                 sector_rotation: Dict, economic_data: Dict) -> List[str]:
+        """Generate comprehensive reasons"""
+        reasons = []
+        
+        # Technical reasons (original + enhanced)
+        reasons.extend(technical.get('signals', [])[:2])
+        
+        # Enhanced indicator reasons
+        williams_r = technical.get('williams_r', -50)
+        if williams_r < -80:
+            reasons.append(f"Williams %R oversold at {williams_r:.1f}")
+        elif williams_r > -20:
+            reasons.append(f"Williams %R overbought at {williams_r:.1f}")
+        
+        # VIX reasons
+        vix_sentiment = vix.get('sentiment', 'NEUTRAL')
+        if vix_sentiment == 'EXTREME_FEAR':
+            reasons.append("Extreme market fear - contrarian opportunity")
+        elif vix_sentiment == 'COMPLACENCY':
+            reasons.append("Market complacency - reversal risk")
+        
+        # ML reasons
+        ensemble_dir = ml_predictions.get('ensemble_prediction', {}).get('ensemble_direction', 'NEUTRAL')
+        ensemble_conf = ml_predictions.get('ensemble_prediction', {}).get('ensemble_confidence', 0)
+        if ensemble_conf > 0.7:
+            reasons.append(f"ML ensemble predicts {ensemble_dir} with {ensemble_conf:.0%} confidence")
+        
+        # Pattern reasons
+        pattern = ml_predictions.get('pattern_analysis', {}).get('detected_pattern', 'no_pattern')
+        if pattern != 'no_pattern':
+            reasons.append(f"Chart pattern: {pattern.replace('_', ' ').title()}")
+        
+        # Market structure reasons
+        breadth_signal = market_structure.get('breadth_signal', 'NEUTRAL')
+        if breadth_signal in ['VERY_BULLISH', 'BULLISH']:
+            reasons.append(f"Strong market breadth ({breadth_signal.lower()})")
+        elif breadth_signal in ['VERY_BEARISH', 'BEARISH']:
+            reasons.append(f"Weak market breadth ({breadth_signal.lower()})")
+        
+        # Sector rotation reasons
+        rotation_theme = sector_rotation.get('rotation_theme', 'NEUTRAL')
+        if rotation_theme != 'NEUTRAL_ROTATION':
+            reasons.append(f"Sector rotation: {rotation_theme.lower().replace('_', ' ')}")
+        
+        # Economic reasons
+        economic_outlook = economic_data.get('economic_outlook', 'NEUTRAL')
+        if economic_outlook != 'NEUTRAL':
+            reasons.append(f"Economic outlook: {economic_outlook.lower()}")
+        
+        return reasons
+    
+    def _calculate_volume_score(self, quote_data: Dict) -> float:
+        """Calculate volume score"""
+        try:
+            volume = quote_data.get('volume', 0)
+            if volume > 20000000:
+                return 90
+            elif volume > 10000000:
+                return 75
+            elif volume > 5000000:
+                return 60
+            elif volume > 1000000:
+                return 45
+            else:
+                return 25
+        except:
+            return 50
+    
+    def _classify_signal(self, confidence: float, direction: str) -> str:
+        """Classify signal based on confidence and direction"""
+        if direction == 'UP':
+            if confidence >= self.thresholds['HYPER_BUY']:
+                return 'HYPER_BUY'
+            elif confidence >= self.thresholds['SOFT_BUY']:
+                return 'SOFT_BUY'
+        elif direction == 'DOWN':
+            if confidence >= self.thresholds['HYPER_SELL']:
+                return 'HYPER_SELL'
+            elif confidence >= self.thresholds['SOFT_SELL']:
+                return 'SOFT_SELL'
+        
+        return 'HOLD'
+    
+    def _create_error_signal(self, symbol: str, error_reason: str) -> HYPERSignal:
+        """Create an error/fallback signal"""
+        return HYPERSignal(
+            symbol=symbol,
+            signal_type='HOLD',
+            confidence=0.0,
+            direction='NEUTRAL',
+            price=0.0,
+            timestamp=datetime.now().isoformat(),
+            technical_score=50,
+            momentum_score=50,
+            trends_score=50,
+            volume_score=50,
+            ml_score=50,
+            indicators={},
+            reasons=[error_reason],
+            warnings=['Data unavailable'],
+            data_quality='error'
+        )
+    
+    async def generate_all_signals(self) -> Dict[str, HYPERSignal]:
+        """Generate signals for all tickers"""
+        import config
+        tickers = config.TICKERS
+        logger.info(f"🎯 Generating combined enhanced signals for {len(tickers)} tickers: {tickers}")
+        
+        signals = {}
+        for ticker in tickers:
+            try:
+                signal = await self.generate_signal(ticker)
+                signals[ticker] = signal
+            except Exception as e:
+                logger.error(f"❌ Failed to generate signal for {ticker}: {e}")
+                signals[ticker] = self._create_error_signal(ticker, f"Generation failed: {str(e)}")
+        
+        logger.info(f"✅ Generated {len(signals)} combined enhanced signals")
+        return signals
+    
+    async def cleanup(self):
+        """Cleanup resources"""
+        try:
+            await self.data_aggregator.close()
+            await self.technical_analyzer.close_session()
+            await self.vix_analyzer.close_session()
+            logger.info("🧹 Combined signal engine cleaned up")
+        except Exception as e:
+            logger.error(f"Cleanup error: {e}")
