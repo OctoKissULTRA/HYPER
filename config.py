@@ -277,13 +277,6 @@ def get_enhanced_config() -> Dict:
         "performance_thresholds": PERFORMANCE_THRESHOLDS
     }
 
-def validate_config() -> bool:
-    """Validate enhanced configuration settings"""
-    try:
-        # Check API key exists
-        if not ALPHA_VANTAGE_API_KEY:
-            raise ValueError("Alpha Vantage API key not configured")
-        
         # Check tickers are defined
         if not TICKERS:
             raise ValueError("No tickers configured")
@@ -327,7 +320,7 @@ def validate_config() -> bool:
         return True
         
     except Exception as e:
-        print(f"❌ Enhanced configuration error: {e}")
+        print(f"â Enhanced configuration error: {e}")
         raise
 
 def get_enabled_features() -> List[str]:
@@ -392,11 +385,24 @@ def get_risk_management_params() -> Dict:
 try:
     validate_config()
     enabled_features = get_enabled_features()
-    print("✅ Combined Enhanced HYPER configuration validated successfully")
-    print(f"🔥 Enhanced features enabled: {len(enabled_features)}/{len(FEATURE_FLAGS)}")
-    print(f"📊 Signal components: {len(SIGNAL_WEIGHTS)} weighted factors")
-    print(f"🎯 Tracking: {', '.join(TICKERS)}")
-    print(f"⚡ Key features: Williams %R, VIX Analysis, ML Predictions, Fibonacci Levels")
+    print("â Combined Enhanced HYPER configuration validated successfully")
+    print(f"ð¥ Enhanced features enabled: {len(enabled_features)}/{len(FEATURE_FLAGS)}")
+    print(f"ð Signal components: {len(SIGNAL_WEIGHTS)} weighted factors")
+    print(f"ð¯ Tracking: {', '.join(TICKERS)}")
+    print(f"â¡ Key features: Williams %R, VIX Analysis, ML Predictions, Fibonacci Levels")
 except Exception as e:
-    print(f"❌ Configuration error: {e}")
+    print(f"â Configuration error: {e}")
     raise
+
+
+def validate_config():
+    for param, value in config_dict.items():
+        if param == "williams_r_period" and not (1 <= value <= 100):
+            raise ValueError(f"Williams %R period must be a positive integer (1â100): {value}")
+        if param == "rsi_period" and not (1 <= value <= 100):
+            raise ValueError(f"RSI period must be a positive integer (1â100): {value}")
+        if param in ["macd_fast", "macd_slow", "macd_signal"] and not (1 <= value <= 100):
+            raise ValueError(f"MACD parameter {param} must be a positive integer (1â100): {value}")
+
+
+validate_config()
