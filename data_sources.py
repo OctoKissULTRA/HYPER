@@ -4,13 +4,12 @@ import time
 import logging
 import random
 import aiohttp
-import asyncio
 import json
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
 import config
-from nltk.sentiment.vader import SentimentIntensityAnalyzer  # ensure nltk and vader_lexicon are installed
+from nltk.sentiment.vader import SentimentIntensityAnalyzer  # make sure nltk & vader_lexicon are installed
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ class AlphaVantageClient:
     async def _ensure_session(self):
         if not self.session or self.session.closed:
             self.session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=10),
+                timeout=aiohttp.ClientTimeout(total=config.PERFORMANCE_THRESHOLDS["api_response_max_time"]),
                 headers={"User-Agent": "HYPER-Trading-System/2.0"}
             )
 
@@ -70,9 +69,9 @@ class AlphaVantageClient:
                 "price": float(quote.get("05. price", 0.0)),
                 "change_percent": float(quote.get("10. change percent", "0%").strip("%")),
                 "volume": int(float(quote.get("06. volume", 0))),
-                "data_source": "alpha_vantage",
                 "high": float(quote.get("03. high", 0.0)),
                 "low": float(quote.get("04. low", 0.0)),
+                "data_source": "alpha_vantage",
                 "timestamp": datetime.now().isoformat()
             }
         except Exception:
@@ -88,9 +87,9 @@ class AlphaVantageClient:
             "price": price,
             "change_percent": round(pct*100, 2),
             "volume": random.randint(1_000_000, 50_000_000),
-            "data_source": "fallback",
             "high": price * (1 + random.uniform(0, 0.02)),
             "low": price * (1 - random.uniform(0, 0.02)),
+            "data_source": "fallback",
             "timestamp": datetime.now().isoformat()
         }
 
@@ -109,8 +108,8 @@ class GoogleTrendsClient:
         data = {}
         for kw in keywords:
             data[kw] = {
-                "momentum": random.uniform(-50,100),
-                "velocity": random.uniform(-30,30)
+                "momentum": random.uniform(-50, 100),
+                "velocity": random.uniform(-30, 30)
             }
         return {"keyword_data": data, "timestamp": now, "data_source": "mock_trends"}
 
@@ -136,9 +135,9 @@ class OptionsChainClient:
         try:
             async with self.session.get(url, params=params) as resp:
                 data = await resp.json()
-                calls = sum(o["open_interest"] for o in data.get("results", []) if o["type"]=="call")
-                puts  = sum(o["open_interest"] for o in data.get("results", []) if o["type"]=="put")
-                pcr   = puts / calls if calls>0 else None
+                calls = sum(o["open_interest"] for o in data.get("results", []) if o["type"] == "call")
+                puts  = sum(o["open_interest"] for o in data.get("results", []) if o["type"] == "put")
+                pcr   = puts / calls if calls > 0 else None
                 return {
                     "open_interest_calls": calls,
                     "open_interest_puts": puts,
@@ -188,9 +187,9 @@ class NewsApiClient:
         if not texts:
             return {"news_sentiment": 50.0}
         scores = [self.vader.polarity_scores(t)["compound"] for t in texts]
-        avg = sum(scores)/len(scores)
-        # map [-1,1] → [0,100]
-        return {"news_sentiment": round((avg+1)*50,1)}
+        avg = sum(scores) / len(scores)
+        # map [-1..1] → [0..100]
+        return {"news_sentiment": round((avg + 1) * 50, 1)}
 
     async def close(self):
         if self.session and not self.session.closed:
@@ -198,7 +197,7 @@ class NewsApiClient:
 
 
 class HYPERDataAggregator:
-    """Unified aggregator: quotes, trends, options, news"""
+    """Unified aggregator: quotes, trends, options, news & quality scoring."""
     def __init__(self, av_key: str):
         self.av      = AlphaVantageClient(av_key)
         self.trends  = GoogleTrendsClient()
@@ -221,14 +220,14 @@ class HYPERDataAggregator:
             "trends": trends,
             "options": opt,
             "news": news_st,
-            "data_quality": "excellent" if quote.get("data_source")=="alpha_vantage" else "poor",
-            "latency": round(time.time()-start,2)
+            "data_quality": "excellent" if quote.get("data_source") == "alpha_vantage" else "poor",
+            "latency": round(time.time() - start, 2)
         }
         logger.debug(f"{symbol} aggregated: {payload}")
         return payload
 
     async def close(self):
         await self.av.close()
-        await self.trends.get_trends_data([])  # no-op close
+        # trends client is stateless/no session to close
         await self.options.close()
         await self.news.close()
