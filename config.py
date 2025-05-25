@@ -283,56 +283,45 @@ def validate_config() -> bool:
         # Check API key exists
         if not ALPHA_VANTAGE_API_KEY:
             raise ValueError("Alpha Vantage API key not configured")
-
+        
         # Check tickers are defined
         if not TICKERS:
             raise ValueError("No tickers configured")
-
+        
         # Check signal weights sum to approximately 1.0
         total_weight = sum(SIGNAL_WEIGHTS.values())
         if abs(total_weight - 1.0) > 0.02:
             raise ValueError(f"Signal weights must sum to 1.0, got {total_weight}")
-
+        
         # Validate confidence thresholds
         for signal_type, threshold in CONFIDENCE_THRESHOLDS.items():
             if not (0 <= threshold <= 100):
                 raise ValueError(f"Invalid threshold for {signal_type}: {threshold}")
-
+        
         # Validate feature flags
         if not isinstance(FEATURE_FLAGS, dict):
             raise ValueError("Feature flags must be a dictionary")
-
+        
         # Validate technical parameters
         for param, value in TECHNICAL_PARAMS.items():
-            if not isinstance(value, (int, float)):
+            if not isinstance(value, (int, float)) or value <= 0:
                 raise ValueError(f"Invalid technical parameter {param}: {value}")
-
-            # FIXED: Correct validation for williams_r_period and thresholds
-            if param == "williams_r_period":
-                if not (1 <= value <= 100):
-                    raise ValueError(f"Williams %R period must be between 1 and 100: {value}")
-            elif "williams_r" in param:
-                if not (-100 <= value <= 0):
-                    raise ValueError(f"Williams %R threshold {param} must be between -100 and 0: {value}")
-            else:
-                if value <= 0:
-                    raise ValueError(f"Invalid technical parameter {param}: {value}")
-
+        
         # Validate VIX configuration
         if VIX_CONFIG["extreme_fear_threshold"] <= VIX_CONFIG["fear_threshold"]:
             raise ValueError("VIX extreme fear threshold must be higher than fear threshold")
-
+        
         # Validate update intervals
         for interval_name, interval_value in UPDATE_INTERVALS.items():
             if not isinstance(interval_value, (int, float)) or interval_value <= 0:
                 raise ValueError(f"Invalid update interval {interval_name}: {interval_value}")
-
+        
         return True
-
+        
     except Exception as e:
         print(f"❌ Enhanced configuration error: {e}")
         raise
-        
+
 def get_enabled_features() -> List[str]:
     """Get list of enabled enhanced features"""
     return [feature for feature, enabled in FEATURE_FLAGS.items() if enabled]
