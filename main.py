@@ -229,107 +229,6 @@ class CombinedConnectionManager:
         logger.info(f"📡 Serialized {len(serialized)} combined enhanced signals for frontend")
         return serialized
 
-manager = CombinedConnectionManager()active_connections)
-        
-        logger.info(f"New client connected. Total: {len(self.active_connections)}")
-        
-        # Send current data to new client
-        await self.send_personal_message(websocket, {
-            "type": "signal_update",
-            "signals": self._serialize_combined_signals(hyper_state.current_signals),
-            "stats": hyper_state.stats.copy(),
-            "timestamp": datetime.now().isoformat()
-        })
-    
-    def disconnect(self, websocket: WebSocket):
-        """Remove WebSocket connection"""
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-            hyper_state.stats["clients_connected"] = len(self.active_connections)
-            logger.info(f"Client disconnected. Total: {len(self.active_connections)}")
-    
-    async def send_personal_message(self, websocket: WebSocket, message: dict):
-        """Send message to specific client"""
-        try:
-            await websocket.send_text(json.dumps(message, default=str))
-        except Exception as e:
-            logger.error(f"Error sending personal message: {e}")
-    
-    async def broadcast(self, message: dict):
-        """Broadcast message to all connected clients"""
-        if not self.active_connections:
-            return
-        
-        disconnected = []
-        message_json = json.dumps(message, default=str)
-        
-        for connection in self.active_connections:
-            try:
-                await connection.send_text(message_json)
-            except Exception as e:
-                logger.error(f"Error broadcasting to client: {e}")
-                disconnected.append(connection)
-        
-        # Remove disconnected clients
-        for conn in disconnected:
-            self.disconnect(conn)
-        
-        if self.active_connections:
-            logger.info(f"Broadcasted signals to {len(self.active_connections)} clients")
-    
-    def _serialize_combined_signals(self, signals):
-        """Convert combined enhanced signals to JSON-serializable format"""
-        if not signals:
-            return {}
-        
-        serialized = {}
-        for symbol, signal in signals.items():
-            if hasattr(signal, '__dict__'):
-                # Extract combined enhanced signal data
-                serialized[symbol] = {
-                    "symbol": signal.symbol,
-                    "signal_type": getattr(signal, 'signal_type', 'HOLD'),
-                    "confidence": float(getattr(signal, 'confidence', 0.0)),
-                    "direction": getattr(signal, 'direction', 'NEUTRAL'),
-                    "price": float(getattr(signal, 'price', 0.0)),
-                    "timestamp": getattr(signal, 'timestamp', datetime.now().isoformat()),
-                    
-                    # Core scores
-                    "technical_score": float(getattr(signal, 'technical_score', 50.0)),
-                    "momentum_score": float(getattr(signal, 'momentum_score', 50.0)),
-                    "sentiment_score": float(getattr(signal, 'sentiment_score', 50.0)),
-                    "ml_score": float(getattr(signal, 'ml_score', 50.0)),
-                    
-                    # Enhanced indicators
-                    "williams_r": float(getattr(signal, 'williams_r', -50.0)),
-                    "stochastic_k": float(getattr(signal, 'stochastic_k', 50.0)),
-                    "stochastic_d": float(getattr(signal, 'stochastic_d', 50.0)),
-                    "vix_sentiment": getattr(signal, 'vix_sentiment', 'NEUTRAL'),
-                    "market_breadth": float(getattr(signal, 'market_breadth', 50.0)),
-                    "sector_rotation": getattr(signal, 'sector_rotation', 'NEUTRAL'),
-                    "anomaly_score": float(getattr(signal, 'anomaly_score', 0.0)),
-                    "pattern_score": float(getattr(signal, 'pattern_score', 50.0)),
-                    "economic_score": float(getattr(signal, 'economic_score', 50.0)),
-                    "var_95": float(getattr(signal, 'var_95', 5.0)),
-                    "correlation_spy": float(getattr(signal, 'correlation_spy', 0.7)),
-                    
-                    # Supporting data
-                    "fibonacci_levels": getattr(signal, 'fibonacci_levels', {}),
-                    "lstm_predictions": getattr(signal, 'lstm_predictions', {}),
-                    "ensemble_prediction": getattr(signal, 'ensemble_prediction', {}),
-                    "volume_profile": getattr(signal, 'volume_profile', {}),
-                    "economic_sentiment": getattr(signal, 'economic_sentiment', {}),
-                    "reasons": getattr(signal, 'reasons', []),
-                    "warnings": getattr(signal, 'warnings', []),
-                    "data_quality": getattr(signal, 'data_quality', 'unknown')
-                }
-            else:
-                # Already a dict
-                serialized[symbol] = signal
-        
-        logger.info(f"📡 Serialized {len(serialized)} combined enhanced signals for frontend")
-        return serialized
-
 manager = CombinedConnectionManager()
 
 # ========================================
@@ -435,7 +334,7 @@ async def combined_signal_generation_loop():
             
             # Check performance thresholds
             total_loop_time = (datetime.now() - loop_start_time).total_seconds()
-            max_time = config.PERFORMANCE_THRESHOLDS.get("total_update_cycle_max_time", 30.0)
+            max_time = config.PERFORMANCE_THRESHOLDS.get("total_update_cycle_max_time", 30.0) if hasattr(config, 'PERFORMANCE_THRESHOLDS') else 30.0
             if total_loop_time > max_time:
                 logger.warning(f"⚠️ Slow update cycle: {total_loop_time:.2f}s (threshold: {max_time}s)")
             
@@ -512,7 +411,7 @@ async def health_check():
         },
         "configuration": {
             "tickers": config.TICKERS,
-            "signal_weights": config.SIGNAL_WEIGHTS,
+            "signal_weights": getattr(config, 'SIGNAL_WEIGHTS', {}),
             "system_initialized": hyper_state.signal_engine is not None,
             "index_file_exists": index_file.exists(),
             "api_key_configured": bool(config.ALPHA_VANTAGE_API_KEY)
