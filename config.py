@@ -278,7 +278,7 @@ def get_enhanced_config() -> Dict:
     }
 
 def validate_config() -> bool:
-    """Validate enhanced configuration settings"""
+    """Validate enhanced configuration settings - FIXED VERSION"""
     try:
         # Check API key exists
         if not ALPHA_VANTAGE_API_KEY:
@@ -307,11 +307,12 @@ def validate_config() -> bool:
             if not isinstance(value, (int, float)):
                 raise ValueError(f"Invalid technical parameter {param}: {value}")
             
-            # Special handling for Williams %R (uses negative values)
-            if 'williams_r' in param:
+            # FIXED: Special handling for Williams %R - only check oversold/overbought values
+            if 'williams_r' in param and ('oversold' in param or 'overbought' in param):
                 if not (-100 <= value <= 0):
-                    raise ValueError(f"Williams %R parameter {param} must be between -100 and 0: {value}")
-            else:
+                    raise ValueError(f"Williams %R {param} must be between -100 and 0: {value}")
+            # All other parameters (including williams_r_period) should be positive
+            elif 'williams_r' not in param or 'period' in param:
                 if value <= 0:
                     raise ValueError(f"Invalid technical parameter {param}: {value}")
         
@@ -327,7 +328,7 @@ def validate_config() -> bool:
         return True
         
     except Exception as e:
-        print(f"❌ Enhanced configuration error: {e}")
+        print(f"❌ Configuration error: {e}")
         raise
 
 def get_enabled_features() -> List[str]:
