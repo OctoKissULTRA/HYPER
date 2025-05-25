@@ -304,8 +304,16 @@ def validate_config() -> bool:
         
         # Validate technical parameters
         for param, value in TECHNICAL_PARAMS.items():
-            if not isinstance(value, (int, float)) or value <= 0:
+            if not isinstance(value, (int, float)):
                 raise ValueError(f"Invalid technical parameter {param}: {value}")
+            
+            # Special handling for Williams %R (uses negative values)
+            if 'williams_r' in param:
+                if not (-100 <= value <= 0):
+                    raise ValueError(f"Williams %R parameter {param} must be between -100 and 0: {value}")
+            else:
+                if value <= 0:
+                    raise ValueError(f"Invalid technical parameter {param}: {value}")
         
         # Validate VIX configuration
         if VIX_CONFIG["extreme_fear_threshold"] <= VIX_CONFIG["fear_threshold"]:
