@@ -1,7 +1,3 @@
-# ============================================
-# ALPHA VANTAGE API ISSUE DIAGNOSIS & FIX
-# ============================================
-
 import aiohttp
 import asyncio
 import logging
@@ -11,6 +7,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List
 import json
 
+# Set up logging
 logger = logging.getLogger(__name__)
 
 class EnhancedAlphaVantageClient:
@@ -386,16 +383,43 @@ class EnhancedAlphaVantageClient:
             'data_source': 'enhanced_fallback'
         }
 
-# ============================================
-# ENHANCED HYPER DATA AGGREGATOR
-# ============================================
+class GoogleTrendsClient:
+    """Mock Google Trends client (since the real one is blocked)"""
+    
+    def __init__(self):
+        logger.info("📈 Google Trends Client initialized (using fallback data)")
+    
+    async def get_trends_data(self, keywords: List[str]) -> Dict[str, Any]:
+        """Generate mock trends data since Google blocks API requests"""
+        logger.info(f"📈 Generating mock trends data for: {keywords}")
+        
+        # Generate realistic trend data
+        trend_data = {}
+        for keyword in keywords:
+            # Generate some realistic search volume data
+            momentum = random.uniform(-50, 100)  # -50% to +100% momentum
+            velocity = random.uniform(-30, 30)   # Rate of change
+            
+            trend_data[keyword] = {
+                'momentum': momentum,
+                'velocity': velocity,
+                'acceleration': random.uniform(-10, 10),
+                'current_value': random.randint(20, 100),
+                'average_value': random.randint(40, 80)
+            }
+        
+        return {
+            'keyword_data': trend_data,
+            'timestamp': datetime.now().isoformat(),
+            'data_source': 'mock_trends'
+        }
 
 class EnhancedHYPERDataAggregator:
     """Enhanced data aggregator with better error handling"""
     
     def __init__(self, api_key: str):
         self.alpha_client = EnhancedAlphaVantageClient(api_key)
-        self.trends_client = GoogleTrendsClient()  # Keep existing
+        self.trends_client = GoogleTrendsClient()
         self.api_test_performed = False
         logger.info(f"🚀 Enhanced HYPER Data Aggregator initialized")
     
@@ -504,34 +528,9 @@ class EnhancedHYPERDataAggregator:
         await self.alpha_client.close_session()
         logger.info("🔒 Enhanced data aggregator cleaned up")
 
-# Keep the existing GoogleTrendsClient
-class GoogleTrendsClient:
-    """Mock Google Trends client (since the real one is blocked)"""
-    
-    def __init__(self):
-        logger.info("📈 Google Trends Client initialized (using fallback data)")
-    
-    async def get_trends_data(self, keywords: List[str]) -> Dict[str, Any]:
-        """Generate mock trends data since Google blocks API requests"""
-        logger.info(f"📈 Generating mock trends data for: {keywords}")
-        
-        # Generate realistic trend data
-        trend_data = {}
-        for keyword in keywords:
-            # Generate some realistic search volume data
-            momentum = random.uniform(-50, 100)  # -50% to +100% momentum
-            velocity = random.uniform(-30, 30)   # Rate of change
-            
-            trend_data[keyword] = {
-                'momentum': momentum,
-                'velocity': velocity,
-                'acceleration': random.uniform(-10, 10),
-                'current_value': random.randint(20, 100),
-                'average_value': random.randint(40, 80)
-            }
-        
-        return {
-            'keyword_data': trend_data,
-            'timestamp': datetime.now().isoformat(),
-            'data_source': 'mock_trends'
-        }
+# ============================================
+# BACKWARD COMPATIBILITY ALIAS
+# ============================================
+
+# Alias for backward compatibility with existing main.py
+HYPERDataAggregator = EnhancedHYPERDataAggregator
