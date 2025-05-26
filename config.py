@@ -1,21 +1,64 @@
 import os
-from typing import Dict, List
+from typing import Dict, List, Tuple, Optional
+from dataclasses import dataclass
+from datetime import datetime, time
+import json
+import logging
 
 # ========================================
-# COMBINED ENHANCED HYPER CONFIGURATION
+# PRODUCTION HYPER CONFIGURATION v3.0
 # ========================================
 
-# API CREDENTIALS
-ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "OKUH0GNJE410ONTC")
+# ENVIRONMENT SETTINGS
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development, staging, production
+DEBUG_MODE = os.getenv("DEBUG", "false").lower() == "true"
+DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() == "true"
 
-# Optional Enhanced API Keys (system will use fallbacks if not provided)
+# SECURITY: NO DEFAULT API KEYS
+ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
+if not ALPHA_VANTAGE_API_KEY:
+    if ENVIRONMENT == "production":
+        raise ValueError("Alpha Vantage API key is required in production")
+    else:
+        logging.warning("⚠️ No Alpha Vantage API key - running in demo mode")
+        DEMO_MODE = True
+
+# Optional Enhanced API Keys
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
 REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")
 REDDIT_SECRET = os.getenv("REDDIT_SECRET", "")
 TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN", "")
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
+QUANDL_API_KEY = os.getenv("QUANDL_API_KEY", "")
 
-# TARGET TICKERS (The Big 5)
+# DATABASE CONFIGURATION
+DATABASE_CONFIG = {
+    "type": os.getenv("DB_TYPE", "sqlite"),  # sqlite, postgresql
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": int(os.getenv("DB_PORT", "5432")),
+    "database": os.getenv("DB_NAME", "hyper_trading.db"),
+    "username": os.getenv("DB_USER", ""),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "pool_size": int(os.getenv("DB_POOL_SIZE", "10")),
+    "ssl_mode": os.getenv("DB_SSL_MODE", "prefer")
+}
+
+# REDIS CONFIGURATION (for caching and rate limiting)
+REDIS_CONFIG = {
+    "host": os.getenv("REDIS_HOST", "localhost"),
+    "port": int(os.getenv("REDIS_PORT", "6379")),
+    "password": os.getenv("REDIS_PASSWORD", ""),
+    "db": int(os.getenv("REDIS_DB", "0")),
+    "ssl": os.getenv("REDIS_SSL", "false").lower() == "true"
+}
+
+# TARGET TICKERS
 TICKERS = ["QQQ", "SPY", "NVDA", "AAPL", "MSFT"]
+
+# TRADING SAFETY
+PAPER_TRADING_ONLY = True  # Never change this - system is for signals only
+MAX_POSITION_SIZE = 10000  # Maximum theoretical position size for risk calculations
+RISK_TOLERANCE = "MODERATE"  # CONSERVATIVE, MODERATE, AGGRESSIVE
 
 # ENHANCED SIGNAL CONFIDENCE THRESHOLDS
 CONFIDENCE_THRESHOLDS = {
@@ -26,7 +69,7 @@ CONFIDENCE_THRESHOLDS = {
     "HYPER_SELL": 85,    # 85-100% confidence DOWN
 }
 
-# COMBINED ENHANCED SIGNAL WEIGHTS
+# SIGNAL WEIGHTS (Enhanced for Production)
 SIGNAL_WEIGHTS = {
     "technical": 0.25,          # Technical analysis + enhanced indicators
     "sentiment": 0.20,          # Multi-source sentiment analysis
@@ -40,7 +83,7 @@ SIGNAL_WEIGHTS = {
 
 # ENHANCED TECHNICAL INDICATOR SETTINGS
 TECHNICAL_PARAMS = {
-    # Original indicators
+    # Core indicators
     "rsi_period": 14,
     "rsi_oversold": 30,
     "rsi_overbought": 70,
@@ -63,7 +106,9 @@ TECHNICAL_PARAMS = {
     "stochastic_overbought": 80,
     "fibonacci_lookback": 50,
     "atr_period": 14,
-    "cci_period": 20
+    "cci_period": 20,
+    "adx_period": 14,
+    "obv_period": 10
 }
 
 # VIX SENTIMENT CONFIGURATION
@@ -88,17 +133,22 @@ MARKET_STRUCTURE_CONFIG = {
 
 # ML & PATTERN RECOGNITION CONFIGURATION
 ML_CONFIG = {
+    "enabled": True,
     "lstm_sequence_length": 60,        # 60-day input sequences
     "lstm_prediction_days": [1, 3, 5, 7, 14],  # Forecast horizons
-    "ensemble_models": ["RandomForest", "GradientBoost", "SVM", "Linear", "LSTM"],
+    "ensemble_models": ["RandomForest", "GradientBoost", "XGBoost", "Linear", "LSTM"],
     "anomaly_contamination": 0.1,      # 10% expected anomalies
     "pattern_confidence_threshold": 0.7,
     "feature_importance_top_n": 10,
-    "model_retrain_interval": 86400    # 24 hours
+    "model_retrain_interval": 86400,   # 24 hours
+    "min_training_samples": 100,       # Minimum samples before training
+    "cross_validation_folds": 5,
+    "early_stopping_patience": 10
 }
 
 # ECONOMIC INDICATORS CONFIGURATION
 ECONOMIC_CONFIG = {
+    "enabled": True,
     "indicators": {
         "gdp_growth": {"weight": 0.25, "bullish_threshold": 3.0, "bearish_threshold": 1.5},
         "unemployment": {"weight": 0.20, "bullish_threshold": 4.0, "bearish_threshold": 5.5},
@@ -118,11 +168,16 @@ RISK_CONFIG = {
     "correlation_warning": 0.9,        # Warn if correlation >90%
     "volatility_percentile_high": 80,  # High vol = 80th percentile
     "volatility_percentile_low": 20,   # Low vol = 20th percentile
-    "stress_test_scenarios": ["market_crash", "sector_rotation", "volatility_spike"]
+    "stress_test_scenarios": ["market_crash", "sector_rotation", "volatility_spike"],
+    "position_sizing_method": "kelly",  # kelly, fixed, percent_volatility
+    "max_portfolio_risk": 0.02,        # 2% max portfolio risk per trade
+    "stop_loss_percent": 0.05,         # 5% stop loss
+    "take_profit_ratio": 2.0           # 2:1 reward:risk ratio
 }
 
 # SENTIMENT ANALYSIS CONFIGURATION
 SENTIMENT_CONFIG = {
+    "enabled": True,
     "news_sources": ["NewsAPI", "AlphaVantage", "Yahoo"],
     "social_sources": ["Reddit", "Twitter", "StockTwits"],
     "sentiment_lookback_hours": 24,
@@ -132,11 +187,14 @@ SENTIMENT_CONFIG = {
         "twitter": 0.25
     },
     "extreme_sentiment_threshold": 80,  # >80 or <20 = extreme
-    "sentiment_momentum_periods": [1, 3, 7]  # Days
+    "sentiment_momentum_periods": [1, 3, 7],  # Days
+    "language_models": ["vader", "textblob", "finbert"],
+    "sentiment_decay_factor": 0.9       # How quickly sentiment fades
 }
 
-# GOOGLE TRENDS CONFIGURATION (Enhanced)
+# GOOGLE TRENDS CONFIGURATION
 TRENDS_CONFIG = {
+    "enabled": True,
     "timeframe": "now 7-d",
     "geo": "US",
     "keywords": {
@@ -147,25 +205,29 @@ TRENDS_CONFIG = {
         "MSFT": ["Microsoft", "Azure", "cloud computing", "enterprise software"],
     },
     "related_queries": True,
-    "sentiment_multiplier": 1.2
+    "sentiment_multiplier": 1.2,
+    "trend_momentum_weight": 0.3
 }
 
-# REAL-TIME UPDATE SETTINGS (Enhanced)
+# ENHANCED UPDATE INTERVALS (Production Optimized)
 UPDATE_INTERVALS = {
-    "market_data": 60,              # Market data every 60 seconds
+    "market_data": 30 if ENVIRONMENT == "production" else 60,              # More frequent in prod
     "advanced_technical": 120,      # Advanced indicators every 2 minutes
     "sentiment_analysis": 300,      # Sentiment every 5 minutes
     "market_structure": 180,        # Market breadth every 3 minutes
     "economic_data": 3600,          # Economic data every hour
     "ml_predictions": 600,          # ML predictions every 10 minutes
-    "signal_generation": 30,        # Generate signals every 30 seconds
+    "signal_generation": 15 if ENVIRONMENT == "production" else 30,        # Faster signals in prod
     "websocket_ping": 30,           # WebSocket keepalive
     "risk_calculations": 300,       # Risk metrics every 5 minutes
     "google_trends": 300,           # Google Trends every 5 minutes
-    "vix_analysis": 180             # VIX analysis every 3 minutes
+    "vix_analysis": 180,            # VIX analysis every 3 minutes
+    "database_cleanup": 86400,      # Daily cleanup
+    "model_training": 3600,         # Hourly ML training check
+    "performance_monitoring": 60    # Performance metrics every minute
 }
 
-# API RATE LIMITS (Enhanced)
+# ENHANCED RATE LIMITS (Production)
 RATE_LIMITS = {
     "alpha_vantage_calls_per_minute": 5,
     "alpha_vantage_calls_per_day": 500,
@@ -175,31 +237,53 @@ RATE_LIMITS = {
     "vix_data_calls_per_hour": 100,
     "economic_data_calls_per_hour": 50,
     "ml_model_calls_per_minute": 30,
-    "google_trends_requests_per_hour": 100
+    "google_trends_requests_per_hour": 100,
+    "websocket_connections_max": 100,
+    "api_requests_per_user_per_minute": 60
 }
 
-# SERVER CONFIGURATION
+# SERVER CONFIGURATION (Production Ready)
 SERVER_CONFIG = {
     "host": "0.0.0.0",
     "port": int(os.getenv("PORT", 8000)),
-    "debug": os.getenv("DEBUG", "false").lower() == "true",
-    "reload": os.getenv("RELOAD", "false").lower() == "true",
-    "workers": 1,
-    "max_connections": 1000
+    "debug": DEBUG_MODE,
+    "reload": DEBUG_MODE and ENVIRONMENT != "production",
+    "workers": int(os.getenv("WORKERS", "1")),
+    "max_connections": int(os.getenv("MAX_CONNECTIONS", "1000")),
+    "keepalive_timeout": int(os.getenv("KEEPALIVE_TIMEOUT", "65")),
+    "access_log": ENVIRONMENT == "production",
+    "proxy_headers": True,
+    "forwarded_allow_ips": "*"
 }
 
-# LOGGING CONFIGURATION (Enhanced)
+# ENHANCED LOGGING CONFIGURATION
 LOGGING_CONFIG = {
-    "level": os.getenv("LOG_LEVEL", "INFO"),
+    "level": os.getenv("LOG_LEVEL", "INFO" if ENVIRONMENT == "production" else "DEBUG"),
     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    "file": "hyper_combined.log",
-    "max_size_mb": 20,
-    "backup_count": 10,
+    "file": f"logs/hyper_{ENVIRONMENT}.log",
+    "max_size_mb": 50,
+    "backup_count": 30,
     "enable_performance_logging": True,
-    "log_signal_details": True
+    "log_signal_details": DEBUG_MODE,
+    "log_api_calls": DEBUG_MODE,
+    "log_ml_training": True,
+    "structured_logging": ENVIRONMENT == "production"
 }
 
-# FEATURE FLAGS (For easy enable/disable of enhanced features)
+# MONITORING & ALERTING
+MONITORING_CONFIG = {
+    "enabled": ENVIRONMENT == "production",
+    "metrics_endpoint": "/metrics",
+    "health_check_interval": 30,
+    "alert_email": os.getenv("ALERT_EMAIL", ""),
+    "slack_webhook": os.getenv("SLACK_WEBHOOK", ""),
+    "error_threshold": 10,              # Alert after 10 errors
+    "latency_threshold": 5.0,           # Alert if response > 5s
+    "memory_threshold": 1024,           # Alert at 1GB memory usage
+    "disk_threshold": 85                # Alert at 85% disk usage
+}
+
+# FEATURE FLAGS (Production Safe)
 FEATURE_FLAGS = {
     "enable_enhanced_signals": True,
     "enable_advanced_technical": True,
@@ -207,29 +291,79 @@ FEATURE_FLAGS = {
     "enable_stochastic": True,
     "enable_vix_analysis": True,
     "enable_fibonacci_levels": True,
-    "enable_lstm_predictions": True,
-    "enable_ensemble_voting": True,
-    "enable_sentiment_analysis": True,
+    "enable_lstm_predictions": ML_CONFIG["enabled"],
+    "enable_ensemble_voting": ML_CONFIG["enabled"],
+    "enable_sentiment_analysis": SENTIMENT_CONFIG["enabled"],
     "enable_market_structure": True,
-    "enable_economic_indicators": True,
+    "enable_economic_indicators": ECONOMIC_CONFIG["enabled"],
     "enable_risk_metrics": True,
-    "enable_anomaly_detection": True,
-    "enable_pattern_recognition": True
+    "enable_anomaly_detection": ML_CONFIG["enabled"],
+    "enable_pattern_recognition": ML_CONFIG["enabled"],
+    "enable_backtesting": True,
+    "enable_paper_trading": True,
+    "enable_real_trading": False,       # NEVER enable for safety
+    "enable_caching": True,
+    "enable_rate_limiting": True,
+    "enable_circuit_breaker": True
 }
 
-# PERFORMANCE THRESHOLDS
+# PERFORMANCE THRESHOLDS (Production)
 PERFORMANCE_THRESHOLDS = {
-    "signal_generation_max_time": 10.0,    # Max 10 seconds per signal
-    "api_response_max_time": 5.0,          # Max 5 seconds per API call
-    "ml_prediction_max_time": 3.0,         # Max 3 seconds for ML
-    "total_update_cycle_max_time": 30.0,   # Max 30 seconds for full cycle
-    "memory_usage_warning": 500,           # Warn at 500MB memory
-    "cpu_usage_warning": 80                # Warn at 80% CPU
+    "signal_generation_max_time": 5.0,     # Reduced for production
+    "api_response_max_time": 3.0,          # Stricter timeout
+    "ml_prediction_max_time": 2.0,         # Faster ML inference
+    "total_update_cycle_max_time": 15.0,   # Tighter cycle time
+    "memory_usage_warning": 512,           # 512MB warning
+    "memory_usage_critical": 1024,         # 1GB critical
+    "cpu_usage_warning": 70,               # 70% CPU warning
+    "cpu_usage_critical": 90,              # 90% CPU critical
+    "disk_usage_warning": 80,              # 80% disk warning
+    "websocket_response_time": 1.0,        # 1s WebSocket response
+    "database_query_time": 0.5,            # 500ms DB query limit
+    "cache_hit_ratio_minimum": 0.8         # 80% cache hit ratio
+}
+
+# SECURITY CONFIGURATION
+SECURITY_CONFIG = {
+    "api_key_rotation_days": 90,
+    "session_timeout_minutes": 60,
+    "max_failed_attempts": 5,
+    "lockout_duration_minutes": 15,
+    "require_https": ENVIRONMENT == "production",
+    "cors_origins": os.getenv("CORS_ORIGINS", "*").split(","),
+    "rate_limit_enabled": True,
+    "input_validation": True,
+    "sql_injection_protection": True,
+    "xss_protection": True
 }
 
 # ========================================
-# HELPER FUNCTIONS (Enhanced)
+# ENHANCED HELPER FUNCTIONS
 # ========================================
+
+def get_database_url() -> str:
+    """Get database connection URL"""
+    if DATABASE_CONFIG["type"] == "sqlite":
+        return f"sqlite:///{DATABASE_CONFIG['database']}"
+    elif DATABASE_CONFIG["type"] == "postgresql":
+        return (f"postgresql://{DATABASE_CONFIG['username']}:{DATABASE_CONFIG['password']}"
+                f"@{DATABASE_CONFIG['host']}:{DATABASE_CONFIG['port']}/{DATABASE_CONFIG['database']}")
+    else:
+        raise ValueError(f"Unsupported database type: {DATABASE_CONFIG['type']}")
+
+def get_redis_url() -> str:
+    """Get Redis connection URL"""
+    protocol = "rediss" if REDIS_CONFIG["ssl"] else "redis"
+    auth = f":{REDIS_CONFIG['password']}@" if REDIS_CONFIG["password"] else ""
+    return f"{protocol}://{auth}{REDIS_CONFIG['host']}:{REDIS_CONFIG['port']}/{REDIS_CONFIG['db']}"
+
+def is_production() -> bool:
+    """Check if running in production"""
+    return ENVIRONMENT == "production"
+
+def is_demo_mode() -> bool:
+    """Check if running in demo mode"""
+    return DEMO_MODE
 
 def get_signal_threshold(signal_type: str) -> int:
     """Get confidence threshold for signal type"""
@@ -257,13 +391,16 @@ def is_high_confidence_signal(confidence: float, direction: str) -> str:
 def get_enhanced_config() -> Dict:
     """Get complete enhanced configuration"""
     return {
-        "api_keys": {
-            "alpha_vantage": ALPHA_VANTAGE_API_KEY,
-            "news_api": NEWS_API_KEY,
-            "reddit_client_id": REDDIT_CLIENT_ID,
-            "reddit_secret": REDDIT_SECRET,
-            "twitter_bearer": TWITTER_BEARER_TOKEN
+        "environment": ENVIRONMENT,
+        "demo_mode": DEMO_MODE,
+        "api_keys_configured": {
+            "alpha_vantage": bool(ALPHA_VANTAGE_API_KEY),
+            "news_api": bool(NEWS_API_KEY),
+            "reddit": bool(REDDIT_CLIENT_ID and REDDIT_SECRET),
+            "twitter": bool(TWITTER_BEARER_TOKEN)
         },
+        "database": DATABASE_CONFIG,
+        "redis": REDIS_CONFIG,
         "signal_weights": SIGNAL_WEIGHTS,
         "technical_params": TECHNICAL_PARAMS,
         "vix_config": VIX_CONFIG,
@@ -274,14 +411,29 @@ def get_enhanced_config() -> Dict:
         "feature_flags": FEATURE_FLAGS,
         "rate_limits": RATE_LIMITS,
         "update_intervals": UPDATE_INTERVALS,
-        "performance_thresholds": PERFORMANCE_THRESHOLDS
+        "performance_thresholds": PERFORMANCE_THRESHOLDS,
+        "security_config": SECURITY_CONFIG,
+        "monitoring": MONITORING_CONFIG
     }
 
 def validate_config() -> bool:
-    """Validate enhanced configuration settings - FIXED VERSION"""
+    """Enhanced configuration validation"""
     try:
-        # Check API key exists
-        if not ALPHA_VANTAGE_API_KEY:
+        # Environment validation
+        if ENVIRONMENT not in ["development", "staging", "production"]:
+            raise ValueError(f"Invalid environment: {ENVIRONMENT}")
+        
+        # Production safety checks
+        if is_production():
+            if not ALPHA_VANTAGE_API_KEY:
+                raise ValueError("Alpha Vantage API key required in production")
+            if FEATURE_FLAGS["enable_real_trading"]:
+                raise ValueError("Real trading must never be enabled")
+            if not MONITORING_CONFIG["enabled"]:
+                raise ValueError("Monitoring must be enabled in production")
+        
+        # Check API key exists (unless demo mode)
+        if not DEMO_MODE and not ALPHA_VANTAGE_API_KEY:
             raise ValueError("Alpha Vantage API key not configured")
         
         # Check tickers are defined
@@ -298,21 +450,16 @@ def validate_config() -> bool:
             if not (0 <= threshold <= 100):
                 raise ValueError(f"Invalid threshold for {signal_type}: {threshold}")
         
-        # Validate feature flags
-        if not isinstance(FEATURE_FLAGS, dict):
-            raise ValueError("Feature flags must be a dictionary")
-        
         # Validate technical parameters
         for param, value in TECHNICAL_PARAMS.items():
             if not isinstance(value, (int, float)):
                 raise ValueError(f"Invalid technical parameter {param}: {value}")
             
-            # FIXED: Special handling for Williams %R - only check oversold/overbought values
+            # Williams %R special handling
             if 'williams_r' in param and ('oversold' in param or 'overbought' in param):
                 if not (-100 <= value <= 0):
                     raise ValueError(f"Williams %R {param} must be between -100 and 0: {value}")
-            # All other parameters (including williams_r_period) should be positive
-            elif 'williams_r' not in param or 'period' in param:
+            elif 'period' in param or param in ['rsi_oversold', 'rsi_overbought', 'stochastic_oversold', 'stochastic_overbought']:
                 if value <= 0:
                     raise ValueError(f"Invalid technical parameter {param}: {value}")
         
@@ -325,10 +472,21 @@ def validate_config() -> bool:
             if not isinstance(interval_value, (int, float)) or interval_value <= 0:
                 raise ValueError(f"Invalid update interval {interval_name}: {interval_value}")
         
+        # Validate database configuration
+        if DATABASE_CONFIG["type"] not in ["sqlite", "postgresql"]:
+            raise ValueError(f"Unsupported database type: {DATABASE_CONFIG['type']}")
+        
+        # Validate ML configuration
+        if ML_CONFIG["enabled"]:
+            if ML_CONFIG["min_training_samples"] < 50:
+                raise ValueError("Minimum training samples should be at least 50")
+            if not (0 < ML_CONFIG["anomaly_contamination"] < 0.5):
+                raise ValueError("Anomaly contamination must be between 0 and 0.5")
+        
         return True
         
     except Exception as e:
-        print(f"❌ Configuration error: {e}")
+        logging.error(f"❌ Configuration validation error: {e}")
         raise
 
 def get_enabled_features() -> List[str]:
@@ -339,65 +497,33 @@ def is_feature_enabled(feature_name: str) -> bool:
     """Check if a specific enhanced feature is enabled"""
     return FEATURE_FLAGS.get(feature_name, False)
 
-def get_vix_sentiment_thresholds() -> Dict[str, float]:
-    """Get VIX sentiment interpretation thresholds"""
-    return {
-        "extreme_fear": VIX_CONFIG["extreme_fear_threshold"],
-        "fear": VIX_CONFIG["fear_threshold"],
-        "complacency": VIX_CONFIG["complacency_threshold"]
-    }
-
-def get_technical_indicator_params(indicator: str) -> Dict:
-    """Get parameters for specific technical indicator"""
-    indicator_params = {
-        "williams_r": {
-            "period": TECHNICAL_PARAMS["williams_r_period"],
-            "oversold": TECHNICAL_PARAMS["williams_r_oversold"],
-            "overbought": TECHNICAL_PARAMS["williams_r_overbought"]
-        },
-        "stochastic": {
-            "k_period": TECHNICAL_PARAMS["stochastic_k_period"],
-            "d_period": TECHNICAL_PARAMS["stochastic_d_period"],
-            "oversold": TECHNICAL_PARAMS["stochastic_oversold"],
-            "overbought": TECHNICAL_PARAMS["stochastic_overbought"]
-        },
-        "rsi": {
-            "period": TECHNICAL_PARAMS["rsi_period"],
-            "oversold": TECHNICAL_PARAMS["rsi_oversold"],
-            "overbought": TECHNICAL_PARAMS["rsi_overbought"]
-        }
-    }
-    return indicator_params.get(indicator, {})
-
-def get_market_structure_thresholds() -> Dict[str, float]:
-    """Get market structure analysis thresholds"""
-    return {
-        "very_bullish": MARKET_STRUCTURE_CONFIG["breadth_very_bullish"],
-        "bullish": MARKET_STRUCTURE_CONFIG["breadth_bullish"],
-        "bearish": MARKET_STRUCTURE_CONFIG["breadth_bearish"],
-        "very_bearish": MARKET_STRUCTURE_CONFIG["breadth_very_bearish"]
-    }
-
-def get_risk_management_params() -> Dict:
-    """Get risk management configuration"""
-    return {
-        "var_confidence": RISK_CONFIG["var_confidence_level"],
-        "max_drawdown_warning": RISK_CONFIG["max_drawdown_warning"],
-        "correlation_warning": RISK_CONFIG["correlation_warning"],
-        "stress_scenarios": RISK_CONFIG["stress_test_scenarios"]
-    }
-
 # ========================================
 # AUTO-VALIDATE ON IMPORT
 # ========================================
 try:
     validate_config()
     enabled_features = get_enabled_features()
-    print("✅ Combined Enhanced HYPER configuration validated successfully")
+    
+    # Create logs directory
+    os.makedirs("logs", exist_ok=True)
+    
+    print("✅ Production HYPER configuration validated successfully")
+    print(f"🌍 Environment: {ENVIRONMENT}")
+    print(f"🔧 Demo mode: {DEMO_MODE}")
     print(f"🔥 Enhanced features enabled: {len(enabled_features)}/{len(FEATURE_FLAGS)}")
     print(f"📊 Signal components: {len(SIGNAL_WEIGHTS)} weighted factors")
     print(f"🎯 Tracking: {', '.join(TICKERS)}")
-    print(f"⚡ Key features: Williams %R, VIX Analysis, ML Predictions, Fibonacci Levels")
+    print(f"⚡ Key features: Williams %R, VIX Analysis, ML Predictions, Risk Management")
+    print(f"🛡️ Security: Rate limiting, input validation, CORS protection")
+    print(f"📈 Performance: Optimized intervals, caching, monitoring")
+    
+    if is_production():
+        print("🚀 PRODUCTION MODE - Enhanced monitoring and security active")
+    elif DEMO_MODE:
+        print("🧪 DEMO MODE - Using fallback data sources")
+    else:
+        print("🛠️ DEVELOPMENT MODE - Debug features enabled")
+        
 except Exception as e:
-    print(f"❌ Configuration error: {e}")
+    print(f"❌ Configuration validation failed: {e}")
     raise
