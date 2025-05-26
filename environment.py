@@ -3,7 +3,7 @@
 # ============================================
 
 # Alpha Vantage API Configuration
-ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key_here
+ALPHA_VANTAGE_API_KEY=OKUH0GNJE410ONTC
 
 # Server Configuration
 PORT=8000
