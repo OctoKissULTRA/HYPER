@@ -14,14 +14,11 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development, staging, p
 DEBUG_MODE = os.getenv("DEBUG", "false").lower() == "true"
 DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() == "true"
 
-# SECURITY: NO DEFAULT API KEYS
-ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY")
+# API CREDENTIALS - Personal Use
+ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "OKUH0GNJE410ONTC")
 if not ALPHA_VANTAGE_API_KEY:
-    if ENVIRONMENT == "production":
-        raise ValueError("Alpha Vantage API key is required in production")
-    else:
-        logging.warning("⚠️ No Alpha Vantage API key - running in demo mode")
-        DEMO_MODE = True
+    logging.warning("⚠️ No Alpha Vantage API key - running in demo mode")
+    DEMO_MODE = True
 
 # Optional Enhanced API Keys
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
