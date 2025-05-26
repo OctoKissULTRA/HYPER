@@ -2,27 +2,42 @@ import os
 import asyncio
 import json
 import logging
+import time
+import traceback
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, BackgroundTasks, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, BackgroundTasks, HTTPException, Request
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
-# Import configuration and combined signal engine
+# Import configuration and components
 import config
 from data_sources import HYPERDataAggregator
 from signal_engine import HYPERSignalEngine, HYPERSignal
+from model_testing import ModelTester, TestingAPI
+from ml_learning import integrate_ml_learning, MLEnhancedSignalEngine, LearningAPI
 
 # ========================================
-# ENHANCED LOGGING SETUP
+# PRODUCTION LOGGING SETUP
 # ========================================
-logging.basicConfig(
-    level=getattr(logging, config.LOGGING_CONFIG.get("level", "INFO")),
-    format=config.LOGGING_CONFIG.get("format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-)
+def setup_logging():
+    """Setup production-grade logging"""
+    log_dir = Path("logs")
+    log_dir.mkdir(exist_ok=True)
+    
+    logging.basicConfig(
+        level=getattr(logging, config.LOGGING_CONFIG.get("level", "INFO")),
+        format=config.LOGGING_CONFIG.get("format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s"),
+        handlers=[
+            logging.FileHandler(config.LOGGING_CONFIG.get("file", "logs/hyper.log")),
+            logging.StreamHandler()
+        ]
+    )
+
+setup_logging()
 logger = logging.getLogger(__name__)
 
 # ========================================
@@ -31,131 +46,200 @@ logger = logging.getLogger(__name__)
 current_dir = Path(__file__).parent
 index_file = current_dir / "index.html"
 
-logger.info(f"🔧 Current directory: {current_dir}")
-logger.info(f"🔧 Index file: {index_file}")
-logger.info(f"🔧 Index file exists: {index_file.exists()}")
-
 # ========================================
 # FASTAPI APPLICATION
 # ========================================
 app = FastAPI(
-    title="⚡ HYPER Trading System - Combined Enhanced",
-    description="Advanced AI-powered trading signals with combined enhanced predictive capabilities",
-    version="2.5.0-COMBINED"
+    title="⚡ HYPER Trading System - Production",
+    description="Production-grade AI-powered trading signals",
+    version="3.0.0-PRODUCTION",
+    docs_url="/docs" if not config.is_production() else None,
+    redoc_url="/redoc" if not config.is_production() else None,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=config.SECURITY_CONFIG.get("cors_origins", ["*"]),
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
 # ========================================
-# GLOBAL STATE WITH COMBINED ENHANCEMENTS
+# PRODUCTION STATE MANAGEMENT
 # ========================================
-class CombinedHYPERState:
-    """Combined enhanced global application state"""
+class ProductionHYPERState:
+    """Production-grade application state with full error handling"""
     def __init__(self):
         self.is_running = False
         self.data_aggregator = None
         self.signal_engine = None
+        self.ml_enhanced_engine = None
+        self.model_tester = None
+        self.learning_api = None
+        self.testing_api = None
+        
         self.current_signals = {}
+        self.enhanced_signals = {}
         self.connected_clients = []
         self.last_update = None
         self.update_task = None
+        self.startup_time = datetime.now()
         
         # Enhanced statistics
         self.stats = {
             "total_signals_generated": 0,
+            "ml_enhanced_signals": 0,
             "clients_connected": 0,
             "uptime_start": datetime.now(),
             "api_calls_made": 0,
             "signals_with_data": 0,
             "fallback_signals": 0,
             "average_confidence": 0.0,
+            "ml_average_confidence": 0.0,
             "high_confidence_signals": 0,
             "ml_predictions_made": 0,
-            "anomalies_detected": 0,
-            "vix_sentiment_updates": 0,
-            "williams_r_signals": 0,
-            "fibonacci_levels_calculated": 0,
-            "pattern_recognitions": 0
+            "ml_agreements": 0,
+            "ml_disagreements": 0,
+            "errors_encountered": 0,
+            "successful_cycles": 0,
+            "system_restarts": 0
+        }
+        
+        # Performance tracking
+        self.performance_metrics = {
+            "avg_generation_time": 0.0,
+            "avg_ml_enhancement_time": 0.0,
+            "memory_usage_mb": 0.0,
+            "cpu_usage_percent": 0.0,
+            "total_api_calls": 0,
+            "error_rate": 0.0
         }
     
     async def initialize(self):
-        """Initialize the Combined Enhanced HYPER system"""
-        logger.info("🚀 Starting Combined Enhanced HYPER Trading System...")
+        """Initialize the production system"""
+        logger.info("🚀 Initializing Production HYPER Trading System...")
+        logger.info(f"Environment: {config.ENVIRONMENT}")
+        logger.info(f"Demo Mode: {config.DEMO_MODE}")
         logger.info(f"Tracking tickers: {', '.join(config.TICKERS)}")
-        logger.info(f"Alpha Vantage API configured: {'✅' if config.ALPHA_VANTAGE_API_KEY else '❌'}")
         
         try:
             # Initialize data aggregator
             self.data_aggregator = HYPERDataAggregator(config.ALPHA_VANTAGE_API_KEY)
+            if hasattr(self.data_aggregator, 'initialize'):
+                await self.data_aggregator.initialize()
             logger.info("✅ Data aggregator initialized")
             
-            # Initialize combined enhanced signal engine
+            # Initialize signal engine
             self.signal_engine = HYPERSignalEngine()
-            logger.info("✅ Combined enhanced signal engine initialized")
+            logger.info("✅ Signal engine initialized")
+            
+            # Initialize testing framework
+            try:
+                self.model_tester = ModelTester(self.signal_engine)
+                self.testing_api = TestingAPI(self.model_tester)
+                logger.info("✅ Testing framework initialized")
+            except Exception as e:
+                logger.warning(f"⚠️ Testing framework failed to initialize: {e}")
+                self.model_tester = None
+                self.testing_api = None
+            
+            # Initialize ML learning
+            try:
+                self.ml_enhanced_engine, self.learning_api = integrate_ml_learning(
+                    self.signal_engine, 
+                    self.model_tester
+                )
+                logger.info("✅ ML learning system initialized")
+            except Exception as e:
+                logger.warning(f"⚠️ ML learning failed to initialize: {e}")
+                self.ml_enhanced_engine = None
+                self.learning_api = None
             
             # Validate configuration
-            logger.info(f"🔧 Running from: {os.getcwd()}")
-            logger.info(f"🔧 Index file exists: {index_file.exists()}")
-            
             config.validate_config()
-            logger.info("✅ Configuration validated successfully")
+            logger.info("✅ Configuration validated")
             
             return True
+            
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Combined HYPER system: {e}")
-            import traceback
-            logger.error(f"📋 Traceback: {traceback.format_exc()}")
+            logger.error(f"❌ Failed to initialize system: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return False
+    
+    async def cleanup(self):
+        """Cleanup resources"""
+        logger.info("🧹 Cleaning up system resources...")
+        
+        try:
+            self.is_running = False
+            
+            if self.learning_api and hasattr(self.learning_api, 'cleanup'):
+                await self.learning_api.cleanup()
+            
+            if self.data_aggregator and hasattr(self.data_aggregator, 'close'):
+                await self.data_aggregator.close()
+            
+            logger.info("✅ Cleanup completed")
+            
+        except Exception as e:
+            logger.error(f"❌ Error during cleanup: {e}")
 
-hyper_state = CombinedHYPERState()
+hyper_state = ProductionHYPERState()
 
 # ========================================
-# ENHANCED WEBSOCKET CONNECTION MANAGER
+# WEBSOCKET CONNECTION MANAGER
 # ========================================
-class CombinedConnectionManager:
-    """Combined enhanced WebSocket connection manager"""
+class ProductionConnectionManager:
+    """Production WebSocket manager with enhanced error handling"""
     
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        self.connection_count = 0
     
     async def connect(self, websocket: WebSocket):
         """Accept new WebSocket connection"""
-        await websocket.accept()
-        self.active_connections.append(websocket)
-        hyper_state.stats["clients_connected"] = len(self.active_connections)
-        
-        logger.info(f"New client connected. Total: {len(self.active_connections)}")
-        
-        # Send current data to new client
-        await self.send_personal_message(websocket, {
-            "type": "signal_update",
-            "signals": self._serialize_combined_signals(hyper_state.current_signals),
-            "stats": hyper_state.stats.copy(),
-            "timestamp": datetime.now().isoformat()
-        })
+        try:
+            await websocket.accept()
+            self.active_connections.append(websocket)
+            self.connection_count += 1
+            hyper_state.stats["clients_connected"] = len(self.active_connections)
+            
+            logger.info(f"Client connected (#{self.connection_count}). Active: {len(self.active_connections)}")
+            
+            # Send welcome message
+            await self.send_personal_message(websocket, {
+                "type": "connection_established",
+                "message": "Connected to HYPER Trading System",
+                "version": "3.0.0-PRODUCTION",
+                "demo_mode": config.DEMO_MODE,
+                "capabilities": {
+                    "ml_learning": hyper_state.ml_enhanced_engine is not None,
+                    "model_testing": hyper_state.model_tester is not None,
+                    "enhanced_signals": True
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Error connecting client: {e}")
     
     def disconnect(self, websocket: WebSocket):
         """Remove WebSocket connection"""
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
             hyper_state.stats["clients_connected"] = len(self.active_connections)
-            logger.info(f"Client disconnected. Total: {len(self.active_connections)}")
+            logger.info(f"Client disconnected. Active: {len(self.active_connections)}")
     
     async def send_personal_message(self, websocket: WebSocket, message: dict):
         """Send message to specific client"""
         try:
             await websocket.send_text(json.dumps(message, default=str))
         except Exception as e:
-            logger.error(f"Error sending personal message: {e}")
+            logger.error(f"Error sending message: {e}")
+            self.disconnect(websocket)
     
     async def broadcast(self, message: dict):
-        """Broadcast message to all connected clients"""
+        """Broadcast to all connected clients"""
         if not self.active_connections:
             return
         
@@ -166,471 +250,510 @@ class CombinedConnectionManager:
             try:
                 await connection.send_text(message_json)
             except Exception as e:
-                logger.error(f"Error broadcasting to client: {e}")
+                logger.error(f"Error broadcasting: {e}")
                 disconnected.append(connection)
         
         # Remove disconnected clients
         for conn in disconnected:
             self.disconnect(conn)
-        
-        if self.active_connections:
-            logger.info(f"Broadcasted signals to {len(self.active_connections)} clients")
     
-    def _serialize_combined_signals(self, signals):
-        """Convert combined enhanced signals to JSON-serializable format"""
+    def serialize_signals(self, signals):
+        """Convert signals to JSON-serializable format"""
         if not signals:
             return {}
         
         serialized = {}
-        for symbol, signal in signals.items():
-            if hasattr(signal, '__dict__'):
-                # Extract combined enhanced signal data
+        for symbol, signal_data in signals.items():
+            try:
+                if isinstance(signal_data, dict) and 'base_signal' in signal_data:
+                    # Enhanced signal format
+                    base = signal_data['base_signal']
+                    ml_pred = signal_data.get('ml_predictions', {})
+                    
+                    serialized[symbol] = {
+                        "symbol": base.get('symbol', symbol),
+                        "signal_type": base.get('signal_type', 'HOLD'),
+                        "confidence": float(signal_data.get('final_confidence', base.get('confidence', 0.0))),
+                        "direction": base.get('direction', 'NEUTRAL'),
+                        "price": float(base.get('price', 0.0)),
+                        "timestamp": base.get('timestamp', datetime.now().isoformat()),
+                        "ml_agreement": signal_data.get('ml_agreement', 'UNKNOWN'),
+                        "ml_confidence": ml_pred.get('confidence', {}).get('predicted_accuracy', 0) * 100,
+                        "enhanced_reasoning": signal_data.get('enhanced_reasoning', []),
+                        "technical_score": float(base.get('technical_score', 50.0)),
+                        "sentiment_score": float(base.get('sentiment_score', 50.0)),
+                        "data_quality": base.get('data_quality', 'unknown')
+                    }
+                else:
+                    # Regular signal format
+                    if hasattr(signal_data, '__dict__'):
+                        signal = signal_data
+                        serialized[symbol] = {
+                            "symbol": signal.symbol,
+                            "signal_type": getattr(signal, 'signal_type', 'HOLD'),
+                            "confidence": float(getattr(signal, 'confidence', 0.0)),
+                            "direction": getattr(signal, 'direction', 'NEUTRAL'),
+                            "price": float(getattr(signal, 'price', 0.0)),
+                            "timestamp": getattr(signal, 'timestamp', datetime.now().isoformat()),
+                            "technical_score": float(getattr(signal, 'technical_score', 50.0)),
+                            "sentiment_score": float(getattr(signal, 'sentiment_score', 50.0)),
+                            "data_quality": getattr(signal, 'data_quality', 'unknown')
+                        }
+                    else:
+                        serialized[symbol] = signal_data
+                        
+            except Exception as e:
+                logger.error(f"Error serializing signal for {symbol}: {e}")
                 serialized[symbol] = {
-                    "symbol": signal.symbol,
-                    "signal_type": getattr(signal, 'signal_type', 'HOLD'),
-                    "confidence": float(getattr(signal, 'confidence', 0.0)),
-                    "direction": getattr(signal, 'direction', 'NEUTRAL'),
-                    "price": float(getattr(signal, 'price', 0.0)),
-                    "timestamp": getattr(signal, 'timestamp', datetime.now().isoformat()),
-                    
-                    # Core scores
-                    "technical_score": float(getattr(signal, 'technical_score', 50.0)),
-                    "momentum_score": float(getattr(signal, 'momentum_score', 50.0)),
-                    "sentiment_score": float(getattr(signal, 'sentiment_score', 50.0)),
-                    "ml_score": float(getattr(signal, 'ml_score', 50.0)),
-                    
-                    # Enhanced indicators
-                    "williams_r": float(getattr(signal, 'williams_r', -50.0)),
-                    "stochastic_k": float(getattr(signal, 'stochastic_k', 50.0)),
-                    "stochastic_d": float(getattr(signal, 'stochastic_d', 50.0)),
-                    "vix_sentiment": getattr(signal, 'vix_sentiment', 'NEUTRAL'),
-                    "market_breadth": float(getattr(signal, 'market_breadth', 50.0)),
-                    "sector_rotation": getattr(signal, 'sector_rotation', 'NEUTRAL'),
-                    "anomaly_score": float(getattr(signal, 'anomaly_score', 0.0)),
-                    "pattern_score": float(getattr(signal, 'pattern_score', 50.0)),
-                    "economic_score": float(getattr(signal, 'economic_score', 50.0)),
-                    "var_95": float(getattr(signal, 'var_95', 5.0)),
-                    "correlation_spy": float(getattr(signal, 'correlation_spy', 0.7)),
-                    
-                    # Supporting data
-                    "fibonacci_levels": getattr(signal, 'fibonacci_levels', {}),
-                    "lstm_predictions": getattr(signal, 'lstm_predictions', {}),
-                    "ensemble_prediction": getattr(signal, 'ensemble_prediction', {}),
-                    "volume_profile": getattr(signal, 'volume_profile', {}),
-                    "economic_sentiment": getattr(signal, 'economic_sentiment', {}),
-                    "reasons": getattr(signal, 'reasons', []),
-                    "warnings": getattr(signal, 'warnings', []),
-                    "data_quality": getattr(signal, 'data_quality', 'unknown')
+                    "symbol": symbol,
+                    "signal_type": "ERROR",
+                    "confidence": 0.0,
+                    "error": str(e)
                 }
-            else:
-                # Already a dict
-                serialized[symbol] = signal
         
-        logger.info(f"📡 Serialized {len(serialized)} combined enhanced signals for frontend")
         return serialized
 
-manager = CombinedConnectionManager()
+manager = ProductionConnectionManager()
 
 # ========================================
-# COMBINED ENHANCED SIGNAL GENERATION LOOP
+# SIGNAL GENERATION LOOP
 # ========================================
-async def combined_signal_generation_loop():
-    """Combined enhanced background signal generation with all features"""
-    logger.info("🚀 Starting Combined Enhanced HYPER signal generation loop...")
+async def production_signal_generation_loop():
+    """Production signal generation with comprehensive error handling"""
+    logger.info("🚀 Starting production signal generation loop...")
+    
+    consecutive_errors = 0
+    max_consecutive_errors = 5
     
     while hyper_state.is_running:
         try:
-            loop_start_time = datetime.now()
-            logger.info("🧠 Generating combined enhanced signals for all tickers...")
+            loop_start_time = time.time()
             
+            # Update performance metrics
+            try:
+                import psutil
+                hyper_state.performance_metrics["memory_usage_mb"] = psutil.Process().memory_info().rss / 1024 / 1024
+                hyper_state.performance_metrics["cpu_usage_percent"] = psutil.cpu_percent()
+            except:
+                pass
+            
+            # Generate base signals
             if not hyper_state.signal_engine:
                 logger.error("❌ Signal engine not initialized")
                 await asyncio.sleep(30)
                 continue
             
-            # Generate signals with timing
-            start_time = datetime.now()
-            signals = await hyper_state.signal_engine.generate_all_signals()
-            generation_time = (datetime.now() - start_time).total_seconds()
+            start_time = time.time()
+            base_signals = await hyper_state.signal_engine.generate_all_signals()
+            base_generation_time = time.time() - start_time
             
-            # Update state and stats
-            hyper_state.current_signals = signals
+            # Generate ML enhanced signals if available
+            enhanced_signals = {}
+            ml_generation_time = 0
+            
+            if hyper_state.ml_enhanced_engine:
+                try:
+                    start_time = time.time()
+                    for symbol in config.TICKERS:
+                        if symbol in base_signals:
+                            enhanced_signal = await hyper_state.ml_enhanced_engine.enhanced_signal_generation(symbol)
+                            enhanced_signals[symbol] = enhanced_signal
+                    ml_generation_time = time.time() - start_time
+                    hyper_state.stats["ml_enhanced_signals"] += len(enhanced_signals)
+                except Exception as e:
+                    logger.error(f"❌ ML enhancement failed: {e}")
+                    enhanced_signals = {}
+            
+            # Update state
+            hyper_state.current_signals = base_signals
+            hyper_state.enhanced_signals = enhanced_signals
             hyper_state.last_update = datetime.now()
-            hyper_state.stats["total_signals_generated"] += len(signals)
+            hyper_state.stats["total_signals_generated"] += len(base_signals)
+            hyper_state.stats["successful_cycles"] += 1
             
-            # Analyze signal quality and calculate enhanced statistics
-            signals_with_data = 0
-            fallback_signals = 0
-            high_confidence_count = 0
-            confidence_sum = 0
-            ml_predictions = 0
-            anomalies = 0
-            vix_updates = 0
-            williams_signals = 0
-            fibonacci_calculations = 0
-            pattern_recognitions = 0
+            # Analyze signal quality
+            analyze_signal_quality(base_signals, enhanced_signals)
             
-            for symbol, signal in signals.items():
-                if hasattr(signal, 'price') and signal.price > 0:
-                    signals_with_data += 1
-                else:
-                    fallback_signals += 1
-                
-                confidence = getattr(signal, 'confidence', 0)
-                confidence_sum += confidence
-                
-                if confidence >= 80:
-                    high_confidence_count += 1
-                
-                # Count enhanced features
-                if hasattr(signal, 'lstm_predictions') and signal.lstm_predictions:
-                    ml_predictions += 1
-                if hasattr(signal, 'anomaly_score') and signal.anomaly_score > 20:
-                    anomalies += 1
-                if hasattr(signal, 'vix_sentiment') and signal.vix_sentiment != 'NEUTRAL':
-                    vix_updates += 1
-                if hasattr(signal, 'williams_r') and signal.williams_r != -50:
-                    williams_signals += 1
-                if hasattr(signal, 'fibonacci_levels') and signal.fibonacci_levels:
-                    fibonacci_calculations += 1
-                if hasattr(signal, 'pattern_score') and signal.pattern_score > 0:
-                    pattern_recognitions += 1
+            # Update performance metrics
+            total_loop_time = time.time() - loop_start_time
+            hyper_state.performance_metrics["avg_generation_time"] = (
+                hyper_state.performance_metrics["avg_generation_time"] * 0.9 + base_generation_time * 0.1
+            )
             
-            # Update enhanced statistics
-            hyper_state.stats.update({
-                "signals_with_data": signals_with_data,
-                "fallback_signals": fallback_signals,
-                "average_confidence": confidence_sum / len(signals) if signals else 0,
-                "high_confidence_signals": high_confidence_count,
-                "ml_predictions_made": ml_predictions,
-                "anomalies_detected": anomalies,
-                "vix_sentiment_updates": vix_updates,
-                "williams_r_signals": williams_signals,
-                "fibonacci_levels_calculated": fibonacci_calculations,
-                "pattern_recognitions": pattern_recognitions
-            })
-            
-            # Log detailed signal information
-            signal_details = []
-            for symbol, signal in signals.items():
-                if hasattr(signal, '__dict__'):
-                    signal_type = getattr(signal, 'signal_type', 'HOLD')
-                    confidence = getattr(signal, 'confidence', 0.0)
-                    price = getattr(signal, 'price', 0.0)
-                    williams = getattr(signal, 'williams_r', -50)
-                    vix_sentiment = getattr(signal, 'vix_sentiment', 'N/A')
-                    ml_conf = getattr(signal, 'ml_score', 50)
-                    
-                    detail = f"{symbol}: {signal_type} ({confidence:.1f}%) ${price:.2f} [W%R:{williams:.0f}, VIX:{vix_sentiment}, ML:{ml_conf:.0f}]"
-                    signal_details.append(detail)
-                else:
-                    signal_details.append(f"{symbol}: {signal}")
-            
-            logger.info(f"Generated signals: {', '.join(signal_details)}")
-            logger.info(f"⏱️ Generation time: {generation_time:.2f}s")
-            logger.info(f"📊 Data quality: {signals_with_data}/{len(signals)} with real data")
-            logger.info(f"🎯 High confidence: {high_confidence_count}/{len(signals)} signals")
-            logger.info(f"🧠 Enhanced features: ML:{ml_predictions}, VIX:{vix_updates}, Williams:{williams_signals}, Patterns:{pattern_recognitions}")
-            
-            # Check performance thresholds
-            total_loop_time = (datetime.now() - loop_start_time).total_seconds()
-            max_time = config.PERFORMANCE_THRESHOLDS.get("total_update_cycle_max_time", 30.0) if hasattr(config, 'PERFORMANCE_THRESHOLDS') else 30.0
-            if total_loop_time > max_time:
-                logger.warning(f"⚠️ Slow update cycle: {total_loop_time:.2f}s (threshold: {max_time}s)")
+            # Log signal summary
+            log_signal_summary(base_signals, enhanced_signals, base_generation_time, ml_generation_time)
             
             # Broadcast to clients
             await manager.broadcast({
                 "type": "signal_update",
-                "signals": manager._serialize_combined_signals(signals),
+                "signals": manager.serialize_signals(base_signals),
+                "enhanced_signals": manager.serialize_signals(enhanced_signals),
                 "timestamp": hyper_state.last_update.isoformat(),
                 "stats": hyper_state.stats.copy(),
-                "generation_time": generation_time,
-                "performance": {
-                    "signals_per_second": len(signals) / generation_time if generation_time > 0 else 0,
-                    "total_loop_time": total_loop_time,
-                    "enhanced_features_active": williams_signals + fibonacci_calculations + pattern_recognitions
+                "performance": hyper_state.performance_metrics.copy(),
+                "generation_times": {
+                    "base_signals": base_generation_time,
+                    "ml_enhanced": ml_generation_time,
+                    "total_loop": total_loop_time
                 }
             })
+            
+            # Reset error counter on success
+            consecutive_errors = 0
             
             # Wait for next update
             await asyncio.sleep(config.UPDATE_INTERVALS["signal_generation"])
             
         except Exception as e:
-            logger.error(f"💥 Error in combined signal generation loop: {e}")
-            import traceback
-            logger.error(f"📋 Traceback: {traceback.format_exc()}")
-            await asyncio.sleep(30)  # Wait longer on error
+            consecutive_errors += 1
+            hyper_state.stats["errors_encountered"] += 1
+            
+            logger.error(f"💥 Error in signal generation loop (#{consecutive_errors}): {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            
+            # Exponential backoff on repeated errors
+            if consecutive_errors >= max_consecutive_errors:
+                logger.critical(f"🚨 Too many consecutive errors ({consecutive_errors}). System may be unstable.")
+                await asyncio.sleep(300)  # 5 minute pause
+            else:
+                await asyncio.sleep(30 * consecutive_errors)  # Escalating delay
+
+def analyze_signal_quality(base_signals, enhanced_signals):
+    """Analyze signal quality metrics"""
+    signals_with_data = 0
+    fallback_signals = 0
+    high_confidence_count = 0
+    confidence_sum = 0
+    
+    for symbol, signal in base_signals.items():
+        if hasattr(signal, 'price') and signal.price > 0:
+            signals_with_data += 1
+        else:
+            fallback_signals += 1
+        
+        confidence = getattr(signal, 'confidence', 0)
+        confidence_sum += confidence
+        
+        if confidence >= 80:
+            high_confidence_count += 1
+    
+    # Update statistics
+    signal_count = len(base_signals) if base_signals else 1
+    hyper_state.stats.update({
+        "signals_with_data": signals_with_data,
+        "fallback_signals": fallback_signals,
+        "average_confidence": confidence_sum / signal_count,
+        "high_confidence_signals": high_confidence_count
+    })
+
+def log_signal_summary(base_signals, enhanced_signals, base_time, ml_time):
+    """Log comprehensive signal summary"""
+    signal_details = []
+    for symbol, signal in base_signals.items():
+        if hasattr(signal, '__dict__'):
+            signal_type = getattr(signal, 'signal_type', 'HOLD')
+            confidence = getattr(signal, 'confidence', 0.0)
+            price = getattr(signal, 'price', 0.0)
+            signal_details.append(f"{symbol}:{signal_type}({confidence:.0f%)@${price:.2f}")
+        else:
+            signal_details.append(f"{symbol}:ERROR")
+    
+    logger.info(f"📊 Signals: {', '.join(signal_details)} (base: {base_time:.2f}s, ml: {ml_time:.2f}s)")
 
 # ========================================
-# API ROUTES (Enhanced)
+# API ROUTES
 # ========================================
 @app.get("/", response_class=HTMLResponse)
 async def get_frontend():
     """Serve the main trading interface"""
     try:
         if index_file.exists():
-            logger.info(f"📁 Serving index.html from: {index_file}")
             with open(index_file, "r", encoding="utf-8") as f:
                 content = f.read()
-                logger.info(f"✅ Successfully loaded index.html ({len(content)} characters)")
                 return HTMLResponse(content=content)
         else:
-            logger.error(f"❌ index.html not found at: {index_file}")
-            return HTMLResponse(
-                content="<h1>HYPER Trading System - Combined Enhanced</h1><p>Frontend not found</p>",
-                status_code=404
-            )
+            # Return embedded HTML if file doesn't exist
+            return HTMLResponse(content=get_embedded_html())
     except Exception as e:
         logger.error(f"❌ Error serving frontend: {e}")
         return HTMLResponse(content=f"<h1>Error: {str(e)}</h1>", status_code=500)
 
-@app.get("/health")
-async def health_check():
-    """Combined enhanced system health check"""
-    uptime = (datetime.now() - hyper_state.stats["uptime_start"]).total_seconds()
-    
-    return {
-        "status": "healthy",
-        "version": "2.5.0-COMBINED",
-        "is_running": hyper_state.is_running,
-        "connected_clients": len(manager.active_connections),
-        "last_update": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
-        "uptime_seconds": uptime,
-        "statistics": hyper_state.stats,
-        "performance": {
-            "signals_per_minute": hyper_state.stats["total_signals_generated"] / (uptime / 60) if uptime > 0 else 0,
-            "average_confidence": hyper_state.stats["average_confidence"],
-            "success_rate": (hyper_state.stats["signals_with_data"] / max(1, hyper_state.stats["total_signals_generated"])) * 100,
-            "enhanced_features_usage": {
-                "ml_predictions": hyper_state.stats["ml_predictions_made"],
-                "vix_updates": hyper_state.stats["vix_sentiment_updates"],
-                "williams_signals": hyper_state.stats["williams_r_signals"],
-                "fibonacci_calculations": hyper_state.stats["fibonacci_levels_calculated"],
-                "pattern_recognitions": hyper_state.stats["pattern_recognitions"]
-            }
-        },
-        "configuration": {
-            "tickers": config.TICKERS,
-            "signal_weights": getattr(config, 'SIGNAL_WEIGHTS', {}),
-            "system_initialized": hyper_state.signal_engine is not None,
-            "index_file_exists": index_file.exists(),
-            "api_key_configured": bool(config.ALPHA_VANTAGE_API_KEY)
-        },
-        "timestamp": datetime.now().isoformat()
-    }
-
-@app.get("/api/signals")
-async def get_current_signals():
-    """Get current combined enhanced signals for all tickers"""
-    return {
-        "signals": manager._serialize_combined_signals(hyper_state.current_signals),
-        "timestamp": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
-        "stats": hyper_state.stats.copy(),
-        "enhanced_features": {
-            "williams_r": True,
-            "vix_sentiment": True,
-            "fibonacci_levels": True,
-            "ml_predictions": True,
-            "pattern_recognition": True,
-            "market_structure": True
+def get_embedded_html():
+    """Get embedded HTML for the frontend"""
+    return """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYPER Trading System - Production</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #fff; 
+            min-height: 100vh;
+            padding: 20px;
         }
-    }
-
-@app.get("/api/signals/{symbol}")
-async def get_signal_for_symbol(symbol: str):
-    """Get combined enhanced signal for specific symbol"""
-    symbol = symbol.upper()
-    if symbol not in config.TICKERS:
-        raise HTTPException(status_code=404, detail=f"Symbol {symbol} not tracked")
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { 
+            font-size: 2.5em; 
+            background: linear-gradient(45deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .status { 
+            display: inline-block; 
+            padding: 8px 20px; 
+            border-radius: 25px; 
+            margin: 10px;
+            font-weight: bold;
+        }
+        .status.connected { background: #4CAF50; }
+        .status.disconnected { background: #f44336; }
+        .status.demo { background: #ff9800; }
+        
+        .signals-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
+            gap: 20px; 
+            margin-top: 20px; 
+        }
+        .signal-card { 
+            background: rgba(255, 255, 255, 0.1); 
+            border-radius: 15px; 
+            padding: 20px; 
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        .signal-card:hover { transform: translateY(-5px); }
+        .signal-card.buy { border-left: 5px solid #4CAF50; }
+        .signal-card.sell { border-left: 5px solid #f44336; }
+        .signal-card.hold { border-left: 5px solid #ff9800; }
+        
+        .signal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .symbol { font-size: 1.8em; font-weight: bold; }
+        .confidence { 
+            font-size: 1.2em; 
+            font-weight: bold; 
+            padding: 5px 15px; 
+            border-radius: 20px; 
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .price { font-size: 1.4em; color: #00d4ff; margin: 10px 0; }
+        .details { margin-top: 15px; }
+        .detail-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin: 5px 0; 
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .timestamp { color: #aaa; font-size: 0.9em; margin-top: 10px; }
+        
+        .stats-panel { 
+            background: rgba(255, 255, 255, 0.1); 
+            border-radius: 15px; 
+            padding: 20px; 
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px; 
+        }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 2em; font-weight: bold; color: #00ff88; }
+        .stat-label { color: #ccc; margin-top: 5px; }
+        
+        .warning { 
+            background: linear-gradient(45deg, #ff6b35, #f7931e); 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 20px 0; 
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .signals-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 HYPER Trading System</h1>
+            <div id="connection-status" class="status disconnected">Connecting...</div>
+            <div id="demo-status" class="status demo" style="display: none;">DEMO MODE</div>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ FOR EDUCATIONAL PURPOSES ONLY</strong><br>
+            This system provides trading signals for educational purposes. Not financial advice. Trade at your own risk.
+        </div>
+        
+        <div class="stats-panel">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div id="total-signals" class="stat-value">0</div>
+                    <div class="stat-label">Total Signals</div>
+                </div>
+                <div class="stat-item">
+                    <div id="avg-confidence" class="stat-value">0%</div>
+                    <div class="stat-label">Avg Confidence</div>
+                </div>
+                <div class="stat-item">
+                    <div id="high-confidence" class="stat-value">0</div>
+                    <div class="stat-label">High Confidence</div>
+                </div>
+                <div class="stat-item">
+                    <div id="clients-connected" class="stat-value">0</div>
+                    <div class="stat-label">Connected Clients</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="signals-container" class="signals-grid">
+            <!-- Signals will be populated here -->
+        </div>
+    </div>
     
-    if symbol in hyper_state.current_signals:
-        signal = hyper_state.current_signals[symbol]
-        return manager._serialize_combined_signals({symbol: signal})[symbol]
-    else:
-        raise HTTPException(status_code=404, detail=f"No signal available for {symbol}")
-
-@app.post("/api/start")
-async def start_system():
-    """Start the combined enhanced signal generation system"""
-    if hyper_state.is_running:
-        return {"status": "already_running", "message": "Combined Enhanced HYPER is already running"}
-    
-    if not hyper_state.signal_engine:
-        success = await hyper_state.initialize()
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to initialize Combined Enhanced HYPER system")
-    
-    hyper_state.is_running = True
-    hyper_state.stats["uptime_start"] = datetime.now()
-    
-    # Start background task
-    asyncio.create_task(combined_signal_generation_loop())
-    
-    logger.info("🚀 Combined Enhanced HYPER signal generation started")
-    return {"status": "started", "message": "Combined Enhanced HYPER signal generation started"}
-
-@app.post("/api/stop")
-async def stop_system():
-    """Stop the signal generation system"""
-    if not hyper_state.is_running:
-        return {"status": "not_running", "message": "HYPER is not running"}
-    
-    hyper_state.is_running = False
-    logger.info("⏸️ Combined Enhanced HYPER signal generation stopped")
-    return {"status": "stopped", "message": "Combined Enhanced HYPER signal generation stopped"}
-
-@app.post("/api/emergency-stop")
-async def emergency_stop():
-    """Emergency stop all operations"""
-    hyper_state.is_running = False
-    logger.warning("🚨 EMERGENCY STOP ACTIVATED")
-    return {"status": "emergency_stopped", "message": "Emergency stop activated"}
-
-# ========================================
-# WEBSOCKET ENDPOINT
-# ========================================
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """Combined enhanced WebSocket endpoint for real-time communication"""
-    await manager.connect(websocket)
-    
-    try:
-        while True:
-            data = await websocket.receive_text()
-            message = json.loads(data)
+    <script>
+        class HYPERTradingSystem {
+            constructor() {
+                this.ws = null;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.reconnectDelay = 5000;
+                this.connect();
+            }
             
-            if message.get("type") == "ping":
-                await manager.send_personal_message(websocket, {
-                    "type": "pong",
-                    "timestamp": datetime.now().isoformat()
-                })
+            connect() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                
+                this.ws = new WebSocket(wsUrl);
+                
+                this.ws.onopen = () => {
+                    console.log('Connected to HYPER Trading System');
+                    this.updateConnectionStatus(true);
+                    this.reconnectAttempts = 0;
+                };
+                
+                this.ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        this.handleMessage(data);
+                    } catch (e) {
+                        console.error('Error parsing message:', e);
+                    }
+                };
+                
+                this.ws.onclose = () => {
+                    console.log('Disconnected from HYPER Trading System');
+                    this.updateConnectionStatus(false);
+                    this.attemptReconnect();
+                };
+                
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+            }
             
-            elif message.get("type") == "request_signals":
-                await manager.send_personal_message(websocket, {
-                    "type": "signal_update",
-                    "signals": manager._serialize_combined_signals(hyper_state.current_signals),
-                    "timestamp": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
-                    "stats": hyper_state.stats.copy()
-                })
-    
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-    except Exception as e:
-        logger.error(f"❌ WebSocket error: {e}")
-        manager.disconnect(websocket)
-
-# ========================================
-# STARTUP/SHUTDOWN EVENTS
-# ========================================
-@app.on_event("startup")
-async def startup_event():
-    """Application startup with combined enhanced features"""
-    logger.info("🚀 Starting Combined Enhanced HYPER Trading System...")
-    
-    # Market status check
-    current_hour = datetime.now().hour
-    current_weekday = datetime.now().weekday()
-    
-    if current_weekday < 5:  # Monday-Friday
-        if 9 <= current_hour <= 16:
-            market_status = "OPEN"
-        elif 4 <= current_hour < 9:
-            market_status = "PRE_MARKET"
-        elif 16 < current_hour <= 20:
-            market_status = "AFTER_HOURS"
-        else:
-            market_status = "CLOSED"
-    else:
-        market_status = "WEEKEND"
-    
-    logger.info(f"📈 Market status: {market_status}")
-    
-    # Initialize the combined system
-    success = await hyper_state.initialize()
-    if not success:
-        logger.error("❌ Failed to initialize Combined Enhanced HYPER system")
-        return
-    
-    # Generate initial signals
-    logger.info("🧠 Generating initial combined enhanced signals...")
-    try:
-        initial_signals = await hyper_state.signal_engine.generate_all_signals()
-        hyper_state.current_signals = initial_signals
-        hyper_state.last_update = datetime.now()
-        
-        # Log initial signal summary
-        signal_types = {}
-        enhanced_features = 0
-        for signal in initial_signals.values():
-            signal_type = getattr(signal, 'signal_type', 'UNKNOWN')
-            signal_types[signal_type] = signal_types.get(signal_type, 0) + 1
+            attemptReconnect() {
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    console.log(`Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+                    setTimeout(() => this.connect(), this.reconnectDelay);
+                }
+            }
             
-            # Count enhanced features
-            if hasattr(signal, 'williams_r') and signal.williams_r != -50:
-                enhanced_features += 1
-        
-        logger.info(f"📊 Initial signals: {dict(signal_types)}")
-        logger.info(f"⚡ Enhanced features active: {enhanced_features}/{len(initial_signals)}")
-        logger.info("✅ Initial combined enhanced signals generated successfully")
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to generate initial signals: {e}")
-    
-    # Auto-start the system
-    hyper_state.is_running = True
-    hyper_state.stats["uptime_start"] = datetime.now()
-    asyncio.create_task(combined_signal_generation_loop())
-    
-    status_msg = f"Markets {market_status} - using {'live' if market_status == 'OPEN' else 'cached/demo'} data"
-    logger.info(f"🔥 Combined Enhanced HYPER signal generation auto-started! ({status_msg})")
-    logger.info("🎯 Combined Enhanced HYPER Trading System ready!")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Application shutdown with cleanup"""
-    logger.info("⏸️ Shutting down Combined Enhanced HYPER Trading System...")
-    hyper_state.is_running = False
-    
-    # Close WebSocket connections
-    for connection in manager.active_connections.copy():
-        try:
-            await connection.close()
-        except:
-            pass
-    
-    # Cleanup signal engine resources
-    if hyper_state.signal_engine and hasattr(hyper_state.signal_engine, 'cleanup'):
-        try:
-            await hyper_state.signal_engine.cleanup()
-            logger.info("🧹 Signal engine cleaned up")
-        except Exception as e:
-            logger.error(f"Cleanup error: {e}")
-    
-    # Log final statistics
-    if hyper_state.stats["total_signals_generated"] > 0:
-        uptime = (datetime.now() - hyper_state.stats["uptime_start"]).total_seconds()
-        signals_per_minute = hyper_state.stats["total_signals_generated"] / (uptime / 60) if uptime > 0 else 0
-        
-        logger.info(f"📊 Final statistics:")
-        logger.info(f"   • Total signals generated: {hyper_state.stats['total_signals_generated']}")
-        logger.info(f"   • Average confidence: {hyper_state.stats['average_confidence']:.1f}%")
-        logger.info(f"   • High confidence signals: {hyper_state.stats['high_confidence_signals']}")
-        logger.info(f"   • Enhanced features used: ML:{hyper_state.stats['ml_predictions_made']}, VIX:{hyper_state.stats['vix_sentiment_updates']}")
-        logger.info(f"   • Signals per minute: {signals_per_minute:.1f}")
-        logger.info(f"   • Uptime: {uptime:.0f} seconds")
-    
-    logger.info("👋 Combined Enhanced HYPER shutdown complete")
-
-# ========================================
-# MAIN ENTRY POINT
-# ========================================
-if __name__ == "__main__":
-    logger.info("🚀 Starting Combined Enhanced HYPER Trading System server...")
-    
-    uvicorn.run(
-        "main:app",
-        host=config.SERVER_CONFIG["host"],
-        port=config.SERVER_CONFIG["port"],
-        reload=config.SERVER_CONFIG.get("reload", False),
-        log_level="info"
-    )
+            updateConnectionStatus(connected) {
+                const statusEl = document.getElementById('connection-status');
+                if (connected) {
+                    statusEl.textContent = '✅ Connected';
+                    statusEl.className = 'status connected';
+                } else {
+                    statusEl.textContent = '❌ Disconnected';
+                    statusEl.className = 'status disconnected';
+                }
+            }
+            
+            handleMessage(data) {
+                switch (data.type) {
+                    case 'connection_established':
+                        console.log('Connection established:', data.message);
+                        if (data.demo_mode) {
+                            document.getElementById('demo-status').style.display = 'inline-block';
+                        }
+                        break;
+                    case 'signal_update':
+                        this.updateSignals(data.signals);
+                        this.updateStats(data.stats);
+                        break;
+                }
+            }
+            
+            updateSignals(signals) {
+                const container = document.getElementById('signals-container');
+                container.innerHTML = '';
+                
+                Object.entries(signals).forEach(([symbol, signal]) => {
+                    const card = this.createSignalCard(symbol, signal);
+                    container.appendChild(card);
+                });
+            }
+            
+            createSignalCard(symbol, signal) {
+                const card = document.createElement('div');
+                card.className = `signal-card ${signal.signal_type.toLowerCase()}`;
+                
+                const confidenceColor = signal.confidence >= 80 ? '#4CAF50' : 
+                                       signal.confidence >= 60 ? '#ff9800' : '#f44336';
+                
+                card.innerHTML = `
+                    <div class="signal-header">
+                        <div class="symbol">${symbol}</div>
+                        <div class="confidence" style="background-color: ${confidenceColor}">
+                            ${signal.confidence.toFixed(1)}%
+                        </div>
+                    </div>
+                    <div class="price">$${signal.price.toFixed(2)}</div>
+                    <div class="details">
+                        <div class="detail-row">
+                            <span>Signal:</span>
+                            <span>${signal.signal_type} ${signal.direction}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Technical Score:</span>
+                            <span>${signal.technical_score.toFixed(1)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Sentiment Score:</span>
+                            <span>${signal.sentiment_score.toFixed(1)}</span>
+                        </div>
+                        ${signal.ml_agreement && signal.ml_agreement !== 'UNKNOWN' ? `
+                        <div class="detail-row">
+                            <span>ML Agreement:</span>
+                            <span>${signal.ml_agreement}</span>
+                        </div>
+                        ` : ''}
+                        <div class="detail-row">
+                            <span>Data Quality:</span>
+                            <span>${signal.data_quality}</span>
+                        </div>
+                    </div>
+                    <div class="timestamp">${new Date(signal.timestamp).toLocaleString()}</div>
+                `;
+                
+                return card;
+            }
+            
+            updateStats(stats) {
