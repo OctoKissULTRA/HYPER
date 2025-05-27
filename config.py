@@ -6,612 +6,431 @@ import json
 import logging
 
 # ========================================
-# ENHANCED HYPER CONFIGURATION - MAXIMUM DATA EDITION
-# Professional-grade multi-source data configuration
+# HYPER CONFIGURATION v3.1 - ROBINHOOD ENHANCED
+# Clean, functional config for maximum performance
 # ========================================
 
 # ENVIRONMENT SETTINGS
-ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
 DEBUG_MODE = os.getenv("DEBUG", "false").lower() == "true"
-DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
+DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() == "true"
 
-# ========================================
-# ENHANCED API CREDENTIALS - MULTI-SOURCE
-# ========================================
-
-# Primary Data Sources
-ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "OKUH0GNJE410ONTC")
-FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
-POLYGON_API_KEY = os.getenv("POLYGON_API_KEY", "")
-
-# Robinhood (Retail Sentiment)
-ROBINHOOD_CONFIG = {
-    "username": os.getenv("ROBINHOOD_USERNAME", ""),
-    "password": os.getenv("ROBINHOOD_PASSWORD", ""),
-    "enable_login": os.getenv("ROBINHOOD_LOGIN", "false").lower() == "true"
-}
-
-# Social Media & News APIs
+# API CREDENTIALS
+ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "OKUH0GNJE410ONTC")  # Backup only
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
-REDDIT_CONFIG = {
-    "client_id": os.getenv("REDDIT_CLIENT_ID", ""),
-    "client_secret": os.getenv("REDDIT_SECRET", ""),
-    "user_agent": "HYPER:1.0.0 (by /u/hypertrader)"
-}
+REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")
+REDDIT_SECRET = os.getenv("REDDIT_SECRET", "")
 TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN", "")
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
 
-# Economic Data APIs
-FRED_API_KEY = os.getenv("FRED_API_KEY", "")
-QUANDL_API_KEY = os.getenv("QUANDL_API_KEY", "")
-
-# Alternative Data
-BENZINGA_API_KEY = os.getenv("BENZINGA_API_KEY", "")
-SEEKING_ALPHA_API_KEY = os.getenv("SEEKING_ALPHA_API_KEY", "")
-
-# ========================================
-# DATA SOURCE CONFIGURATION
-# ========================================
-
-DATA_SOURCES_CONFIG = {
-    "primary_sources": {
-        "robinhood": {
-            "enabled": True,
-            "priority": 1,
-            "features": ["quotes", "sentiment", "popularity", "options_flow"],
-            "rate_limit": 100,  # requests per minute
-            "timeout": 15,
-            "retry_attempts": 3
-        },
-        "alpha_vantage": {
-            "enabled": bool(ALPHA_VANTAGE_API_KEY),
-            "priority": 2,
-            "features": ["quotes", "fundamentals", "technical"],
-            "rate_limit": 5,
-            "timeout": 20,
-            "retry_attempts": 2
-        },
-        "finnhub": {
-            "enabled": bool(FINNHUB_API_KEY),
-            "priority": 3,
-            "features": ["quotes", "news", "sentiment", "fundamentals"],
-            "rate_limit": 60,
-            "timeout": 10,
-            "retry_attempts": 3
-        },
-        "polygon": {
-            "enabled": bool(POLYGON_API_KEY),
-            "priority": 4,
-            "features": ["quotes", "options", "crypto", "forex"],
-            "rate_limit": 200,
-            "timeout": 10,
-            "retry_attempts": 2
-        },
-        "yfinance": {
-            "enabled": True,
-            "priority": 5,
-            "features": ["quotes", "fundamentals", "historical"],
-            "rate_limit": 2000,
-            "timeout": 15,
-            "retry_attempts": 3
-        }
-    },
-    "news_sources": {
-        "newsapi": {
-            "enabled": bool(NEWS_API_KEY),
-            "sentiment_weight": 0.25,
-            "rate_limit": 1000
-        },
-        "finnhub_news": {
-            "enabled": bool(FINNHUB_API_KEY),
-            "sentiment_weight": 0.25,
-            "rate_limit": 60
-        },
-        "reddit": {
-            "enabled": bool(REDDIT_CONFIG["client_id"]),
-            "sentiment_weight": 0.30,
-            "subreddits": ["stocks", "investing", "SecurityAnalysis", "ValueInvesting"],
-            "rate_limit": 60
-        },
-        "twitter": {
-            "enabled": bool(TWITTER_BEARER_TOKEN),
-            "sentiment_weight": 0.20,
-            "rate_limit": 300
-        }
-    },
-    "fallback_chain": ["robinhood", "alpha_vantage", "yfinance", "finnhub", "polygon"],
-    "data_quality_thresholds": {
-        "minimum_sources": 2,
-        "price_deviation_limit": 0.01,  # 1% max deviation between sources
-        "volume_threshold": 1000,
-        "staleness_limit": 300  # 5 minutes max age
-    }
+# ROBINHOOD CONFIGURATION (NEW)
+ROBINHOOD_CONFIG = {
+    "rate_limit_delay": 2,              # Seconds between requests
+    "cache_duration": 30,               # Cache data for 30 seconds
+    "timeout": 15,                      # Request timeout
+    "retry_attempts": 3,                # Number of retries
+    "use_enhanced_features": True,      # Enable sentiment estimation
+    "respect_rate_limits": True,        # Be respectful to Robinhood
+    "log_requests": DEBUG_MODE          # Log requests in debug mode
 }
 
-# ========================================
-# ENHANCED ML CONFIGURATION
-# ========================================
-
-ENHANCED_ML_CONFIG = {
-    "enabled": True,
-    "models": {
-        "ensemble_voting": {
-            "enabled": True,
-            "models": ["random_forest", "xgboost", "lightgbm", "neural_network"],
-            "voting_strategy": "soft",  # soft or hard voting
-            "weight_optimization": True
-        },
-        "deep_learning": {
-            "enabled": True,
-            "lstm_enabled": True,
-            "sequence_length": 60,
-            "prediction_horizons": [1, 3, 5, 7, 14],
-            "hidden_layers": [128, 64, 32],
-            "dropout_rate": 0.2,
-            "batch_size": 32,
-            "epochs": 100,
-            "early_stopping_patience": 15
-        },
-        "traditional_ml": {
-            "random_forest": {
-                "n_estimators": 200,
-                "max_depth": 15,
-                "min_samples_split": 5,
-                "feature_importance_threshold": 0.01
-            },
-            "xgboost": {
-                "n_estimators": 150,
-                "max_depth": 8,
-                "learning_rate": 0.1,
-                "subsample": 0.8,
-                "colsample_bytree": 0.8
-            },
-            "lightgbm": {
-                "n_estimators": 150,
-                "max_depth": 10,
-                "learning_rate": 0.1,
-                "feature_fraction": 0.8,
-                "bagging_fraction": 0.8
-            }
-        }
-    },
-    "feature_engineering": {
-        "technical_indicators": 25,  # Number of technical indicators
-        "sentiment_features": 15,    # Sentiment-derived features
-        "fundamental_features": 10,  # Fundamental analysis features
-        "macro_features": 8,         # Macroeconomic features
-        "alternative_features": 12,  # Alternative data features
-        "lag_features": [1, 2, 3, 5, 7, 14],  # Lag periods
-        "rolling_windows": [5, 10, 20, 50],   # Rolling window sizes
-        "volatility_features": True,
-        "momentum_features": True,
-        "mean_reversion_features": True
-    },
-    "training": {
-        "update_frequency": 3600,  # Retrain every hour
-        "validation_split": 0.2,
-        "test_split": 0.1,
-        "cross_validation_folds": 5,
-        "hyperparameter_optimization": True,
-        "feature_selection": True,
-        "ensemble_optimization": True
-    },
-    "performance_monitoring": {
-        "accuracy_threshold": 0.65,
-        "precision_threshold": 0.60,
-        "recall_threshold": 0.60,
-        "f1_threshold": 0.60,
-        "sharpe_threshold": 1.0,
-        "max_drawdown_threshold": 0.15
-    }
+# DATA SOURCE CONFIGURATION (NEW)
+DATA_SOURCE_CONFIG = {
+    "primary_source": "robinhood",           # Use Robinhood as primary
+    "fallback_enabled": True,                # Keep fallback system
+    "cache_enabled": True,                   # Enable caching for performance
+    "quality_threshold": "fair",             # Minimum acceptable data quality
+    "source_timeout": 15,                    # Timeout for data requests
+    "fallback_quality": "enhanced"           # Use enhanced fallback data
 }
 
-# ========================================
-# ENHANCED TECHNICAL ANALYSIS
-# ========================================
+# TARGET TICKERS
+TICKERS = ["QQQ", "SPY", "NVDA", "AAPL", "MSFT"]
 
-ENHANCED_TECHNICAL_CONFIG = {
-    "indicators": {
-        # Trend Indicators
-        "moving_averages": {
-            "sma": [5, 10, 20, 50, 100, 200],
-            "ema": [9, 12, 20, 26, 50],
-            "wma": [10, 20],
-            "hull_ma": [9, 16, 21]
-        },
-        "trend_lines": {
-            "macd": {"fast": 12, "slow": 26, "signal": 9},
-            "adx": {"period": 14, "threshold": 25},
-            "aroon": {"period": 14},
-            "parabolic_sar": {"acceleration": 0.02, "maximum": 0.2}
-        },
-        
-        # Momentum Indicators
-        "momentum": {
-            "rsi": {"period": 14, "oversold": 30, "overbought": 70},
-            "stochastic": {
-                "k_period": 14, "d_period": 3,
-                "oversold": 20, "overbought": 80
-            },
-            "williams_r": {
-                "period": 14, "oversold": -80, "overbought": -20
-            },
-            "cci": {"period": 20, "oversold": -100, "overbought": 100},
-            "roc": {"period": 12},
-            "momentum": {"period": 10}
-        },
-        
-        # Volatility Indicators
-        "volatility": {
-            "bollinger_bands": {"period": 20, "std": 2},
-            "atr": {"period": 14},
-            "keltner_channels": {"period": 20, "multiplier": 2},
-            "donchian_channels": {"period": 20},
-            "vix_correlation": True
-        },
-        
-        # Volume Indicators
-        "volume": {
-            "obv": True,
-            "volume_ma": {"period": 20},
-            "money_flow": {"period": 14},
-            "volume_profile": True,
-            "accumulation_distribution": True,
-            "chaikin_oscillator": {"fast": 3, "slow": 10}
-        },
-        
-        # Support/Resistance
-        "levels": {
-            "fibonacci_retracements": True,
-            "pivot_points": True,
-            "support_resistance": {"lookback": 50},
-            "key_levels": True
-        }
-    },
-    "pattern_recognition": {
-        "enabled": True,
-        "patterns": [
-            "head_and_shoulders", "inverse_head_and_shoulders",
-            "double_top", "double_bottom",
-            "triangles", "flags", "pennants",
-            "cup_and_handle", "wedges"
-        ],
-        "confidence_threshold": 0.7
-    }
+# TRADING SAFETY
+PAPER_TRADING_ONLY = True
+MAX_POSITION_SIZE = 10000
+RISK_TOLERANCE = "MODERATE"
+
+# SIGNAL CONFIDENCE THRESHOLDS
+CONFIDENCE_THRESHOLDS = {
+    "HYPER_BUY": 85,     # 85-100% confidence UP
+    "SOFT_BUY": 65,      # 65-84% confidence UP  
+    "HOLD": 35,          # 35-64% confidence (unclear)
+    "SOFT_SELL": 65,     # 65-84% confidence DOWN
+    "HYPER_SELL": 85,    # 85-100% confidence DOWN
 }
 
-# ========================================
-# ENHANCED SENTIMENT ANALYSIS
-# ========================================
-
-ENHANCED_SENTIMENT_CONFIG = {
-    "enabled": True,
-    "sources": {
-        "news": {
-            "weight": 0.25,
-            "lookback_hours": 24,
-            "sentiment_models": ["vader", "textblob", "finbert"],
-            "keywords_tracking": True,
-            "entity_recognition": True
-        },
-        "social_media": {
-            "reddit": {
-                "weight": 0.30,
-                "subreddits": ["stocks", "investing", "SecurityAnalysis", "ValueInvesting", "wallstreetbets"],
-                "sentiment_threshold": 50,
-                "post_score_threshold": 10,
-                "comment_analysis": True
-            },
-            "twitter": {
-                "weight": 0.20,
-                "keywords": ["$AAPL", "$MSFT", "$NVDA", "$SPY", "$QQQ"],
-                "influencer_tracking": True,
-                "hashtag_analysis": True,
-                "retweet_weighting": True
-            }
-        },
-        "retail_sentiment": {
-            "robinhood_popularity": {
-                "weight": 0.15,
-                "ranking_impact": True,
-                "options_flow": True,
-                "holdings_analysis": True
-            }
-        },
-        "analyst_sentiment": {
-            "weight": 0.10,
-            "rating_changes": True,
-            "price_target_changes": True,
-            "upgrade_downgrade_impact": True
-        }
-    },
-    "aggregation": {
-        "method": "weighted_average",
-        "normalization": "z_score",
-        "decay_factor": 0.9,  # How quickly old sentiment decays
-        "momentum_tracking": True,
-        "contrarian_signals": True
-    }
-}
-
-# ========================================
-# MARKET STRUCTURE & MACRO ANALYSIS
-# ========================================
-
-MARKET_STRUCTURE_CONFIG = {
-    "enabled": True,
-    "breadth_indicators": {
-        "advance_decline": True,
-        "new_highs_lows": True,
-        "up_down_volume": True,
-        "breadth_thrust": {"threshold": 0.9},
-        "arms_index": True,
-        "mcclellan_oscillator": True
-    },
-    "sector_analysis": {
-        "sector_rotation": True,
-        "relative_strength": True,
-        "sector_etfs": ["XLK", "XLF", "XLE", "XLV", "XLI", "XLY", "XLP", "XLU", "XLB", "XLRE", "XLC"],
-        "leadership_tracking": True
-    },
-    "vix_analysis": {
-        "enabled": True,
-        "fear_greed_levels": {
-            "extreme_fear": 30,
-            "fear": 20,
-            "neutral": [12, 20],
-            "complacency": 12
-        },
-        "term_structure": True,
-        "put_call_ratio": True
-    },
-    "economic_indicators": {
-        "enabled": True,
-        "indicators": {
-            "gdp": {"weight": 0.20},
-            "unemployment": {"weight": 0.15},
-            "inflation": {"weight": 0.15},
-            "interest_rates": {"weight": 0.15},
-            "retail_sales": {"weight": 0.10},
-            "manufacturing_pmi": {"weight": 0.10},
-            "consumer_confidence": {"weight": 0.10},
-            "yield_curve": {"weight": 0.05}
-        }
-    }
-}
-
-# ========================================
 # ENHANCED SIGNAL WEIGHTS
-# Professional-grade multi-factor model
-# ========================================
-
-ENHANCED_SIGNAL_WEIGHTS = {
-    # Core Technical Analysis (40%)
-    "technical_trend": 0.15,          # Moving averages, MACD, ADX
-    "technical_momentum": 0.12,       # RSI, Stochastic, Williams %R
-    "technical_volatility": 0.08,     # Bollinger Bands, ATR
-    "technical_volume": 0.05,         # OBV, Volume indicators
-    
-    # Advanced ML Predictions (25%)
-    "ml_ensemble": 0.15,              # XGBoost, LightGBM, Random Forest
-    "deep_learning": 0.10,            # LSTM, Neural Networks
-    
-    # Multi-Source Sentiment (20%)
-    "news_sentiment": 0.05,           # News analysis
-    "social_sentiment": 0.06,         # Reddit, Twitter
-    "retail_sentiment": 0.05,         # Robinhood popularity
-    "analyst_sentiment": 0.04,        # Professional ratings
-    
-    # Market Structure (10%)
-    "market_breadth": 0.04,           # Advance/decline, breadth indicators
-    "sector_rotation": 0.03,          # Sector strength analysis
-    "vix_sentiment": 0.03,            # Fear/greed indicators
-    
-    # Risk & Macro (5%)
-    "economic_indicators": 0.02,      # GDP, inflation, employment
-    "risk_metrics": 0.02,             # VaR, correlation, volatility
-    "liquidity_analysis": 0.01        # Volume, spread analysis
+SIGNAL_WEIGHTS = {
+    "technical": 0.25,          # Technical analysis + enhanced indicators
+    "sentiment": 0.20,          # Multi-source sentiment analysis
+    "momentum": 0.15,           # Price momentum
+    "ml_prediction": 0.15,      # ML predictions + patterns
+    "market_structure": 0.10,   # Market breadth + sector rotation
+    "vix_sentiment": 0.08,      # VIX fear/greed
+    "economic": 0.05,           # Economic indicators
+    "risk_adjusted": 0.02       # Risk penalty
 }
 
-# Validate weights sum to 1.0
-assert abs(sum(ENHANCED_SIGNAL_WEIGHTS.values()) - 1.0) < 0.001, "Signal weights must sum to 1.0"
-
-# ========================================
-# ENHANCED CONFIDENCE THRESHOLDS
-# ========================================
-
-ENHANCED_CONFIDENCE_THRESHOLDS = {
-    "HYPER_BUY": 85,      # 85-100% confidence UP
-    "STRONG_BUY": 75,     # 75-84% confidence UP
-    "SOFT_BUY": 65,       # 65-74% confidence UP
-    "HOLD": 35,           # 35-64% confidence (unclear)
-    "SOFT_SELL": 65,      # 65-74% confidence DOWN
-    "STRONG_SELL": 75,    # 75-84% confidence DOWN
-    "HYPER_SELL": 85,     # 85-100% confidence DOWN
+# TECHNICAL INDICATOR SETTINGS
+TECHNICAL_PARAMS = {
+    # Core indicators
+    "rsi_period": 14,
+    "rsi_oversold": 30,
+    "rsi_overbought": 70,
+    "ema_short": 9,
+    "ema_long": 20,
+    "macd_fast": 12,
+    "macd_slow": 26,
+    "macd_signal": 9,
+    "bb_period": 20,
+    "bb_std": 2,
+    "volume_ma_period": 20,
+    
+    # Enhanced indicators
+    "williams_r_period": 14,
+    "williams_r_oversold": -80,
+    "williams_r_overbought": -20,
+    "stochastic_k_period": 14,
+    "stochastic_d_period": 3,
+    "stochastic_oversold": 20,
+    "stochastic_overbought": 80,
+    "fibonacci_lookback": 50,
+    "atr_period": 14,
+    "cci_period": 20,
+    "adx_period": 14,
+    "obv_period": 10
 }
 
-# ========================================
-# ENHANCED UPDATE INTERVALS
-# ========================================
-
-ENHANCED_UPDATE_INTERVALS = {
-    "real_time_data": 5,              # Every 5 seconds for price data
-    "technical_indicators": 30,        # Every 30 seconds
-    "sentiment_analysis": 60,          # Every minute
-    "ml_predictions": 300,             # Every 5 minutes
-    "market_structure": 180,           # Every 3 minutes
-    "economic_data": 3600,             # Every hour
-    "news_sentiment": 300,             # Every 5 minutes
-    "social_sentiment": 180,           # Every 3 minutes
-    "pattern_recognition": 60,         # Every minute
-    "risk_calculations": 300,          # Every 5 minutes
-    "model_retraining": 3600,          # Every hour
-    "performance_monitoring": 60       # Every minute
+# VIX SENTIMENT CONFIGURATION
+VIX_CONFIG = {
+    "extreme_fear_threshold": 30,      # VIX > 30 = Extreme Fear
+    "fear_threshold": 20,              # VIX 20-30 = Fear
+    "complacency_threshold": 12,       # VIX < 12 = Complacency
+    "contrarian_signal": True,         # Use VIX as contrarian indicator
+    "weight_adjustment": 0.1           # How much VIX affects other signals
 }
 
-# ========================================
-# TARGET TICKERS - EXPANDED
-# ========================================
-
-ENHANCED_TICKERS = {
-    "primary": ["QQQ", "SPY", "NVDA", "AAPL", "MSFT"],
-    "sector_etfs": ["XLK", "XLF", "XLE", "XLV", "XLI"],
-    "volatility": ["VIX", "UVXY", "SVXY"],
-    "crypto_proxies": ["MSTR", "COIN"],
-    "watchlist": ["TSLA", "GOOGL", "AMZN", "META", "NFLX"]
+# MARKET STRUCTURE ANALYSIS
+MARKET_STRUCTURE_CONFIG = {
+    "breadth_very_bullish": 0.9,      # 90%+ advancing stocks
+    "breadth_bullish": 0.6,           # 60%+ advancing stocks
+    "breadth_bearish": 0.4,           # <40% advancing stocks
+    "breadth_very_bearish": 0.1,      # <10% advancing stocks
+    "sector_rotation_lookback": 5,     # Days to analyze rotation
+    "volume_spike_threshold": 2.0,     # 2x normal volume = spike
+    "dark_pool_threshold": 0.4         # 40%+ dark pool ratio = institutional
 }
 
-# Main tickers (backward compatibility)
-TICKERS = ENHANCED_TICKERS["primary"]
-
-# ========================================
-# ENHANCED FEATURE FLAGS
-# ========================================
-
-ENHANCED_FEATURE_FLAGS = {
-    # Data Sources
-    "enable_multi_source_data": True,
-    "enable_robinhood_sentiment": True,
-    "enable_news_sentiment": bool(NEWS_API_KEY),
-    "enable_social_sentiment": bool(REDDIT_CONFIG["client_id"]),
-    "enable_fundamental_analysis": True,
-    "enable_options_flow": True,
-    
-    # ML Features
-    "enable_ensemble_ml": True,
-    "enable_deep_learning": True,
-    "enable_automated_feature_engineering": True,
-    "enable_hyperparameter_optimization": True,
-    "enable_model_interpretation": True,
-    
-    # Technical Analysis
-    "enable_advanced_technical": True,
-    "enable_pattern_recognition": True,
-    "enable_support_resistance": True,
-    "enable_fibonacci_analysis": True,
-    
-    # Market Analysis
-    "enable_market_structure": True,
-    "enable_sector_analysis": True,
-    "enable_vix_analysis": True,
-    "enable_economic_indicators": True,
-    
-    # Risk & Performance
-    "enable_risk_management": True,
-    "enable_performance_attribution": True,
-    "enable_backtesting": True,
-    "enable_walk_forward_analysis": True,
-    
-    # Production Features
-    "enable_real_time_alerts": True,
-    "enable_performance_monitoring": True,
-    "enable_model_drift_detection": True,
-    "enable_automated_reporting": True
+# ML CONFIGURATION
+ML_CONFIG = {
+    "enabled": True,
+    "lstm_sequence_length": 60,        # 60-day input sequences
+    "lstm_prediction_days": [1, 3, 5, 7, 14],  # Forecast horizons
+    "ensemble_models": ["RandomForest", "GradientBoost", "XGBoost", "Linear", "LSTM"],
+    "anomaly_contamination": 0.1,      # 10% expected anomalies
+    "pattern_confidence_threshold": 0.7,
+    "feature_importance_top_n": 10,
+    "model_retrain_interval": 86400,   # 24 hours
+    "min_training_samples": 100,       # Minimum samples before training
+    "cross_validation_folds": 5,
+    "early_stopping_patience": 10
 }
 
-# ========================================
-# ENHANCED PERFORMANCE TARGETS
-# ========================================
-
-PERFORMANCE_TARGETS = {
-    "signal_accuracy": 0.72,          # 72% accuracy target
-    "precision": 0.68,                # 68% precision
-    "recall": 0.65,                   # 65% recall
-    "f1_score": 0.66,                 # F1 score target
-    "sharpe_ratio": 1.5,              # Risk-adjusted returns
-    "max_drawdown": 0.12,             # Maximum 12% drawdown
-    "win_rate": 0.60,                 # 60% winning trades
-    "profit_factor": 1.8,             # Profit factor target
-    "calmar_ratio": 1.2,              # Risk-adjusted performance
-    "information_ratio": 0.8          # Active return vs tracking error
+# RISK MANAGEMENT CONFIGURATION
+RISK_CONFIG = {
+    "var_confidence_level": 0.05,      # 95% VaR
+    "max_drawdown_warning": 15.0,      # Warn if >15% drawdown risk
+    "correlation_warning": 0.9,        # Warn if correlation >90%
+    "volatility_percentile_high": 80,  # High vol = 80th percentile
+    "volatility_percentile_low": 20,   # Low vol = 20th percentile
+    "stress_test_scenarios": ["market_crash", "sector_rotation", "volatility_spike"],
+    "position_sizing_method": "kelly",  # kelly, fixed, percent_volatility
+    "max_portfolio_risk": 0.02,        # 2% max portfolio risk per trade
+    "stop_loss_percent": 0.05,         # 5% stop loss
+    "take_profit_ratio": 2.0           # 2:1 reward:risk ratio
 }
 
-# ========================================
-# SERVER & DEPLOYMENT CONFIG
-# ========================================
+# SENTIMENT ANALYSIS CONFIGURATION
+SENTIMENT_CONFIG = {
+    "enabled": True,
+    "news_sources": ["NewsAPI", "AlphaVantage", "Yahoo"],
+    "social_sources": ["Reddit", "Twitter", "StockTwits"],
+    "sentiment_lookback_hours": 24,
+    "sentiment_weights": {
+        "news": 0.4,
+        "reddit": 0.35,
+        "twitter": 0.25
+    },
+    "extreme_sentiment_threshold": 80,  # >80 or <20 = extreme
+    "sentiment_momentum_periods": [1, 3, 7],  # Days
+    "language_models": ["vader", "textblob", "finbert"],
+    "sentiment_decay_factor": 0.9,       # How quickly sentiment fades
+    # NEW: Robinhood retail sentiment
+    "robinhood_sentiment": {
+        "enabled": True,
+        "weight": 0.3,                   # Weight for retail sentiment
+        "popularity_threshold": 50,      # Top 50 = popular
+        "sentiment_boost": 1.2           # Boost factor for popular stocks
+    }
+}
 
+# GOOGLE TRENDS CONFIGURATION
+TRENDS_CONFIG = {
+    "enabled": True,
+    "timeframe": "now 7-d",
+    "geo": "US",
+    "keywords": {
+        "QQQ": ["QQQ ETF", "NASDAQ 100", "tech stocks", "technology sector"],
+        "SPY": ["SPY ETF", "S&P 500", "market index", "broad market"],
+        "NVDA": ["NVIDIA", "AI stocks", "graphics cards", "semiconductor"],
+        "AAPL": ["Apple", "iPhone", "Apple stock", "consumer tech"],
+        "MSFT": ["Microsoft", "Azure", "cloud computing", "enterprise software"],
+    },
+    "related_queries": True,
+    "sentiment_multiplier": 1.2,
+    "trend_momentum_weight": 0.3,
+    # NEW: Enhanced with retail behavior
+    "retail_influence": {
+        "enabled": True,
+        "social_buzz_weight": 0.4,
+        "momentum_amplification": 1.5
+    }
+}
+
+# UPDATE INTERVALS (Optimized for Robinhood)
+UPDATE_INTERVALS = {
+    "market_data": 30 if ENVIRONMENT == "production" else 60,
+    "advanced_technical": 120,      # Advanced indicators every 2 minutes
+    "sentiment_analysis": 300,      # Sentiment every 5 minutes
+    "market_structure": 180,        # Market breadth every 3 minutes
+    "economic_data": 3600,          # Economic data every hour
+    "ml_predictions": 600,          # ML predictions every 10 minutes
+    "signal_generation": 15 if ENVIRONMENT == "production" else 30,
+    "websocket_ping": 30,           # WebSocket keepalive
+    "risk_calculations": 300,       # Risk metrics every 5 minutes
+    "google_trends": 300,           # Google Trends every 5 minutes
+    "vix_analysis": 180,            # VIX analysis every 3 minutes
+    "database_cleanup": 86400,      # Daily cleanup
+    "model_training": 3600,         # Hourly ML training check
+    "performance_monitoring": 60,   # Performance metrics every minute
+    # NEW: Robinhood specific
+    "robinhood_data": 30,           # Robinhood data every 30 seconds
+    "robinhood_sentiment": 300,     # Robinhood sentiment every 5 minutes
+    "fallback_check": 600           # Check if API is back every 10 minutes
+}
+
+# RATE LIMITS (Robinhood Optimized)
+RATE_LIMITS = {
+    "robinhood_requests_per_minute": 30,    # Conservative rate limiting
+    "alpha_vantage_calls_per_minute": 5,    # Backup only
+    "news_api_calls_per_hour": 100,
+    "reddit_api_calls_per_minute": 60,
+    "twitter_api_calls_per_hour": 300,
+    "google_trends_requests_per_hour": 100,
+    "websocket_connections_max": 100,
+    "api_requests_per_user_per_minute": 60
+}
+
+# SERVER CONFIGURATION
 SERVER_CONFIG = {
     "host": "0.0.0.0",
     "port": int(os.getenv("PORT", 8000)),
     "debug": DEBUG_MODE,
-    "reload": False,  # Disabled for production
-    "workers": 1,
-    "max_connections": 1000,
-    "keepalive_timeout": 65,
-    "access_log": True,
+    "reload": DEBUG_MODE and ENVIRONMENT != "production",
+    "workers": int(os.getenv("WORKERS", "1")),
+    "max_connections": int(os.getenv("MAX_CONNECTIONS", "1000")),
+    "keepalive_timeout": int(os.getenv("KEEPALIVE_TIMEOUT", "65")),
+    "access_log": ENVIRONMENT == "production",
     "proxy_headers": True,
     "forwarded_allow_ips": "*"
 }
 
-# ========================================
 # LOGGING CONFIGURATION
-# ========================================
-
-ENHANCED_LOGGING_CONFIG = {
-    "level": os.getenv("LOG_LEVEL", "INFO"),
+LOGGING_CONFIG = {
+    "level": os.getenv("LOG_LEVEL", "INFO" if ENVIRONMENT == "production" else "DEBUG"),
     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": f"logs/hyper_{ENVIRONMENT}.log",
+    "max_size_mb": 50,
+    "backup_count": 30,
+    "enable_performance_logging": True,
+    "log_signal_details": DEBUG_MODE,
+    "log_api_calls": DEBUG_MODE,
+    "log_ml_training": True,
     "structured_logging": ENVIRONMENT == "production",
-    "performance_logging": True,
-    "ml_training_logs": True,
-    "data_quality_logs": True,
-    "signal_generation_logs": DEBUG_MODE,
-    "api_request_logs": DEBUG_MODE
+    # NEW: Data source logging
+    "log_data_quality": True,
+    "log_fallback_usage": True,
+    "log_cache_performance": DEBUG_MODE
+}
+
+# FEATURE FLAGS
+FEATURE_FLAGS = {
+    "enable_enhanced_signals": True,
+    "enable_advanced_technical": True,
+    "enable_williams_r": True,
+    "enable_stochastic": True,
+    "enable_vix_analysis": True,
+    "enable_fibonacci_levels": True,
+    "enable_lstm_predictions": ML_CONFIG["enabled"],
+    "enable_ensemble_voting": ML_CONFIG["enabled"],
+    "enable_sentiment_analysis": SENTIMENT_CONFIG["enabled"],
+    "enable_market_structure": True,
+    "enable_risk_metrics": True,
+    "enable_anomaly_detection": ML_CONFIG["enabled"],
+    "enable_pattern_recognition": ML_CONFIG["enabled"],
+    "enable_backtesting": True,
+    "enable_paper_trading": True,
+    "enable_real_trading": False,       # NEVER enable for safety
+    "enable_caching": True,
+    "enable_rate_limiting": True,
+    "enable_circuit_breaker": True,
+    # NEW: Robinhood features
+    "enable_robinhood_primary": True,
+    "enable_retail_sentiment": True,
+    "enable_popularity_tracking": True,
+    "enable_enhanced_fallback": True
+}
+
+# PERFORMANCE THRESHOLDS
+PERFORMANCE_THRESHOLDS = {
+    "signal_generation_max_time": 5.0,     # 5 seconds max
+    "api_response_max_time": 3.0,          # 3 seconds max
+    "ml_prediction_max_time": 2.0,         # 2 seconds max
+    "total_update_cycle_max_time": 15.0,   # 15 seconds max
+    "memory_usage_warning": 512,           # 512MB warning
+    "memory_usage_critical": 1024,         # 1GB critical
+    "cpu_usage_warning": 70,               # 70% CPU warning
+    "cpu_usage_critical": 90,              # 90% CPU critical
+    "disk_usage_warning": 80,              # 80% disk warning
+    "websocket_response_time": 1.0,        # 1s WebSocket response
+    "database_query_time": 0.5,            # 500ms DB query limit
+    "cache_hit_ratio_minimum": 0.8,        # 80% cache hit ratio
+    # NEW: Data source performance
+    "robinhood_response_time": 5.0,        # 5s max for Robinhood
+    "fallback_generation_time": 1.0,       # 1s max for fallback
+    "data_quality_minimum": "fair"         # Minimum acceptable quality
 }
 
 # ========================================
 # HELPER FUNCTIONS
 # ========================================
 
-def get_enabled_data_sources() -> List[str]:
-    """Get list of enabled data sources"""
-    return [
-        source for source, config in DATA_SOURCES_CONFIG["primary_sources"].items()
-        if config["enabled"]
-    ]
+def get_database_url() -> str:
+    """Get database connection URL"""
+    return f"sqlite:///hyper_{ENVIRONMENT}.db"
 
-def get_ml_model_config(model_name: str) -> Dict:
-    """Get configuration for specific ML model"""
-    return ENHANCED_ML_CONFIG["models"].get(model_name, {})
+def is_production() -> bool:
+    """Check if running in production"""
+    return ENVIRONMENT == "production"
+
+def is_demo_mode() -> bool:
+    """Check if running in demo mode"""
+    return DEMO_MODE
+
+def get_signal_threshold(signal_type: str) -> int:
+    """Get confidence threshold for signal type"""
+    return CONFIDENCE_THRESHOLDS.get(signal_type, 35)
+
+def get_ticker_keywords(ticker: str) -> List[str]:
+    """Get Google Trends keywords for ticker"""
+    return TRENDS_CONFIG["keywords"].get(ticker, [ticker])
+
+def is_high_confidence_signal(confidence: float, direction: str) -> str:
+    """Determine signal type based on confidence and direction"""
+    if direction.upper() == "UP":
+        if confidence >= CONFIDENCE_THRESHOLDS["HYPER_BUY"]:
+            return "HYPER_BUY"
+        elif confidence >= CONFIDENCE_THRESHOLDS["SOFT_BUY"]:
+            return "SOFT_BUY"
+    elif direction.upper() == "DOWN":
+        if confidence >= CONFIDENCE_THRESHOLDS["HYPER_SELL"]:
+            return "HYPER_SELL"
+        elif confidence >= CONFIDENCE_THRESHOLDS["SOFT_SELL"]:
+            return "SOFT_SELL"
+    
+    return "HOLD"
 
 def is_feature_enabled(feature_name: str) -> bool:
-    """Check if enhanced feature is enabled"""
-    return ENHANCED_FEATURE_FLAGS.get(feature_name, False)
+    """Check if a specific feature is enabled"""
+    return FEATURE_FLAGS.get(feature_name, False)
 
-def validate_enhanced_config():
-    """Validate enhanced configuration"""
-    # Validate signal weights
-    total_weight = sum(ENHANCED_SIGNAL_WEIGHTS.values())
-    if abs(total_weight - 1.0) > 0.001:
-        raise ValueError(f"Enhanced signal weights must sum to 1.0, got {total_weight}")
-    
-    # Validate data sources
-    enabled_sources = get_enabled_data_sources()
-    if len(enabled_sources) < 2:
-        raise ValueError("At least 2 data sources must be enabled for redundancy")
-    
-    # Validate ML configuration
-    if ENHANCED_ML_CONFIG["enabled"] and not any(
-        model["enabled"] for model in ENHANCED_ML_CONFIG["models"].values()
-    ):
-        raise ValueError("At least one ML model must be enabled")
-    
-    return True
+def validate_config() -> bool:
+    """Enhanced configuration validation"""
+    try:
+        # Environment validation
+        if ENVIRONMENT not in ["development", "staging", "production"]:
+            raise ValueError(f"Invalid environment: {ENVIRONMENT}")
+        
+        # Production safety checks
+        if is_production():
+            if FEATURE_FLAGS["enable_real_trading"]:
+                raise ValueError("Real trading must never be enabled")
+        
+        # Check tickers are defined
+        if not TICKERS:
+            raise ValueError("No tickers configured")
+        
+        # Check signal weights sum to approximately 1.0
+        total_weight = sum(SIGNAL_WEIGHTS.values())
+        if abs(total_weight - 1.0) > 0.02:
+            raise ValueError(f"Signal weights must sum to 1.0, got {total_weight}")
+        
+        # Validate confidence thresholds
+        for signal_type, threshold in CONFIDENCE_THRESHOLDS.items():
+            if not (0 <= threshold <= 100):
+                raise ValueError(f"Invalid threshold for {signal_type}: {threshold}")
+        
+        # Validate technical parameters
+        for param, value in TECHNICAL_PARAMS.items():
+            if not isinstance(value, (int, float)):
+                raise ValueError(f"Invalid technical parameter {param}: {value}")
+            
+            if 'williams_r' in param and ('oversold' in param or 'overbought' in param):
+                if not (-100 <= value <= 0):
+                    raise ValueError(f"Williams %R {param} must be between -100 and 0: {value}")
+            elif 'period' in param and value <= 0:
+                raise ValueError(f"Invalid technical parameter {param}: {value}")
+        
+        return True
+        
+    except Exception as e:
+        logging.error(f"❌ Configuration validation error: {e}")
+        raise
+
+def get_enabled_features() -> List[str]:
+    """Get list of enabled features"""
+    return [feature for feature, enabled in FEATURE_FLAGS.items() if enabled]
 
 # ========================================
-# INITIALIZATION
+# AUTO-VALIDATE ON IMPORT
 # ========================================
-
-# Validate configuration on import
 try:
-    validate_enhanced_config()
-    enabled_sources = get_enabled_data_sources()
+    validate_config()
+    enabled_features = get_enabled_features()
     
-    print("🚀 ENHANCED HYPER CONFIGURATION LOADED")
-    print(f"📊 Data Sources: {len(enabled_sources)} enabled ({', '.join(enabled_sources)})")
-    print(f"🧠 ML Models: {len([m for m in ENHANCED_ML_CONFIG['models'] if ENHANCED_ML_CONFIG['models'][m].get('enabled')])} enabled")
-    print(f"📈 Technical Indicators: {sum(len(group) if isinstance(group, list) else len(group) if isinstance(group, dict) else 1 for group in ENHANCED_TECHNICAL_CONFIG['indicators'].values())}")
-    print(f"🎯 Performance Target: {PERFORMANCE_TARGETS['signal_accuracy']:.1%} accuracy")
-    print(f"⚡ Enhanced Features: {sum(ENHANCED_FEATURE_FLAGS.values())}/{len(ENHANCED_FEATURE_FLAGS)} enabled")
+    # Create logs directory
+    os.makedirs("logs", exist_ok=True)
     
+    print("✅ Enhanced HYPER configuration validated successfully")
+    print(f"🌍 Environment: {ENVIRONMENT}")
+    print(f"🔧 Demo mode: {DEMO_MODE}")
+    print(f"📱 Primary data source: Robinhood")
+    print(f"🔥 Enhanced features enabled: {len(enabled_features)}/{len(FEATURE_FLAGS)}")
+    print(f"📊 Signal components: {len(SIGNAL_WEIGHTS)} weighted factors")
+    print(f"🎯 Tracking: {', '.join(TICKERS)}")
+    print(f"⚡ Key features: Williams %R, VIX Analysis, ML Predictions, Retail Sentiment")
+    print(f"🛡️ Security: Rate limiting, input validation, CORS protection")
+    print(f"📈 Performance: Optimized for Robinhood + enhanced fallback")
+    
+    if is_production():
+        print("🚀 PRODUCTION MODE - Enhanced monitoring and security active")
+    elif DEMO_MODE:
+        print("🧪 DEMO MODE - Using enhanced fallback data when needed")
+    else:
+        print("🛠️ DEVELOPMENT MODE - Debug features enabled")
+        
 except Exception as e:
-    print(f"❌ Enhanced configuration validation failed: {e}")
+    print(f"❌ Configuration validation failed: {e}")
     raise
