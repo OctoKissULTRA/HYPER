@@ -11,6 +11,7 @@ from pathlib import Path
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 # Import configuration and components
@@ -33,7 +34,7 @@ logger = logging.getLogger(__name__)
 # FASTAPI APPLICATION
 # ========================================
 app = FastAPI(
-    title="⚡ HYPER Trading System - Production",
+    title="🌟 HYPERtrends - Production",
     description="Production-grade AI-powered trading signals",
     version="3.0.0-PRODUCTION"
 )
@@ -45,6 +46,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files (for serving index.html and assets)
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ========================================
 # GLOBAL STATE
@@ -160,7 +165,15 @@ class ConnectionManager:
                         "timestamp": getattr(signal, 'timestamp', datetime.now().isoformat()),
                         "technical_score": float(getattr(signal, 'technical_score', 50)),
                         "sentiment_score": float(getattr(signal, 'sentiment_score', 50)),
-                        "data_quality": getattr(signal, 'data_quality', 'unknown')
+                        "ml_score": float(getattr(signal, 'ml_score', 50)),
+                        "williams_r": float(getattr(signal, 'williams_r', -50)),
+                        "stochastic_k": float(getattr(signal, 'stochastic_k', 50)),
+                        "stochastic_d": float(getattr(signal, 'stochastic_d', 50)),
+                        "vix_sentiment": getattr(signal, 'vix_sentiment', 'NEUTRAL'),
+                        "risk_score": float(getattr(signal, 'risk_score', 50)),
+                        "data_quality": getattr(signal, 'data_quality', 'unknown'),
+                        "reasons": getattr(signal, 'reasons', []),
+                        "warnings": getattr(signal, 'warnings', [])
                     }
                 else:
                     serialized[symbol] = signal_data
@@ -231,131 +244,41 @@ async def signal_generation_loop():
 # ========================================
 @app.get("/", response_class=HTMLResponse)
 async def get_frontend():
-    html_content = '''
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HYPER Trading System</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: Arial, sans-serif; 
-            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
-            color: #fff; 
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { 
-            font-size: 2.5em; 
-            background: linear-gradient(45deg, #00d4ff, #00ff88);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-        .status { 
-            display: inline-block; 
-            padding: 8px 16px; 
-            margin: 5px; 
-            border-radius: 20px; 
-            font-weight: bold; 
-        }
-        .connected { background: #4CAF50; }
-        .disconnected { background: #f44336; }
-        .demo { background: #ff9800; }
-        
-        .signals-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
-            gap: 20px; 
-        }
-        .signal-card { 
-            background: rgba(255, 255, 255, 0.1); 
-            border-radius: 15px; 
-            padding: 20px; 
-            backdrop-filter: blur(10px);
-            border-left: 5px solid #ccc;
-        }
-        .signal-card.hyper_buy, .signal-card.soft_buy { border-left-color: #4CAF50; }
-        .signal-card.hyper_sell, .signal-card.soft_sell { border-left-color: #f44336; }
-        .signal-card.hold { border-left-color: #ff9800; }
-        
-        .symbol { font-size: 1.5em; font-weight: bold; margin-bottom: 10px; }
-        .confidence { font-size: 1.2em; margin: 10px 0; }
-        .price { font-size: 1.3em; color: #00d4ff; margin: 10px 0; }
-        .timestamp { color: #888; font-size: 0.8em; margin-top: 15px; }
-        
-        .warning { 
-            background: #ff5722; 
-            padding: 15px; 
-            margin: 20px 0; 
-            border-radius: 5px; 
-            text-align: center; 
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 HYPER Trading System</h1>
-            <div id="status" class="status disconnected">Connecting...</div>
-        </div>
-        
-        <div class="warning">
-            <strong>⚠️ EDUCATIONAL PURPOSES ONLY</strong><br>
-            This system provides signals for educational purposes. Not financial advice.
-        </div>
-        
-        <div id="signals" class="signals-grid"></div>
-    </div>
+    """Serve the HYPERtrends dashboard"""
+    try:
+        # Try to serve from index.html file
+        if os.path.exists("index.html"):
+            with open("index.html", "r", encoding="utf-8") as f:
+                return HTMLResponse(content=f.read())
+    except Exception as e:
+        logger.error(f"Error serving index.html: {e}")
     
-    <script>
-        const ws = new WebSocket(`ws${window.location.protocol === 'https:' ? 's' : ''}://${window.location.host}/ws`);
-        
-        ws.onopen = function() {
-            document.getElementById('status').innerHTML = '✅ Connected';
-            document.getElementById('status').className = 'status connected';
-        };
-        
-        ws.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            if (data.type === 'signal_update') {
-                displaySignals(data.signals);
-            }
-        };
-        
-        ws.onclose = function() {
-            document.getElementById('status').innerHTML = '❌ Disconnected';
-            document.getElementById('status').className = 'status disconnected';
-        };
-        
-        function displaySignals(signals) {
-            const container = document.getElementById('signals');
-            container.innerHTML = '';
-            
-            for (const [symbol, signal] of Object.entries(signals)) {
-                const card = document.createElement('div');
-                card.className = `signal-card ${signal.signal_type.toLowerCase().replace('_', '')}`;
-                
-                card.innerHTML = `
-                    <div class="symbol">${symbol}</div>
-                    <div class="confidence">Confidence: ${signal.confidence.toFixed(1)}%</div>
-                    <div class="price">$${signal.price.toFixed(2)}</div>
-                    <div>Signal: ${signal.signal_type} ${signal.direction}</div>
-                    <div class="timestamp">${new Date(signal.timestamp).toLocaleString()}</div>
-                `;
-                
-                container.appendChild(card);
-            }
-        }
-    </script>
-</body>
-</html>
+    # Fallback minimal HTML if file not found
+    fallback_html = '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>HYPERtrends</title>
+        <style>
+            body { font-family: Arial, sans-serif; background: #000; color: #00ffff; text-align: center; padding: 50px; }
+            h1 { font-size: 3em; margin-bottom: 20px; }
+        </style>
+    </head>
+    <body>
+        <h1>🌟 HYPERtrends</h1>
+        <p>Dashboard loading... Please ensure index.html is deployed correctly.</p>
+        <p>API Status: <span id="status">Checking...</span></p>
+        <script>
+            fetch('/health').then(r => r.json()).then(data => {
+                document.getElementById('status').textContent = data.status;
+            }).catch(e => {
+                document.getElementById('status').textContent = 'Error';
+            });
+        </script>
+    </body>
+    </html>
     '''
-    return HTMLResponse(content=html_content)
+    return HTMLResponse(content=fallback_html)
 
 @app.get("/health")
 async def health_check():
@@ -437,9 +360,35 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}")
         manager.disconnect(websocket)
 
+# Optional: Model testing endpoints (if available)
+@app.get("/api/testing/status")
+async def get_testing_status():
+    if hyper_state.testing_api:
+        return await hyper_state.testing_api.get_test_status()
+    return {"status": "unavailable", "message": "Testing framework not initialized"}
+
+@app.post("/api/testing/backtest")
+async def run_backtest(days: int = 7):
+    if hyper_state.testing_api:
+        return await hyper_state.testing_api.run_quick_backtest(days)
+    raise HTTPException(status_code=503, detail="Testing framework not available")
+
+# Optional: ML learning endpoints (if available)  
+@app.get("/api/ml/status")
+async def get_ml_status():
+    if hyper_state.learning_api:
+        return await hyper_state.learning_api.get_ml_status()
+    return {"status": "unavailable", "message": "ML learning not initialized"}
+
+@app.get("/api/ml/performance")
+async def get_ml_performance():
+    if hyper_state.learning_api:
+        return await hyper_state.learning_api.get_model_performance()
+    raise HTTPException(status_code=503, detail="ML learning not available")
+
 @app.on_event("startup")
 async def startup_event():
-    logger.info("🚀 Starting HYPER Trading System...")
+    logger.info("🚀 Starting HYPERtrends system...")
     
     success = await hyper_state.initialize()
     if success:
@@ -454,11 +403,11 @@ async def startup_event():
         hyper_state.is_running = True
         hyper_state.stats["uptime_start"] = datetime.now()
         asyncio.create_task(signal_generation_loop())
-        logger.info("🔥 HYPER system auto-started!")
+        logger.info("🔥 HYPERtrends system auto-started!")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("⏸️ Shutting down HYPER Trading System...")
+    logger.info("⏸️ Shutting down HYPERtrends system...")
     hyper_state.is_running = False
     
     for connection in manager.active_connections.copy():
@@ -470,10 +419,10 @@ async def shutdown_event():
     if hyper_state.data_aggregator and hasattr(hyper_state.data_aggregator, 'close'):
         await hyper_state.data_aggregator.close()
     
-    logger.info("👋 HYPER shutdown complete")
+    logger.info("👋 HYPERtrends shutdown complete")
 
 if __name__ == "__main__":
-    logger.info("🚀 Starting HYPER Trading System server...")
+    logger.info("🚀 Starting HYPERtrends server...")
     
     uvicorn.run(
         "main:app",
