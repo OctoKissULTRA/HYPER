@@ -16,7 +16,7 @@ import uvicorn
 
 # Import configuration and components
 import config
-from data_sources import HYPERDataAggregator
+from data_sources import HYPERDataAggregator  # Now Robinhood + Dynamic Simulation
 from signal_engine import HYPERSignalEngine, HYPERSignal
 from model_testing import ModelTester, TestingAPI
 from ml_learning import integrate_ml_learning, MLEnhancedSignalEngine, LearningAPI
@@ -34,9 +34,9 @@ logger = logging.getLogger(__name__)
 # FASTAPI APPLICATION
 # ========================================
 app = FastAPI(
-    title="🌟 HYPERtrends - Production",
-    description="Production-grade AI-powered trading signals",
-    version="3.0.0-PRODUCTION"
+    title="🌟 HYPERtrends - Robinhood Edition",
+    description="AI-powered trading signals with Robinhood integration",
+    version="4.0.0-ROBINHOOD"
 )
 
 app.add_middleware(
@@ -77,14 +77,17 @@ class ProductionHYPERState:
             "successful_cycles": 0,
             "errors_encountered": 0,
             "average_confidence": 0.0,
-            "last_error": None
+            "last_error": None,
+            "data_source_status": config.get_data_source_status(),
+            "robinhood_available": config.has_robinhood_credentials()
         }
     
     async def initialize(self):
-        logger.info("🚀 Initializing HYPER Trading System...")
+        logger.info("🚀 Initializing HYPER Trading System (Robinhood Edition)...")
         
         try:
-            self.data_aggregator = HYPERDataAggregator(config.ALPHA_VANTAGE_API_KEY)
+            # Initialize data aggregator (no API key needed - Robinhood + simulation)
+            self.data_aggregator = HYPERDataAggregator()
             if hasattr(self.data_aggregator, 'initialize'):
                 await self.data_aggregator.initialize()
             
@@ -104,6 +107,13 @@ class ProductionHYPERState:
                 logger.warning(f"⚠️ ML learning failed: {e}")
             
             config.validate_config()
+            
+            # Log data source status
+            if config.has_robinhood_credentials():
+                logger.info("✅ Robinhood credentials available - will attempt real data")
+            else:
+                logger.info("ℹ️ No Robinhood credentials - using dynamic simulation")
+            
             logger.info("✅ System initialized successfully")
             return True
             
@@ -219,6 +229,7 @@ async def signal_generation_loop():
             for symbol, signal in base_signals.items():
                 signal_type = getattr(signal, 'signal_type', 'HOLD')
                 confidence = getattr(signal, 'confidence', 0)
+                data_source = getattr(signal, 'data_quality', 'unknown')
                 signal_summary.append(f"{symbol}:{signal_type}({confidence:.0f}%)")
             
             logger.info(f"📊 Generated signals: {', '.join(signal_summary)} ({generation_time:.2f}s)")
@@ -229,7 +240,11 @@ async def signal_generation_loop():
                 "enhanced_signals": manager.serialize_signals(enhanced_signals),
                 "timestamp": hyper_state.last_update.isoformat(),
                 "stats": hyper_state.stats.copy(),
-                "generation_time": generation_time
+                "generation_time": generation_time,
+                "data_source_info": {
+                    "robinhood_available": config.has_robinhood_credentials(),
+                    "status": config.get_data_source_status()
+                }
             })
             
             await asyncio.sleep(config.UPDATE_INTERVALS["signal_generation"])
@@ -243,7 +258,6 @@ async def signal_generation_loop():
 # API ROUTES
 # ========================================
 
-
 @app.get("/health/status")
 async def get_health_status():
     symbol = "QQQ"
@@ -256,9 +270,11 @@ async def get_health_status():
             "source": data.get("quote", {}).get("data_source", "unknown"),
             "price": data.get("quote", {}).get("price"),
             "timestamp": data.get("quote", {}).get("timestamp"),
-            "fallback_used": data.get("quote", {}).get("data_source") != "robinhood",
+            "data_source_status": config.get_data_source_status(),
+            "robinhood_available": config.has_robinhood_credentials(),
             "api_status": data.get("api_status"),
-            "data_quality": data.get("data_quality")
+            "data_quality": data.get("data_quality"),
+            "ml_ready": data.get("ml_ready", True)
         }
     except Exception as e:
         logger.error(f"❌ Health check failed: {e}")
@@ -279,26 +295,32 @@ async def get_frontend():
         logger.error(f"Error serving index.html: {e}")
     
     # Fallback minimal HTML if file not found
-    fallback_html = '''
+    fallback_html = f'''
     <!DOCTYPE html>
     <html>
     <head>
-        <title>HYPERtrends</title>
+        <title>HYPERtrends - Robinhood Edition</title>
         <style>
-            body { font-family: Arial, sans-serif; background: #000; color: #00ffff; text-align: center; padding: 50px; }
-            h1 { font-size: 3em; margin-bottom: 20px; }
+            body {{ font-family: Arial, sans-serif; background: #000; color: #00ffff; text-align: center; padding: 50px; }}
+            h1 {{ font-size: 3em; margin-bottom: 20px; }}
+            .status {{ background: #111; padding: 20px; border-radius: 10px; margin: 20px 0; }}
         </style>
     </head>
     <body>
         <h1>🌟 HYPERtrends</h1>
-        <p>Dashboard loading... Please ensure index.html is deployed correctly.</p>
-        <p>API Status: <span id="status">Checking...</span></p>
+        <h2>Robinhood Edition</h2>
+        <div class="status">
+            <p>Dashboard loading... Please ensure index.html is deployed correctly.</p>
+            <p>Data Source: Robinhood + Dynamic Simulation</p>
+            <p>Robinhood Credentials: {'✅ Available' if config.has_robinhood_credentials() else '❌ Not provided'}</p>
+            <p>API Status: <span id="status">Checking...</span></p>
+        </div>
         <script>
-            fetch('/health').then(r => r.json()).then(data => {
+            fetch('/health').then(r => r.json()).then(data => {{
                 document.getElementById('status').textContent = data.status;
-            }).catch(e => {
+            }}).catch(e => {{
                 document.getElementById('status').textContent = 'Error';
-            });
+            }});
         </script>
     </body>
     </html>
@@ -311,15 +333,22 @@ async def health_check():
     
     return {
         "status": "healthy",
-        "version": "3.0.0-PRODUCTION",
+        "version": "4.0.0-ROBINHOOD",
         "environment": config.ENVIRONMENT,
         "demo_mode": config.DEMO_MODE,
+        "data_source": {
+            "primary": "robinhood",
+            "fallback": "dynamic_simulation",
+            "robinhood_credentials": config.has_robinhood_credentials(),
+            "status": config.get_data_source_status()
+        },
         "is_running": hyper_state.is_running,
         "uptime_seconds": uptime,
         "last_update": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
         "stats": hyper_state.stats,
         "tickers": config.TICKERS,
-        "connected_clients": len(manager.active_connections)
+        "connected_clients": len(manager.active_connections),
+        "alpha_vantage_removed": True
     }
 
 @app.get("/api/signals")
@@ -328,7 +357,11 @@ async def get_current_signals():
         "signals": manager.serialize_signals(hyper_state.current_signals),
         "enhanced_signals": manager.serialize_signals(hyper_state.enhanced_signals),
         "timestamp": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
-        "stats": hyper_state.stats
+        "stats": hyper_state.stats,
+        "data_source_info": {
+            "robinhood_available": config.has_robinhood_credentials(),
+            "status": config.get_data_source_status()
+        }
     }
 
 @app.get("/api/signals/{symbol}")
@@ -342,6 +375,23 @@ async def get_signal_for_symbol(symbol: str):
         return manager.serialize_signals({symbol: signal})[symbol]
     else:
         raise HTTPException(status_code=404, detail=f"No signal available for {symbol}")
+
+@app.get("/api/data-source/status")
+async def get_data_source_status():
+    """Get detailed data source status"""
+    return {
+        "primary_source": "robinhood",
+        "fallback_source": "dynamic_simulation",
+        "robinhood_credentials_available": config.has_robinhood_credentials(),
+        "current_status": config.get_data_source_status(),
+        "alpha_vantage_removed": True,
+        "simulation_features": {
+            "time_evolving_prices": True,
+            "market_regimes": True,
+            "correlated_movements": True,
+            "ml_ready_data": True
+        }
+    }
 
 @app.post("/api/start")
 async def start_system():
@@ -357,7 +407,11 @@ async def start_system():
     hyper_state.stats["uptime_start"] = datetime.now()
     asyncio.create_task(signal_generation_loop())
     
-    return {"status": "started", "message": "Signal generation started"}
+    return {
+        "status": "started", 
+        "message": "Signal generation started",
+        "data_source": config.get_data_source_status()
+    }
 
 @app.post("/api/stop")
 async def stop_system():
@@ -376,7 +430,8 @@ async def websocket_endpoint(websocket: WebSocket):
             if message.get("type") == "ping":
                 await websocket.send_text(json.dumps({
                     "type": "pong",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
+                    "data_source_status": config.get_data_source_status()
                 }))
     
     except WebSocketDisconnect:
@@ -413,7 +468,7 @@ async def get_ml_performance():
 
 @app.on_event("startup")
 async def startup_event():
-    logger.info("🚀 Starting HYPERtrends system...")
+    logger.info("🚀 Starting HYPERtrends system (Robinhood Edition)...")
     
     success = await hyper_state.initialize()
     if success:
@@ -428,7 +483,11 @@ async def startup_event():
         hyper_state.is_running = True
         hyper_state.stats["uptime_start"] = datetime.now()
         asyncio.create_task(signal_generation_loop())
-        logger.info("🔥 HYPERtrends system auto-started!")
+        
+        if config.has_robinhood_credentials():
+            logger.info("🔥 HYPERtrends system auto-started with Robinhood integration!")
+        else:
+            logger.info("🔥 HYPERtrends system auto-started with dynamic simulation!")
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -447,7 +506,7 @@ async def shutdown_event():
     logger.info("👋 HYPERtrends shutdown complete")
 
 if __name__ == "__main__":
-    logger.info("🚀 Starting HYPERtrends server...")
+    logger.info("🚀 Starting HYPERtrends server (Robinhood Edition)...")
     
     uvicorn.run(
         "main:app",
