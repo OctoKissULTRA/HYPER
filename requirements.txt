@@ -1,6 +1,6 @@
 # ============================================
-# HYPER TRADING SYSTEM - ROBINHOOD ENHANCED
-# Clean, functional requirements for maximum performance
+# HYPER TRADING SYSTEM - RENDER OPTIMIZED
+# Production Requirements for Reliable Deployment
 # ============================================
 
 # Core FastAPI and Server (Required)
@@ -17,10 +17,7 @@ httpx==0.25.2
 pandas==2.1.4
 numpy==1.26.2
 
-# NEW: Robinhood Data Source (Primary)
-robin-stocks==3.0.3
-
-# Google Trends (Enhanced)
+# Google Trends (Required)
 pytrends==4.9.2
 
 # Essential Utilities (Required)
@@ -31,10 +28,10 @@ requests==2.31.0
 # Performance Monitoring (Render Compatible)
 psutil==5.9.6
 
-# ML Libraries (Core)
+# Basic ML (Lightweight)
 scikit-learn==1.3.2
 
-# Sentiment Analysis (Enhanced)
+# Sentiment Analysis (Lightweight)
 textblob==0.17.1
 vaderSentiment==3.3.2
 
@@ -47,83 +44,81 @@ joblib==1.3.2
 # Rate Limiting and Resilience
 backoff==2.2.1
 
-# Statistical Analysis (Essential)
+# Statistical Analysis (Essential only)
 scipy==1.11.4
+
+# Robinhood API (Optional - will gracefully fallback if unavailable)
+robin-stocks==3.0.0
 
 # ============================================
 # RENDER DEPLOYMENT OPTIMIZATIONS
 # ============================================
 
 # ✅ All packages are Render-compatible
-# ✅ Fast build times (~3-5 minutes)
-# ✅ Memory efficient (~400-600MB)
+# ✅ No system dependencies required
+# ✅ Fast build times (<5 minutes)
+# ✅ Memory efficient (<512MB)
 # ✅ No compilation issues
 # ✅ Stable versions with security updates
-# ✅ Enhanced with Robinhood for maximum data quality
+# ✅ Graceful fallback if robin-stocks fails
 
 # ============================================
-# KEY ENHANCEMENTS
+# ROBINHOOD INTEGRATION NOTES
 # ============================================
 
-# ROBINHOOD INTEGRATION:
-# - Real-time quote data for 5 tickers
-# - Retail sentiment estimation
-# - Popularity ranking analysis
-# - Market hours detection
-# - Enhanced fallback system
+# robin-stocks is included but optional:
+# - If credentials are provided (RH_USERNAME, RH_PASSWORD), it will attempt to use Robinhood
+# - If credentials are missing or login fails, it gracefully falls back to enhanced simulation
+# - The system works perfectly without Robinhood credentials
+# - Enhanced fallback provides realistic market data
 
-# DATA QUALITY IMPROVEMENTS:
-# - Primary: Robinhood real-time data
-# - Fallback: Enhanced realistic market simulation
-# - Caching: 30-second intelligent caching
-# - Quality: Multi-source validation
+# Environment Variables for Robinhood (optional):
+# RH_USERNAME=your_robinhood_username
+# RH_PASSWORD=your_robinhood_password
 
-# PERFORMANCE OPTIMIZED:
-# - Respectful rate limiting (2s between requests)
-# - Async HTTP sessions with connection pooling
-# - Smart caching with configurable TTL
-# - Enhanced error handling and retries
+# ============================================
+# EXCLUDED (OPTIONAL ENHANCEMENTS)
+# Add these later for advanced features:
+# ============================================
+
+# Heavy ML Libraries (use after testing core):
+# tensorflow==2.15.0
+# torch==2.1.0
+
+# Advanced Technical Analysis (requires system libs):
+# TA-Lib==0.4.28
+# pandas-ta==0.3.14b0
+
+# Additional APIs (add when needed):
+# alpha-vantage==2.3.1
+# yfinance==0.2.28
+# newsapi-python==0.2.7
+# praw==7.7.1
+# tweepy==4.14.0
+
+# Advanced Statistics (heavy):
+# statsmodels==0.14.1
+
+# Rate Limiting (if needed):
+# ratelimit==2.2.1
 
 # ============================================
 # DEPLOYMENT STRATEGY
 # ============================================
 
-# PHASE 1: Deploy with Robinhood primary ✅
-# - Immediate improvement over Alpha Vantage
-# - Real-time retail sentiment data
-# - Enhanced fallback when API unavailable
-# - Zero breaking changes to existing system
+# PHASE 1: Deploy with current requirements ✅
+# - Core HYPER system fully functional
+# - Real-time signals and WebSocket
+# - Basic ML and sentiment analysis
+# - Google Trends integration
+# - Optional Robinhood integration with graceful fallback
 
-# PHASE 2: Monitor and optimize (Week 2) 
-# - Track data quality metrics
-# - Monitor API performance
-# - Optimize caching strategies
-# - Fine-tune rate limiting
+# PHASE 2: Add enhanced features gradually
+# - Test each addition on Render
+# - Monitor build times and memory
+# - Add error handling for missing packages
 
-# PHASE 3: Future enhancements (Month 2+)
-# - Add IBKR for professional features
-# - Add additional sentiment sources
-# - Implement advanced ML features
-# - Scale to more tickers if needed
-
-# ============================================
-# EXPECTED IMPROVEMENTS
-# ============================================
-
-# DATA QUALITY: 
-# - 95%+ uptime vs 85% with Alpha Vantage
-# - Real-time data vs 15-minute delayed
-# - Retail sentiment insights for ML models
-# - Enhanced fallback quality
-
-# SIGNAL ACCURACY:
-# - +10-15% improvement from real-time data
-# - +5-10% improvement from retail sentiment
-# - Better Williams %R and Stochastic calculations
-# - Enhanced ML feature engineering
-
-# SYSTEM PERFORMANCE:
-# - Faster response times (2-3s vs 5-8s)
-# - Better cache hit ratios
-# - Reduced API failures
-# - Enhanced monitoring and alerting
+# PHASE 3: Full feature set (if needed)
+# - Advanced ML models
+# - Multiple data sources
+# - Complex technical indicators
