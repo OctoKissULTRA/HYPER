@@ -1,19 +1,20 @@
-# ============================================
-# ENHANCED DATA SOURCES - ROBINHOOD PRIMARY
-# Clean replacement for Alpha Vantage + enhanced fallback
-# ============================================
 
+import os
+import logging
 import aiohttp
 import asyncio
-import logging
 import random
 import time
 import json
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 import robin_stocks.robinhood as rh
-import os
-# Login credentials from environment
+
+# Set up logging first
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+# Robinhood credentials from environment
 RH_USERNAME = os.getenv("RH_USERNAME")
 RH_PASSWORD = os.getenv("RH_PASSWORD")
 
@@ -22,21 +23,7 @@ try:
     logger.info("✅ Robinhood login successful.")
 except Exception as e:
     logger.warning(f"⚠️ Robinhood login failed: {e}")
-# Set up logging
-logger = logging.getLogger(__name__)
 
-class EnhancedRobinhoodClient:
-    """Enhanced Robinhood client - primary data source"""
-    
-    def __init__(self):
-        self.session = None
-        self.request_count = 0
-        self.last_request_time = 0
-        self.rate_limit_delay = 2  # 2 seconds between requests (respectful)
-        self.cache = {}
-        self.cache_duration = 30  # 30 seconds cache
-        
-        logger.info("📱 Enhanced Robinhood Client initialized")
         logger.info("🎯 Primary data source for HYPER system")
     
     async def create_session(self):
