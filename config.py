@@ -6,53 +6,64 @@ import json
 import logging
 
 # ========================================
-# HYPER CONFIGURATION v3.1 - ROBINHOOD ENHANCED
-# Clean, functional config for maximum performance
+# HYPER CONFIGURATION v4.0 - ROBINHOOD ONLY
 # ========================================
 
 # ENVIRONMENT SETTINGS
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development, staging, production
 DEBUG_MODE = os.getenv("DEBUG", "false").lower() == "true"
 DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() == "true"
 
-# API CREDENTIALS
-ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "OKUH0GNJE410ONTC")  # Backup only
+# ROBINHOOD CREDENTIALS (Primary Data Source)
+RH_USERNAME = os.getenv("RH_USERNAME", "")
+RH_PASSWORD = os.getenv("RH_PASSWORD", "")
+
+# Data source status
+if RH_USERNAME and RH_PASSWORD:
+    logging.info("✅ Robinhood credentials provided - will attempt real data")
+    DATA_SOURCE_STATUS = "robinhood_available"
+else:
+    logging.info("ℹ️ No Robinhood credentials - using dynamic simulation")
+    DATA_SOURCE_STATUS = "simulation_only"
+
+# Optional Enhanced API Keys (for future features)
 NEWS_API_KEY = os.getenv("NEWS_API_KEY", "")
 REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID", "")
 REDDIT_SECRET = os.getenv("REDDIT_SECRET", "")
 TWITTER_BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN", "")
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
+QUANDL_API_KEY = os.getenv("QUANDL_API_KEY", "")
 
-# ROBINHOOD CONFIGURATION (NEW)
-ROBINHOOD_CONFIG = {
-    "rate_limit_delay": 2,              # Seconds between requests
-    "cache_duration": 30,               # Cache data for 30 seconds
-    "timeout": 15,                      # Request timeout
-    "retry_attempts": 3,                # Number of retries
-    "use_enhanced_features": True,      # Enable sentiment estimation
-    "respect_rate_limits": True,        # Be respectful to Robinhood
-    "log_requests": DEBUG_MODE          # Log requests in debug mode
+# DATABASE CONFIGURATION
+DATABASE_CONFIG = {
+    "type": os.getenv("DB_TYPE", "sqlite"),  # sqlite, postgresql
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": int(os.getenv("DB_PORT", "5432")),
+    "database": os.getenv("DB_NAME", "hyper_trading.db"),
+    "username": os.getenv("DB_USER", ""),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "pool_size": int(os.getenv("DB_POOL_SIZE", "10")),
+    "ssl_mode": os.getenv("DB_SSL_MODE", "prefer")
 }
 
-# DATA SOURCE CONFIGURATION (NEW)
-DATA_SOURCE_CONFIG = {
-    "primary_source": "robinhood",           # Use Robinhood as primary
-    "fallback_enabled": True,                # Keep fallback system
-    "cache_enabled": True,                   # Enable caching for performance
-    "quality_threshold": "fair",             # Minimum acceptable data quality
-    "source_timeout": 15,                    # Timeout for data requests
-    "fallback_quality": "enhanced"           # Use enhanced fallback data
+# REDIS CONFIGURATION (for caching and rate limiting)
+REDIS_CONFIG = {
+    "host": os.getenv("REDIS_HOST", "localhost"),
+    "port": int(os.getenv("REDIS_PORT", "6379")),
+    "password": os.getenv("REDIS_PASSWORD", ""),
+    "db": int(os.getenv("REDIS_DB", "0")),
+    "ssl": os.getenv("REDIS_SSL", "false").lower() == "true"
 }
 
 # TARGET TICKERS
 TICKERS = ["QQQ", "SPY", "NVDA", "AAPL", "MSFT"]
 
 # TRADING SAFETY
-PAPER_TRADING_ONLY = True
-MAX_POSITION_SIZE = 10000
-RISK_TOLERANCE = "MODERATE"
+PAPER_TRADING_ONLY = True  # Never change this - system is for signals only
+MAX_POSITION_SIZE = 10000  # Maximum theoretical position size for risk calculations
+RISK_TOLERANCE = "MODERATE"  # CONSERVATIVE, MODERATE, AGGRESSIVE
 
-# SIGNAL CONFIDENCE THRESHOLDS
+# ENHANCED SIGNAL CONFIDENCE THRESHOLDS
 CONFIDENCE_THRESHOLDS = {
     "HYPER_BUY": 85,     # 85-100% confidence UP
     "SOFT_BUY": 65,      # 65-84% confidence UP  
@@ -61,7 +72,7 @@ CONFIDENCE_THRESHOLDS = {
     "HYPER_SELL": 85,    # 85-100% confidence DOWN
 }
 
-# ENHANCED SIGNAL WEIGHTS
+# SIGNAL WEIGHTS (Enhanced for Production)
 SIGNAL_WEIGHTS = {
     "technical": 0.25,          # Technical analysis + enhanced indicators
     "sentiment": 0.20,          # Multi-source sentiment analysis
@@ -73,7 +84,7 @@ SIGNAL_WEIGHTS = {
     "risk_adjusted": 0.02       # Risk penalty
 }
 
-# TECHNICAL INDICATOR SETTINGS
+# ENHANCED TECHNICAL INDICATOR SETTINGS
 TECHNICAL_PARAMS = {
     # Core indicators
     "rsi_period": 14,
@@ -123,7 +134,7 @@ MARKET_STRUCTURE_CONFIG = {
     "dark_pool_threshold": 0.4         # 40%+ dark pool ratio = institutional
 }
 
-# ML CONFIGURATION
+# ML & PATTERN RECOGNITION CONFIGURATION
 ML_CONFIG = {
     "enabled": True,
     "lstm_sequence_length": 60,        # 60-day input sequences
@@ -136,6 +147,21 @@ ML_CONFIG = {
     "min_training_samples": 100,       # Minimum samples before training
     "cross_validation_folds": 5,
     "early_stopping_patience": 10
+}
+
+# ECONOMIC INDICATORS CONFIGURATION
+ECONOMIC_CONFIG = {
+    "enabled": True,
+    "indicators": {
+        "gdp_growth": {"weight": 0.25, "bullish_threshold": 3.0, "bearish_threshold": 1.5},
+        "unemployment": {"weight": 0.20, "bullish_threshold": 4.0, "bearish_threshold": 5.5},
+        "inflation": {"weight": 0.20, "optimal_min": 2.0, "optimal_max": 3.0, "danger_threshold": 4.0},
+        "interest_rate": {"weight": 0.15, "neutral_range": [1.0, 3.0]},
+        "retail_sales": {"weight": 0.10, "bullish_threshold": 2.0, "bearish_threshold": -1.0},
+        "manufacturing_pmi": {"weight": 0.10, "expansion_threshold": 50, "strong_threshold": 55}
+    },
+    "update_frequency": 3600,          # Update every hour
+    "cache_duration": 14400            # Cache for 4 hours
 }
 
 # RISK MANAGEMENT CONFIGURATION
@@ -155,7 +181,7 @@ RISK_CONFIG = {
 # SENTIMENT ANALYSIS CONFIGURATION
 SENTIMENT_CONFIG = {
     "enabled": True,
-    "news_sources": ["NewsAPI", "AlphaVantage", "Yahoo"],
+    "news_sources": ["NewsAPI", "Robinhood", "Yahoo"],  # Updated sources
     "social_sources": ["Reddit", "Twitter", "StockTwits"],
     "sentiment_lookback_hours": 24,
     "sentiment_weights": {
@@ -166,14 +192,7 @@ SENTIMENT_CONFIG = {
     "extreme_sentiment_threshold": 80,  # >80 or <20 = extreme
     "sentiment_momentum_periods": [1, 3, 7],  # Days
     "language_models": ["vader", "textblob", "finbert"],
-    "sentiment_decay_factor": 0.9,       # How quickly sentiment fades
-    # NEW: Robinhood retail sentiment
-    "robinhood_sentiment": {
-        "enabled": True,
-        "weight": 0.3,                   # Weight for retail sentiment
-        "popularity_threshold": 50,      # Top 50 = popular
-        "sentiment_boost": 1.2           # Boost factor for popular stocks
-    }
+    "sentiment_decay_factor": 0.9       # How quickly sentiment fades
 }
 
 # GOOGLE TRENDS CONFIGURATION
@@ -190,50 +209,43 @@ TRENDS_CONFIG = {
     },
     "related_queries": True,
     "sentiment_multiplier": 1.2,
-    "trend_momentum_weight": 0.3,
-    # NEW: Enhanced with retail behavior
-    "retail_influence": {
-        "enabled": True,
-        "social_buzz_weight": 0.4,
-        "momentum_amplification": 1.5
-    }
+    "trend_momentum_weight": 0.3
 }
 
-# UPDATE INTERVALS (Optimized for Robinhood)
+# ROBINHOOD-OPTIMIZED UPDATE INTERVALS
 UPDATE_INTERVALS = {
-    "market_data": 30 if ENVIRONMENT == "production" else 60,
+    "market_data": 45 if ENVIRONMENT == "production" else 60,              # Robinhood rate limits
     "advanced_technical": 120,      # Advanced indicators every 2 minutes
     "sentiment_analysis": 300,      # Sentiment every 5 minutes
     "market_structure": 180,        # Market breadth every 3 minutes
     "economic_data": 3600,          # Economic data every hour
     "ml_predictions": 600,          # ML predictions every 10 minutes
-    "signal_generation": 15 if ENVIRONMENT == "production" else 30,
+    "signal_generation": 30 if ENVIRONMENT == "production" else 45,        # Signal generation
     "websocket_ping": 30,           # WebSocket keepalive
     "risk_calculations": 300,       # Risk metrics every 5 minutes
     "google_trends": 300,           # Google Trends every 5 minutes
     "vix_analysis": 180,            # VIX analysis every 3 minutes
     "database_cleanup": 86400,      # Daily cleanup
     "model_training": 3600,         # Hourly ML training check
-    "performance_monitoring": 60,   # Performance metrics every minute
-    # NEW: Robinhood specific
-    "robinhood_data": 30,           # Robinhood data every 30 seconds
-    "robinhood_sentiment": 300,     # Robinhood sentiment every 5 minutes
-    "fallback_check": 600           # Check if API is back every 10 minutes
+    "performance_monitoring": 60    # Performance metrics every minute
 }
 
-# RATE LIMITS (Robinhood Optimized)
+# ROBINHOOD-OPTIMIZED RATE LIMITS
 RATE_LIMITS = {
-    "robinhood_requests_per_minute": 30,    # Conservative rate limiting
-    "alpha_vantage_calls_per_minute": 5,    # Backup only
+    "robinhood_calls_per_minute": 30,     # Conservative Robinhood limits
+    "robinhood_calls_per_hour": 1000,     # Hourly limit
     "news_api_calls_per_hour": 100,
     "reddit_api_calls_per_minute": 60,
     "twitter_api_calls_per_hour": 300,
+    "vix_data_calls_per_hour": 100,
+    "economic_data_calls_per_hour": 50,
+    "ml_model_calls_per_minute": 30,
     "google_trends_requests_per_hour": 100,
     "websocket_connections_max": 100,
     "api_requests_per_user_per_minute": 60
 }
 
-# SERVER CONFIGURATION
+# SERVER CONFIGURATION (Production Ready)
 SERVER_CONFIG = {
     "host": "0.0.0.0",
     "port": int(os.getenv("PORT", 8000)),
@@ -247,7 +259,7 @@ SERVER_CONFIG = {
     "forwarded_allow_ips": "*"
 }
 
-# LOGGING CONFIGURATION
+# ENHANCED LOGGING CONFIGURATION
 LOGGING_CONFIG = {
     "level": os.getenv("LOG_LEVEL", "INFO" if ENVIRONMENT == "production" else "DEBUG"),
     "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -258,14 +270,23 @@ LOGGING_CONFIG = {
     "log_signal_details": DEBUG_MODE,
     "log_api_calls": DEBUG_MODE,
     "log_ml_training": True,
-    "structured_logging": ENVIRONMENT == "production",
-    # NEW: Data source logging
-    "log_data_quality": True,
-    "log_fallback_usage": True,
-    "log_cache_performance": DEBUG_MODE
+    "structured_logging": ENVIRONMENT == "production"
 }
 
-# FEATURE FLAGS
+# MONITORING & ALERTING
+MONITORING_CONFIG = {
+    "enabled": ENVIRONMENT == "production",
+    "metrics_endpoint": "/metrics",
+    "health_check_interval": 30,
+    "alert_email": os.getenv("ALERT_EMAIL", ""),
+    "slack_webhook": os.getenv("SLACK_WEBHOOK", ""),
+    "error_threshold": 10,              # Alert after 10 errors
+    "latency_threshold": 5.0,           # Alert if response > 5s
+    "memory_threshold": 1024,           # Alert at 1GB memory usage
+    "disk_threshold": 85                # Alert at 85% disk usage
+}
+
+# FEATURE FLAGS (Robinhood-Optimized)
 FEATURE_FLAGS = {
     "enable_enhanced_signals": True,
     "enable_advanced_technical": True,
@@ -277,6 +298,7 @@ FEATURE_FLAGS = {
     "enable_ensemble_voting": ML_CONFIG["enabled"],
     "enable_sentiment_analysis": SENTIMENT_CONFIG["enabled"],
     "enable_market_structure": True,
+    "enable_economic_indicators": ECONOMIC_CONFIG["enabled"],
     "enable_risk_metrics": True,
     "enable_anomaly_detection": ML_CONFIG["enabled"],
     "enable_pattern_recognition": ML_CONFIG["enabled"],
@@ -286,19 +308,16 @@ FEATURE_FLAGS = {
     "enable_caching": True,
     "enable_rate_limiting": True,
     "enable_circuit_breaker": True,
-    # NEW: Robinhood features
-    "enable_robinhood_primary": True,
-    "enable_retail_sentiment": True,
-    "enable_popularity_tracking": True,
-    "enable_enhanced_fallback": True
+    "enable_robinhood_data": True,      # Primary data source
+    "enable_dynamic_simulation": True   # Always available fallback
 }
 
-# PERFORMANCE THRESHOLDS
+# PERFORMANCE THRESHOLDS (Production)
 PERFORMANCE_THRESHOLDS = {
-    "signal_generation_max_time": 5.0,     # 5 seconds max
-    "api_response_max_time": 3.0,          # 3 seconds max
-    "ml_prediction_max_time": 2.0,         # 2 seconds max
-    "total_update_cycle_max_time": 15.0,   # 15 seconds max
+    "signal_generation_max_time": 5.0,     # Reduced for production
+    "api_response_max_time": 3.0,          # Stricter timeout
+    "ml_prediction_max_time": 2.0,         # Faster ML inference
+    "total_update_cycle_max_time": 15.0,   # Tighter cycle time
     "memory_usage_warning": 512,           # 512MB warning
     "memory_usage_critical": 1024,         # 1GB critical
     "cpu_usage_warning": 70,               # 70% CPU warning
@@ -306,20 +325,42 @@ PERFORMANCE_THRESHOLDS = {
     "disk_usage_warning": 80,              # 80% disk warning
     "websocket_response_time": 1.0,        # 1s WebSocket response
     "database_query_time": 0.5,            # 500ms DB query limit
-    "cache_hit_ratio_minimum": 0.8,        # 80% cache hit ratio
-    # NEW: Data source performance
-    "robinhood_response_time": 5.0,        # 5s max for Robinhood
-    "fallback_generation_time": 1.0,       # 1s max for fallback
-    "data_quality_minimum": "fair"         # Minimum acceptable quality
+    "cache_hit_ratio_minimum": 0.8         # 80% cache hit ratio
+}
+
+# SECURITY CONFIGURATION
+SECURITY_CONFIG = {
+    "api_key_rotation_days": 90,
+    "session_timeout_minutes": 60,
+    "max_failed_attempts": 5,
+    "lockout_duration_minutes": 15,
+    "require_https": ENVIRONMENT == "production",
+    "cors_origins": os.getenv("CORS_ORIGINS", "*").split(","),
+    "rate_limit_enabled": True,
+    "input_validation": True,
+    "sql_injection_protection": True,
+    "xss_protection": True
 }
 
 # ========================================
-# HELPER FUNCTIONS
+# HELPER FUNCTIONS (Updated)
 # ========================================
 
 def get_database_url() -> str:
     """Get database connection URL"""
-    return f"sqlite:///hyper_{ENVIRONMENT}.db"
+    if DATABASE_CONFIG["type"] == "sqlite":
+        return f"sqlite:///{DATABASE_CONFIG['database']}"
+    elif DATABASE_CONFIG["type"] == "postgresql":
+        return (f"postgresql://{DATABASE_CONFIG['username']}:{DATABASE_CONFIG['password']}"
+                f"@{DATABASE_CONFIG['host']}:{DATABASE_CONFIG['port']}/{DATABASE_CONFIG['database']}")
+    else:
+        raise ValueError(f"Unsupported database type: {DATABASE_CONFIG['type']}")
+
+def get_redis_url() -> str:
+    """Get Redis connection URL"""
+    protocol = "rediss" if REDIS_CONFIG["ssl"] else "redis"
+    auth = f":{REDIS_CONFIG['password']}@" if REDIS_CONFIG["password"] else ""
+    return f"{protocol}://{auth}{REDIS_CONFIG['host']}:{REDIS_CONFIG['port']}/{REDIS_CONFIG['db']}"
 
 def is_production() -> bool:
     """Check if running in production"""
@@ -329,108 +370,4 @@ def is_demo_mode() -> bool:
     """Check if running in demo mode"""
     return DEMO_MODE
 
-def get_signal_threshold(signal_type: str) -> int:
-    """Get confidence threshold for signal type"""
-    return CONFIDENCE_THRESHOLDS.get(signal_type, 35)
-
-def get_ticker_keywords(ticker: str) -> List[str]:
-    """Get Google Trends keywords for ticker"""
-    return TRENDS_CONFIG["keywords"].get(ticker, [ticker])
-
-def is_high_confidence_signal(confidence: float, direction: str) -> str:
-    """Determine signal type based on confidence and direction"""
-    if direction.upper() == "UP":
-        if confidence >= CONFIDENCE_THRESHOLDS["HYPER_BUY"]:
-            return "HYPER_BUY"
-        elif confidence >= CONFIDENCE_THRESHOLDS["SOFT_BUY"]:
-            return "SOFT_BUY"
-    elif direction.upper() == "DOWN":
-        if confidence >= CONFIDENCE_THRESHOLDS["HYPER_SELL"]:
-            return "HYPER_SELL"
-        elif confidence >= CONFIDENCE_THRESHOLDS["SOFT_SELL"]:
-            return "SOFT_SELL"
-    
-    return "HOLD"
-
-def is_feature_enabled(feature_name: str) -> bool:
-    """Check if a specific feature is enabled"""
-    return FEATURE_FLAGS.get(feature_name, False)
-
-def validate_config() -> bool:
-    """Enhanced configuration validation"""
-    try:
-        # Environment validation
-        if ENVIRONMENT not in ["development", "staging", "production"]:
-            raise ValueError(f"Invalid environment: {ENVIRONMENT}")
-        
-        # Production safety checks
-        if is_production():
-            if FEATURE_FLAGS["enable_real_trading"]:
-                raise ValueError("Real trading must never be enabled")
-        
-        # Check tickers are defined
-        if not TICKERS:
-            raise ValueError("No tickers configured")
-        
-        # Check signal weights sum to approximately 1.0
-        total_weight = sum(SIGNAL_WEIGHTS.values())
-        if abs(total_weight - 1.0) > 0.02:
-            raise ValueError(f"Signal weights must sum to 1.0, got {total_weight}")
-        
-        # Validate confidence thresholds
-        for signal_type, threshold in CONFIDENCE_THRESHOLDS.items():
-            if not (0 <= threshold <= 100):
-                raise ValueError(f"Invalid threshold for {signal_type}: {threshold}")
-        
-        # Validate technical parameters
-        for param, value in TECHNICAL_PARAMS.items():
-            if not isinstance(value, (int, float)):
-                raise ValueError(f"Invalid technical parameter {param}: {value}")
-            
-            if 'williams_r' in param and ('oversold' in param or 'overbought' in param):
-                if not (-100 <= value <= 0):
-                    raise ValueError(f"Williams %R {param} must be between -100 and 0: {value}")
-            elif 'period' in param and value <= 0:
-                raise ValueError(f"Invalid technical parameter {param}: {value}")
-        
-        return True
-        
-    except Exception as e:
-        logging.error(f"❌ Configuration validation error: {e}")
-        raise
-
-def get_enabled_features() -> List[str]:
-    """Get list of enabled features"""
-    return [feature for feature, enabled in FEATURE_FLAGS.items() if enabled]
-
-# ========================================
-# AUTO-VALIDATE ON IMPORT
-# ========================================
-try:
-    validate_config()
-    enabled_features = get_enabled_features()
-    
-    # Create logs directory
-    os.makedirs("logs", exist_ok=True)
-    
-    print("✅ Enhanced HYPER configuration validated successfully")
-    print(f"🌍 Environment: {ENVIRONMENT}")
-    print(f"🔧 Demo mode: {DEMO_MODE}")
-    print(f"📱 Primary data source: Robinhood")
-    print(f"🔥 Enhanced features enabled: {len(enabled_features)}/{len(FEATURE_FLAGS)}")
-    print(f"📊 Signal components: {len(SIGNAL_WEIGHTS)} weighted factors")
-    print(f"🎯 Tracking: {', '.join(TICKERS)}")
-    print(f"⚡ Key features: Williams %R, VIX Analysis, ML Predictions, Retail Sentiment")
-    print(f"🛡️ Security: Rate limiting, input validation, CORS protection")
-    print(f"📈 Performance: Optimized for Robinhood + enhanced fallback")
-    
-    if is_production():
-        print("🚀 PRODUCTION MODE - Enhanced monitoring and security active")
-    elif DEMO_MODE:
-        print("🧪 DEMO MODE - Using enhanced fallback data when needed")
-    else:
-        print("🛠️ DEVELOPMENT MODE - Debug features enabled")
-        
-except Exception as e:
-    print(f"❌ Configuration validation failed: {e}")
-    raise
+def has_robinhood_credentials() ->
