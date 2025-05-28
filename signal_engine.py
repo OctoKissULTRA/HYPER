@@ -66,7 +66,7 @@ class HYPERSignal:
     # Enhanced features for Robinhood integration
     enhanced_features: Dict[str, Any] = field(default_factory=dict)
     retail_sentiment: str = "NEUTRAL"
-    popularity_rank: Optional[int] = 
+    popularity_rank: Optional[int] = None
 class MLPredictor:
     """Machine Learning Predictions and Pattern Recognition"""
     
