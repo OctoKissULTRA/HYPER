@@ -370,4 +370,4 @@ def is_demo_mode() -> bool:
     """Check if running in demo mode"""
     return DEMO_MODE
 
-def has_robinhood_credentials() ->
+def has_robinhood_credentials() -> bool:
