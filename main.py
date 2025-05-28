@@ -242,6 +242,31 @@ async def signal_generation_loop():
 # ========================================
 # API ROUTES
 # ========================================
+
+
+@app.get("/health/status")
+async def get_health_status():
+    symbol = "QQQ"
+    logger.info("🔍 /health/status check triggered")
+    try:
+        data = await hyper_state.data_aggregator.get_comprehensive_data(symbol)
+        return {
+            "status": "online",
+            "symbol": symbol,
+            "source": data.get("quote", {}).get("data_source", "unknown"),
+            "price": data.get("quote", {}).get("price"),
+            "timestamp": data.get("quote", {}).get("timestamp"),
+            "fallback_used": data.get("quote", {}).get("data_source") != "robinhood",
+            "api_status": data.get("api_status"),
+            "data_quality": data.get("data_quality")
+        }
+    except Exception as e:
+        logger.error(f"❌ Health check failed: {e}")
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
 @app.get("/", response_class=HTMLResponse)
 async def get_frontend():
     """Serve the HYPERtrends dashboard"""
