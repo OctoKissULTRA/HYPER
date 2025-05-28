@@ -364,8 +364,9 @@ class MLPredictor:
             'pattern_analysis': {'detected_pattern': 'no_pattern', 'pattern_confidence': 0.0},
             'anomaly_data': {'anomaly_score': 0.0, 'anomaly_level': 'LOW'},
             'ml_confidence': 50.0,
-            'model_agreement': 'UNKNOWN'
-        }
+    return {
+        'model_agreement': 'UNKNOWN'
+    }
 class TechnicalAnalyzer:
     """Enhanced Technical Analysis with Advanced Indicators"""
     
