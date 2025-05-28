@@ -371,3 +371,166 @@ def is_demo_mode() -> bool:
     return DEMO_MODE
 
 def has_robinhood_credentials() -> bool:
+    """Check if Robinhood credentials are available"""
+    return bool(RH_USERNAME and RH_PASSWORD)
+
+def get_data_source_status() -> str:
+    """Get current data source status"""
+    return DATA_SOURCE_STATUS
+
+def get_signal_threshold(signal_type: str) -> int:
+    """Get confidence threshold for signal type"""
+    return CONFIDENCE_THRESHOLDS.get(signal_type, 35)
+
+def get_ticker_keywords(ticker: str) -> List[str]:
+    """Get Google Trends keywords for ticker"""
+    return TRENDS_CONFIG["keywords"].get(ticker, [ticker])
+
+def is_high_confidence_signal(confidence: float, direction: str) -> str:
+    """Determine signal type based on confidence and direction"""
+    if direction.upper() == "UP":
+        if confidence >= CONFIDENCE_THRESHOLDS["HYPER_BUY"]:
+            return "HYPER_BUY"
+        elif confidence >= CONFIDENCE_THRESHOLDS["SOFT_BUY"]:
+            return "SOFT_BUY"
+    elif direction.upper() == "DOWN":
+        if confidence >= CONFIDENCE_THRESHOLDS["HYPER_SELL"]:
+            return "HYPER_SELL"
+        elif confidence >= CONFIDENCE_THRESHOLDS["SOFT_SELL"]:
+            return "SOFT_SELL"
+    
+    return "HOLD"
+
+def get_enhanced_config() -> Dict:
+    """Get complete enhanced configuration"""
+    return {
+        "environment": ENVIRONMENT,
+        "demo_mode": DEMO_MODE,
+        "data_source": {
+            "primary": "robinhood",
+            "fallback": "dynamic_simulation",
+            "robinhood_credentials": has_robinhood_credentials(),
+            "status": get_data_source_status()
+        },
+        "database": DATABASE_CONFIG,
+        "redis": REDIS_CONFIG,
+        "signal_weights": SIGNAL_WEIGHTS,
+        "technical_params": TECHNICAL_PARAMS,
+        "vix_config": VIX_CONFIG,
+        "ml_config": ML_CONFIG,
+        "economic_config": ECONOMIC_CONFIG,
+        "risk_config": RISK_CONFIG,
+        "sentiment_config": SENTIMENT_CONFIG,
+        "feature_flags": FEATURE_FLAGS,
+        "rate_limits": RATE_LIMITS,
+        "update_intervals": UPDATE_INTERVALS,
+        "performance_thresholds": PERFORMANCE_THRESHOLDS,
+        "security_config": SECURITY_CONFIG,
+        "monitoring": MONITORING_CONFIG
+    }
+
+def validate_config() -> bool:
+    """Enhanced configuration validation (no Alpha Vantage)"""
+    try:
+        # Environment validation
+        if ENVIRONMENT not in ["development", "staging", "production"]:
+            raise ValueError(f"Invalid environment: {ENVIRONMENT}")
+        
+        # Production safety checks
+        if is_production():
+            if FEATURE_FLAGS["enable_real_trading"]:
+                raise ValueError("Real trading must never be enabled")
+            if not MONITORING_CONFIG["enabled"]:
+                raise ValueError("Monitoring must be enabled in production")
+        
+        # Check tickers are defined
+        if not TICKERS:
+            raise ValueError("No tickers configured")
+        
+        # Check signal weights sum to approximately 1.0
+        total_weight = sum(SIGNAL_WEIGHTS.values())
+        if abs(total_weight - 1.0) > 0.02:
+            raise ValueError(f"Signal weights must sum to 1.0, got {total_weight}")
+        
+        # Validate confidence thresholds
+        for signal_type, threshold in CONFIDENCE_THRESHOLDS.items():
+            if not (0 <= threshold <= 100):
+                raise ValueError(f"Invalid threshold for {signal_type}: {threshold}")
+        
+        # Validate technical parameters
+        for param, value in TECHNICAL_PARAMS.items():
+            if not isinstance(value, (int, float)):
+                raise ValueError(f"Invalid technical parameter {param}: {value}")
+            
+            # Williams %R special handling
+            if 'williams_r' in param and ('oversold' in param or 'overbought' in param):
+                if not (-100 <= value <= 0):
+                    raise ValueError(f"Williams %R {param} must be between -100 and 0: {value}")
+            elif 'period' in param or param in ['rsi_oversold', 'rsi_overbought', 'stochastic_oversold', 'stochastic_overbought']:
+                if value <= 0:
+                    raise ValueError(f"Invalid technical parameter {param}: {value}")
+        
+        # Validate VIX configuration
+        if VIX_CONFIG["extreme_fear_threshold"] <= VIX_CONFIG["fear_threshold"]:
+            raise ValueError("VIX extreme fear threshold must be higher than fear threshold")
+        
+        # Validate update intervals
+        for interval_name, interval_value in UPDATE_INTERVALS.items():
+            if not isinstance(interval_value, (int, float)) or interval_value <= 0:
+                raise ValueError(f"Invalid update interval {interval_name}: {interval_value}")
+        
+        # Validate database configuration
+        if DATABASE_CONFIG["type"] not in ["sqlite", "postgresql"]:
+            raise ValueError(f"Unsupported database type: {DATABASE_CONFIG['type']}")
+        
+        # Validate ML configuration
+        if ML_CONFIG["enabled"]:
+            if ML_CONFIG["min_training_samples"] < 50:
+                raise ValueError("Minimum training samples should be at least 50")
+            if not (0 < ML_CONFIG["anomaly_contamination"] < 0.5):
+                raise ValueError("Anomaly contamination must be between 0 and 0.5")
+        
+        return True
+        
+    except Exception as e:
+        logging.error(f"❌ Configuration validation error: {e}")
+        raise
+
+def get_enabled_features() -> List[str]:
+    """Get list of enabled enhanced features"""
+    return [feature for feature, enabled in FEATURE_FLAGS.items() if enabled]
+
+def is_feature_enabled(feature_name: str) -> bool:
+    """Check if a specific enhanced feature is enabled"""
+    return FEATURE_FLAGS.get(feature_name, False)
+
+# ========================================
+# AUTO-VALIDATE ON IMPORT
+# ========================================
+try:
+    validate_config()
+    enabled_features = get_enabled_features()
+    
+    # Create logs directory
+    os.makedirs("logs", exist_ok=True)
+    
+    print("✅ HYPER configuration validated successfully (Robinhood Edition)")
+    print(f"🌍 Environment: {ENVIRONMENT}")
+    print(f"🔧 Demo mode: {DEMO_MODE}")
+    print(f"📱 Data source: Robinhood + Dynamic Simulation")
+    print(f"🔐 Robinhood credentials: {'✅ Available' if has_robinhood_credentials() else '❌ Not provided'}")
+    print(f"🔥 Enhanced features enabled: {len(enabled_features)}/{len(FEATURE_FLAGS)}")
+    print(f"📊 Signal components: {len(SIGNAL_WEIGHTS)} weighted factors")
+    print(f"🎯 Tracking: {', '.join(TICKERS)}")
+    print(f"🚫 Alpha Vantage: Completely removed")
+    
+    if is_production():
+        print("🚀 PRODUCTION MODE - Enhanced monitoring and security active")
+    elif DEMO_MODE:
+        print("🧪 DEMO MODE - Using dynamic simulation")
+    else:
+        print("🛠️ DEVELOPMENT MODE - Debug features enabled")
+        
+except Exception as e:
+    print(f"❌ Configuration validation failed: {e}")
+    raise
