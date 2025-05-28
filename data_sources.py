@@ -12,7 +12,16 @@ import json
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 import robin_stocks.robinhood as rh
+import os
+# Login credentials from environment
+RH_USERNAME = os.getenv("RH_USERNAME")
+RH_PASSWORD = os.getenv("RH_PASSWORD")
 
+try:
+    rh.login(username=RH_USERNAME, password=RH_PASSWORD)
+    logger.info("✅ Robinhood login successful.")
+except Exception as e:
+    logger.warning(f"⚠️ Robinhood login failed: {e}")
 # Set up logging
 logger = logging.getLogger(__name__)
 
