@@ -181,7 +181,7 @@ class AdvancedVIXAnalyzer:
             logger.error(f"VIX data retrieval error: {e}")
             return {'current_vix': 20.0, 'vix9d': 19.0, 'vix3m': 21.0, 'vix6m': 22.0}
 
-async def _calculate_dynamic_vix(self, symbol: str, change_percent: float, volume: int) -> float:
+    async def _calculate_dynamic_vix(self, symbol: str, change_percent: float, volume: int) -> float:
         """Calculate dynamic VIX based on market conditions"""
         try:
             # Base VIX level (historical average around 18-20)
@@ -398,7 +398,7 @@ async def _calculate_dynamic_vix(self, symbol: str, change_percent: float, volum
             logger.error(f"Contrarian signal generation error: {e}")
             return "HOLD"
 
-def _calculate_mean_reversion_probability(self, current_vix: float, percentile_rank: float) -> float:
+    def _calculate_mean_reversion_probability(self, current_vix: float, percentile_rank: float) -> float:
         """Calculate probability of VIX mean reversion"""
         try:
             # VIX has strong mean reversion properties
@@ -483,10 +483,6 @@ def _calculate_mean_reversion_probability(self, current_vix: float, percentile_r
             return 0.0
     
     def _generate_vix_history(self, current_vix: float, days: int) -> List[float]:
-        """Generate realistic VIX history"""
-        try:
-
-def _generate_vix_history(self, current_vix: float, days: int) -> List[float]:
         """Generate realistic VIX history"""
         try:
             history = []
@@ -818,4 +814,3 @@ __all__ = ['AdvancedVIXAnalyzer', 'VIXAnalysis', 'VIXSignal']
 logger.info("😱 Advanced VIX Analysis module loaded successfully")
 logger.info("🎯 Fear/greed detection with contrarian signals enabled")
 logger.info("📊 VIX term structure and regime analysis active")
-
