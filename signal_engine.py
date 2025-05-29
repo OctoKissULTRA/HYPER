@@ -1,13 +1,19 @@
+# signal_engine.py - Modular HYPERtrends Signal Engine v4.0
 import logging
-import random
 import asyncio
-import numpy as np
-import aiohttp
-import json
-from datetime import datetime, timedelta
+import time
+from datetime import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
-import math
+
+# Import all modular components
+from technical_indicators import AdvancedTechnicalAnalyzer, TechnicalAnalysis
+from sentiment_analysis import AdvancedSentimentAnalyzer, SentimentAnalysis
+from vix_analysis import AdvancedVIXAnalyzer, VIXAnalysis
+from market_structure import AdvancedMarketStructureAnalyzer, MarketStructureAnalysis
+from risk_analysis import AdvancedRiskAnalyzer, RiskAnalysis
+
+import config
 
 logger = logging.getLogger(__name__)
 
@@ -21,16 +27,14 @@ class HYPERSignal:
     price: float
     timestamp: str
     
-    # Core signal component scores
+    # Core component scores
     technical_score: float
+    sentiment_score: float
     momentum_score: float
-    trends_score: float
-    volume_score: float
     ml_score: float
     
     # Enhanced v4.0 scores
-    sentiment_score: float = 50.0
-    pattern_score: float = 50.0
+    vix_score: float = 50.0
     market_structure_score: float = 50.0
     risk_score: float = 50.0
     
@@ -39,344 +43,566 @@ class HYPERSignal:
     stochastic_k: float = 50.0
     stochastic_d: float = 50.0
     vix_sentiment: str = "NEUTRAL"
-    put_call_ratio: float = 1.0
     
-    # Key levels and structure
-    fibonacci_levels: Dict[str, float] = field(default_factory=dict)
-    market_breadth: float = 50.0
-    sector_rotation: str = "NEUTRAL"
-    volume_profile: Dict[str, float] = field(default_factory=dict)
-    
-    # ML predictions
-    lstm_predictions: Dict[str, Any] = field(default_factory=dict)
-    ensemble_prediction: Dict[str, Any] = field(default_factory=dict)
-    anomaly_score: float = 0.0
-    
-    # Risk metrics
-    var_95: float = 5.0
-    max_drawdown_risk: float = 10.0
-    correlation_spy: float = 0.7
+    # Component analysis results
+    technical_analysis: Optional[TechnicalAnalysis] = None
+    sentiment_analysis: Optional[SentimentAnalysis] = None
+    vix_analysis: Optional[VIXAnalysis] = None
+    market_structure_analysis: Optional[MarketStructureAnalysis] = None
+    risk_analysis: Optional[RiskAnalysis] = None
     
     # Supporting data
-    indicators: Dict[str, Any] = field(default_factory=dict)
     reasons: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     data_quality: str = "unknown"
     
-    # Enhanced features for Robinhood integration
+    # Enhanced features for integration
     enhanced_features: Dict[str, Any] = field(default_factory=dict)
-    retail_sentiment: str = "NEUTRAL"
-    popularity_rank: Optional[int] = None
-class MLPredictor:
-    """Machine Learning Predictions and Pattern Recognition"""
+
+class HYPERSignalEngine:
+    """Modular HYPER Signal Engine - Orchestrates all analysis components"""
     
     def __init__(self):
-        self.model_cache = {}
-        logger.info("🧠 ML Predictor v4.0 initialized")
+        self.config = config
+        self.signal_cache = {}
+        self.cache_duration = 30  # 30 seconds
+        
+        # Initialize all modular analyzers
+        logger.info("🚀 Initializing HYPERtrends v4.0 Modular Signal Engine...")
+        
+        # Technical Analysis
+        if config.is_feature_enabled('enable_advanced_technical'):
+            self.technical_analyzer = AdvancedTechnicalAnalyzer(config.TECHNICAL_PARAMS)
+            logger.info("✅ Technical Analyzer loaded (25+ indicators)")
+        else:
+            self.technical_analyzer = None
+            logger.info("⚠️ Technical Analyzer disabled")
+        
+        # Sentiment Analysis
+        if config.is_feature_enabled('enable_sentiment_analysis'):
+            self.sentiment_analyzer = AdvancedSentimentAnalyzer(config.SENTIMENT_CONFIG)
+            logger.info("✅ Sentiment Analyzer loaded (multi-source NLP)")
+        else:
+            self.sentiment_analyzer = None
+            logger.info("⚠️ Sentiment Analyzer disabled")
+        
+        # VIX Analysis
+        if config.is_feature_enabled('enable_vix_analysis'):
+            self.vix_analyzer = AdvancedVIXAnalyzer(config.VIX_CONFIG)
+            logger.info("✅ VIX Analyzer loaded (fear/greed detection)")
+        else:
+            self.vix_analyzer = None
+            logger.info("⚠️ VIX Analyzer disabled")
+        
+        # Market Structure Analysis
+        if config.is_feature_enabled('enable_market_structure'):
+            self.market_structure_analyzer = AdvancedMarketStructureAnalyzer(config.MARKET_STRUCTURE_CONFIG)
+            logger.info("✅ Market Structure Analyzer loaded (breadth + sectors)")
+        else:
+            self.market_structure_analyzer = None
+            logger.info("⚠️ Market Structure Analyzer disabled")
+        
+        # Risk Analysis
+        if config.is_feature_enabled('enable_risk_metrics'):
+            self.risk_analyzer = AdvancedRiskAnalyzer(config.RISK_CONFIG)
+            logger.info("✅ Risk Analyzer loaded (VaR + position sizing)")
+        else:
+            self.risk_analyzer = None
+            logger.info("⚠️ Risk Analyzer disabled")
+        
+        logger.info("🌟 HYPERtrends Modular Signal Engine initialized successfully!")
     
-    def generate_ml_predictions(self, symbol: str, quote_data: Dict) -> Dict[str, Any]:
-        """Generate comprehensive ML predictions"""
+    async def generate_signal(self, symbol: str, quote_data: Dict[str, Any], 
+                             trends_data: Optional[Dict] = None,
+                             historical_data: Optional[List[Dict]] = None) -> HYPERSignal:
+        """Generate comprehensive HYPER signal using all modular components"""
         try:
-            # LSTM predictions
-            lstm_predictions = self._generate_lstm_predictions(symbol, quote_data)
+            # Check cache first
+            cache_key = f"{symbol}_{time.time() // self.cache_duration}"
+            if cache_key in self.signal_cache:
+                logger.debug(f"📋 Using cached signal for {symbol}")
+                return self.signal_cache[cache_key]
             
-            # Ensemble predictions
-            ensemble_prediction = self._generate_ensemble_prediction(symbol, quote_data)
+            logger.debug(f"🎯 Generating modular signal for {symbol}...")
+            start_time = time.time()
             
-            # Pattern analysis
-            pattern_analysis = self._analyze_chart_patterns(symbol, quote_data)
+            # Initialize component results
+            technical_analysis = None
+            sentiment_analysis = None
+            vix_analysis = None
+            market_structure_analysis = None
+            risk_analysis = None
             
-            # Anomaly detection
-            anomaly_data = self._detect_anomalies(symbol, quote_data)
+            # Run all enabled analyzers concurrently
+            analysis_tasks = []
             
-            # Calculate overall ML confidence
-            ml_confidence = (
-                lstm_predictions.get('model_confidence', 0.5) * 0.3 +
-                ensemble_prediction.get('ensemble_confidence', 0.5) * 0.4 +
-                pattern_analysis.get('pattern_confidence', 0.5) * 0.2 +
-                (1 - anomaly_data.get('anomaly_score', 0) / 100) * 0.1
-            ) * 100
+            if self.technical_analyzer:
+                analysis_tasks.append(
+                    self._run_technical_analysis(symbol, quote_data, historical_data)
+                )
             
-            return {
-                'lstm_predictions': lstm_predictions,
-                'ensemble_prediction': ensemble_prediction,
-                'pattern_analysis': pattern_analysis,
-                'anomaly_data': anomaly_data,
-                'ml_confidence': round(ml_confidence, 1),
-                'model_agreement': self._calculate_model_agreement(lstm_predictions, ensemble_prediction)
-            }
+            if self.sentiment_analyzer:
+                analysis_tasks.append(
+                    self._run_sentiment_analysis(symbol, quote_data, trends_data)
+                )
+            
+            if self.vix_analyzer:
+                analysis_tasks.append(
+                    self._run_vix_analysis(symbol, quote_data)
+                )
+            
+            if self.market_structure_analyzer:
+                analysis_tasks.append(
+                    self._run_market_structure_analysis(symbol, quote_data)
+                )
+            
+            if self.risk_analyzer:
+                analysis_tasks.append(
+                    self._run_risk_analysis(symbol, quote_data, historical_data)
+                )
+            
+            # Execute all analyses concurrently
+            if analysis_tasks:
+                results = await asyncio.gather(*analysis_tasks, return_exceptions=True)
+                
+                # Process results
+                result_index = 0
+                if self.technical_analyzer:
+                    technical_analysis = results[result_index] if not isinstance(results[result_index], Exception) else None
+                    result_index += 1
+                
+                if self.sentiment_analyzer:
+                    sentiment_analysis = results[result_index] if not isinstance(results[result_index], Exception) else None
+                    result_index += 1
+                
+                if self.vix_analyzer:
+                    vix_analysis = results[result_index] if not isinstance(results[result_index], Exception) else None
+                    result_index += 1
+                
+                if self.market_structure_analyzer:
+                    market_structure_analysis = results[result_index] if not isinstance(results[result_index], Exception) else None
+                    result_index += 1
+                
+                if self.risk_analyzer:
+                    risk_analysis = results[result_index] if not isinstance(results[result_index], Exception) else None
+                    result_index += 1
+            
+            # Extract component scores
+            component_scores = self._extract_component_scores(
+                technical_analysis, sentiment_analysis, vix_analysis, 
+                market_structure_analysis, risk_analysis
+            )
+            
+            # Calculate weighted overall signal
+            overall_signal = self._calculate_weighted_signal(component_scores, quote_data)
+            
+            # Generate comprehensive reasons and warnings
+            reasons, warnings = self._generate_comprehensive_insights(
+                technical_analysis, sentiment_analysis, vix_analysis,
+                market_structure_analysis, risk_analysis, overall_signal
+            )
+            
+            # Assess data quality
+            data_quality = self._assess_overall_data_quality(
+                technical_analysis, sentiment_analysis, vix_analysis,
+                market_structure_analysis, risk_analysis
+            )
+            
+            # Create enhanced signal
+            signal = HYPERSignal(
+                symbol=symbol,
+                signal_type=overall_signal['signal_type'],
+                confidence=overall_signal['confidence'],
+                direction=overall_signal['direction'],
+                price=float(quote_data.get('price', 0)),
+                timestamp=datetime.now().isoformat(),
+                
+                # Component scores
+                technical_score=component_scores['technical'],
+                sentiment_score=component_scores['sentiment'],
+                momentum_score=component_scores['momentum'],
+                ml_score=component_scores['ml'],
+                vix_score=component_scores['vix'],
+                market_structure_score=component_scores['market_structure'],
+                risk_score=component_scores['risk'],
+                
+                # Enhanced indicators
+                williams_r=component_scores.get('williams_r', -50.0),
+                stochastic_k=component_scores.get('stochastic_k', 50.0),
+                stochastic_d=component_scores.get('stochastic_d', 50.0),
+                vix_sentiment=component_scores.get('vix_sentiment', 'NEUTRAL'),
+                
+                # Component analysis results
+                technical_analysis=technical_analysis,
+                sentiment_analysis=sentiment_analysis,
+                vix_analysis=vix_analysis,
+                market_structure_analysis=market_structure_analysis,
+                risk_analysis=risk_analysis,
+                
+                # Supporting data
+                reasons=reasons,
+                warnings=warnings,
+                data_quality=data_quality,
+                
+                # Enhanced features
+                enhanced_features={
+                    'generation_time': time.time() - start_time,
+                    'components_used': self._get_active_components(),
+                    'data_sources': quote_data.get('enhanced_features', {}),
+                    'analysis_depth': 'comprehensive'
+                }
+            )
+            
+            # Cache the signal
+            self.signal_cache[cache_key] = signal
+            
+            generation_time = time.time() - start_time
+            logger.debug(f"✅ Generated {signal.signal_type} signal for {symbol} "
+                        f"({signal.confidence:.0f}% confidence) in {generation_time:.2f}s")
+            
+            return signal
             
         except Exception as e:
-            logger.error(f"ML prediction error: {e}")
-            return self._get_default_ml_predictions()
+            logger.error(f"❌ Signal generation error for {symbol}: {e}")
+            return self._generate_fallback_signal(symbol, quote_data)
     
-    def _generate_lstm_predictions(self, symbol: str, quote_data: Dict) -> Dict[str, Any]:
-        """Generate LSTM neural network predictions"""
-        try:
-            current_price = quote_data.get('price', 100)
-            change_percent = float(quote_data.get('change_percent', 0))
-            
-            predictions = {}
-            base_trend = change_percent * 0.1  # Carry forward some momentum
-            
-            # Multi-horizon predictions
-            for horizon in [1, 3, 5, 7, 14]:
-                # Add uncertainty with longer horizons
-                uncertainty_factor = 1 + (horizon * 0.05)
-                volatility = random.uniform(0.02, 0.08) * uncertainty_factor
-                
-                predicted_change = random.gauss(base_trend, volatility)
-                predicted_price = current_price * (1 + predicted_change)
-                
-                confidence = max(0.4, 0.85 - (horizon * 0.04))
-                
-                predictions[f'{horizon}d'] = {
-                    'predicted_price': round(predicted_price, 2),
-                    'price_change_percent': round(predicted_change * 100, 2),
-                    'confidence': round(confidence, 3),
-                    'direction': 'UP' if predicted_change > 0 else 'DOWN'
-                }
-            
-            # Overall LSTM confidence
-            overall_confidence = sum(p['confidence'] for p in predictions.values()) / len(predictions)
-            
-            return {
-                'predictions': predictions,
-                'model_confidence': round(overall_confidence, 3),
-                'model_type': 'LSTM_Neural_Network',
-                'sequence_length': 60,
-                'training_accuracy': round(random.uniform(0.68, 0.82), 3)
+    async def generate_all_signals(self) -> Dict[str, HYPERSignal]:
+        """Generate signals for all configured tickers"""
+        logger.info(f"🎯 Generating signals for {len(config.TICKERS)} tickers...")
+        
+        signals = {}
+        
+        # Generate signals concurrently for better performance
+        signal_tasks = []
+        for symbol in config.TICKERS:
+            # Note: In production, you'd get actual quote_data from your data aggregator
+            # For now, using placeholder data
+            quote_data = {
+                'symbol': symbol,
+                'price': 100.0,  # Placeholder - replace with real data
+                'change_percent': 0.0,  # Placeholder - replace with real data
+                'volume': 25000000,  # Placeholder - replace with real data
+                'timestamp': datetime.now().isoformat()
             }
             
-        except:
-            return {'predictions': {}, 'model_confidence': 0.5, 'model_type': 'LSTM'}
-    
-    def _generate_ensemble_prediction(self, symbol: str, quote_data: Dict) -> Dict[str, Any]:
-        """Generate ensemble model prediction"""
-        try:
-            models = ['RandomForest', 'GradientBoost', 'XGBoost', 'SVM', 'Neural_Network']
-            model_predictions = {}
-            
-            change_percent = float(quote_data.get('change_percent', 0))
-            
-            # Generate predictions from each model
-            votes = {'UP': 0, 'DOWN': 0, 'NEUTRAL': 0}
-            confidences = []
-            
-            for model in models:
-                # Each model has different characteristics
-                if model == 'RandomForest':
-                    bias = 0.02  # Slightly bullish
-                    variance = 0.03
-                elif model == 'GradientBoost':
-                    bias = 0.01
-                    variance = 0.025
-                elif model == 'XGBoost':
-                    bias = -0.005  # Slightly bearish
-                    variance = 0.035
-                elif model == 'SVM':
-                    bias = 0.0
-                    variance = 0.04
-                else:  # Neural Network
-                    bias = change_percent * 0.02  # Momentum factor
-                    variance = 0.03
-                
-                predicted_change = random.gauss(bias, variance)
-                confidence = random.uniform(0.55, 0.85)
-                
-                if predicted_change > 0.01:
-                    direction = 'UP'
-                    votes['UP'] += confidence
-                elif predicted_change < -0.01:
-                    direction = 'DOWN'
-                    votes['DOWN'] += confidence
-                else:
-                    direction = 'NEUTRAL'
-                    votes['NEUTRAL'] += confidence
-                
-                model_predictions[model] = {
-                    'predicted_change': round(predicted_change * 100, 2),
-                    'direction': direction,
-                    'confidence': round(confidence, 3)
-                }
-                
-                confidences.append(confidence)
-            
-            # Determine ensemble decision
-            total_votes = sum(votes.values())
-            if total_votes > 0:
-                ensemble_direction = max(votes, key=votes.get)
-                ensemble_confidence = votes[ensemble_direction] / total_votes
+            signal_tasks.append(self.generate_signal(symbol, quote_data))
+        
+        # Execute all signal generations concurrently
+        signal_results = await asyncio.gather(*signal_tasks, return_exceptions=True)
+        
+        # Process results
+        for i, result in enumerate(signal_results):
+            symbol = config.TICKERS[i]
+            if isinstance(result, Exception):
+                logger.error(f"❌ Signal generation failed for {symbol}: {result}")
+                signals[symbol] = self._generate_fallback_signal(symbol, {'price': 100.0})
             else:
-                ensemble_direction = 'NEUTRAL'
-                ensemble_confidence = 0.5
-            
-            return {
-                'model_predictions': model_predictions,
-                'ensemble_direction': ensemble_direction,
-                'ensemble_confidence': round(ensemble_confidence, 3),
-                'vote_distribution': {k: round(v/total_votes, 3) if total_votes > 0 else 0 for k, v in votes.items()},
-                'average_model_confidence': round(sum(confidences) / len(confidences), 3)
-            }
-            
-        except:
-            return {'ensemble_direction': 'NEUTRAL', 'ensemble_confidence': 0.5}
+                signals[symbol] = result
+        
+        logger.info(f"✅ Generated {len(signals)} signals successfully")
+        return signals
     
-    def _analyze_chart_patterns(self, symbol: str, quote_data: Dict) -> Dict[str, Any]:
-        """Analyze chart patterns"""
+    # Individual analysis method wrappers
+    async def _run_technical_analysis(self, symbol: str, quote_data: Dict[str, Any], 
+                                     historical_data: Optional[List[Dict]]) -> Optional[TechnicalAnalysis]:
+        """Run technical analysis"""
         try:
-            current_price = quote_data.get('price', 100)
-            change_percent = float(quote_data.get('change_percent', 0))
-            
-            patterns = [
-                'double_top', 'double_bottom', 'head_shoulders', 'inverse_head_shoulders',
-                'ascending_triangle', 'descending_triangle', 'symmetrical_triangle',
-                'bull_flag', 'bear_flag', 'cup_handle', 'wedge', 'no_pattern'
-            ]
-            
-            # Weight patterns based on price action
-            if change_percent > 2:
-                # Strong up move - bullish patterns more likely
-                pattern_weights = [0.05, 0.15, 0.05, 0.15, 0.12, 0.05, 0.08, 0.15, 0.05, 0.10, 0.05, 0.20]
-            elif change_percent < -2:
-                # Strong down move - bearish patterns more likely
-                pattern_weights = [0.15, 0.05, 0.15, 0.05, 0.05, 0.12, 0.08, 0.05, 0.15, 0.05, 0.10, 0.20]
-            else:
-                # Neutral - equal weights
-                pattern_weights = [0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.10, 0.08, 0.08, 0.08, 0.08, 0.30]
-            
-            detected_pattern = random.choices(patterns, weights=pattern_weights)[0]
-            
-            # Calculate pattern confidence
-            if detected_pattern == 'no_pattern':
-                pattern_confidence = 0.0
-                bullish_probability = 0.5
-                breakout_probability = 0.5
-            else:
-                pattern_confidence = random.uniform(0.6, 0.9)
-                
-                # Bullish patterns
-                bullish_patterns = ['double_bottom', 'inverse_head_shoulders', 'ascending_triangle', 'bull_flag', 'cup_handle']
-                bearish_patterns = ['double_top', 'head_shoulders', 'descending_triangle', 'bear_flag']
-                
-                if detected_pattern in bullish_patterns:
-                    bullish_probability = random.uniform(0.65, 0.85)
-                elif detected_pattern in bearish_patterns:
-                    bullish_probability = random.uniform(0.15, 0.35)
-                else:
-                    bullish_probability = random.uniform(0.45, 0.55)
-                
-                breakout_probability = random.uniform(0.5, 0.8)
-            
-            return {
-                'detected_pattern': detected_pattern,
-                'pattern_confidence': round(pattern_confidence, 3),
-                'bullish_probability': round(bullish_probability, 3),
-                'breakout_probability': round(breakout_probability, 3),
-                'support_level': round(current_price * 0.97, 2),
-                'resistance_level': round(current_price * 1.03, 2)
-            }
-            
-        except:
-            return {'detected_pattern': 'no_pattern', 'pattern_confidence': 0.0, 'bullish_probability': 0.5}
+            return await self.technical_analyzer.analyze(symbol, quote_data, historical_data)
+        except Exception as e:
+            logger.error(f"Technical analysis error for {symbol}: {e}")
+            return None
     
-    def _detect_anomalies(self, symbol: str, quote_data: Dict) -> Dict[str, Any]:
-        """Detect market anomalies"""
+    async def _run_sentiment_analysis(self, symbol: str, quote_data: Dict[str, Any], 
+                                     trends_data: Optional[Dict]) -> Optional[SentimentAnalysis]:
+        """Run sentiment analysis"""
         try:
-            anomaly_score = 0
-            anomalies = []
-            
-            # Price anomaly
-            change_percent = abs(float(quote_data.get('change_percent', 0)))
-            if change_percent > 5:
-                anomaly_score += 30
-                anomalies.append('Extreme price movement detected')
-            elif change_percent > 3:
-                anomaly_score += 15
-                anomalies.append('High price volatility')
-            
-            # Volume anomaly
-            volume = quote_data.get('volume', 0)
-            avg_volume = 25000000  # Rough average
-            volume_ratio = volume / avg_volume if avg_volume > 0 else 1.0
-            
-            if volume_ratio > 3:
-                anomaly_score += 25
-                anomalies.append('Extreme volume spike detected')
-            elif volume_ratio > 2:
-                anomaly_score += 15
-                anomalies.append('High volume activity')
-            elif volume_ratio < 0.3:
-                anomaly_score += 10
-                anomalies.append('Unusually low volume')
-            
-            # Time-based anomalies
-            hour = datetime.now().hour
-            if hour < 9 or hour > 16:  # After hours activity
-                if change_percent > 2 or volume_ratio > 1.5:
-                    anomaly_score += 10
-                    anomalies.append('Significant after-hours activity')
-            
-            return {
-                'anomaly_score': round(min(100, anomaly_score), 1),
-                'anomaly_level': 'HIGH' if anomaly_score > 40 else 'MEDIUM' if anomaly_score > 20 else 'LOW',
-                'anomalies_detected': anomalies,
-                'volume_ratio': round(volume_ratio, 2)
-            }
-            
-        except:
-            return {'anomaly_score': 0.0, 'anomaly_level': 'LOW', 'anomalies_detected': []}
+            return await self.sentiment_analyzer.analyze(symbol, quote_data, trends_data)
+        except Exception as e:
+            logger.error(f"Sentiment analysis error for {symbol}: {e}")
+            return None
     
-    def _calculate_model_agreement(self, lstm_data: Dict, ensemble_data: Dict) -> str:
-        """Calculate agreement between models"""
+    async def _run_vix_analysis(self, symbol: str, quote_data: Dict[str, Any]) -> Optional[VIXAnalysis]:
+        """Run VIX analysis"""
         try:
-            lstm_direction = 'NEUTRAL'
-            if lstm_data.get('predictions'):
-                # Get short-term LSTM direction
-                short_term = lstm_data['predictions'].get('1d', {})
-                change = short_term.get('price_change_percent', 0)
-                if change > 0.5:
-                    lstm_direction = 'UP'
-                elif change < -0.5:
-                    lstm_direction = 'DOWN'
-            
-            ensemble_direction = ensemble_data.get('ensemble_direction', 'NEUTRAL')
-            ensemble_confidence = ensemble_data.get('ensemble_confidence', 0.5)
-            
-            if lstm_direction == ensemble_direction and lstm_direction != 'NEUTRAL':
-                if ensemble_confidence > 0.7:
-                    return 'STRONG_AGREEMENT'
-                else:
-                    return 'AGREEMENT'
-            elif lstm_direction == ensemble_direction:
-                return 'NEUTRAL_AGREEMENT'
-            else:
-                return 'DISAGREEMENT'
-                
-        except:
-            return 'UNKNOWN'
+            return await self.vix_analyzer.analyze(symbol, quote_data)
+        except Exception as e:
+            logger.error(f"VIX analysis error for {symbol}: {e}")
+            return None
     
-    def _get_default_ml_predictions(self) -> Dict[str, Any]:
-        """Default ML predictions"""
+    async def _run_market_structure_analysis(self, symbol: str, quote_data: Dict[str, Any]) -> Optional[MarketStructureAnalysis]:
+        """Run market structure analysis"""
+        try:
+            return await self.market_structure_analyzer.analyze(symbol, quote_data)
+        except Exception as e:
+            logger.error(f"Market structure analysis error for {symbol}: {e}")
+            return None
+    
+    async def _run_risk_analysis(self, symbol: str, quote_data: Dict[str, Any], 
+                                historical_data: Optional[List[Dict]]) -> Optional[RiskAnalysis]:
+        """Run risk analysis"""
+        try:
+            return await self.risk_analyzer.analyze(symbol, quote_data, historical_data)
+        except Exception as e:
+            logger.error(f"Risk analysis error for {symbol}: {e}")
+            return None
+    
+    def _extract_component_scores(self, technical_analysis: Optional[TechnicalAnalysis],
+                                 sentiment_analysis: Optional[SentimentAnalysis],
+                                 vix_analysis: Optional[VIXAnalysis],
+                                 market_structure_analysis: Optional[MarketStructureAnalysis],
+                                 risk_analysis: Optional[RiskAnalysis]) -> Dict[str, float]:
+        """Extract component scores from analysis results"""
+        scores = {
+            'technical': 50.0,
+            'sentiment': 50.0,
+            'momentum': 50.0,
+            'ml': 50.0,
+            'vix': 50.0,
+            'market_structure': 50.0,
+            'risk': 50.0
+        }
+        
+        # Technical scores
+        if technical_analysis:
+            scores['technical'] = technical_analysis.overall_score
+            scores['momentum'] = technical_analysis.momentum_analysis.get('momentum_5d', 0) + 50
+            
+            # Extract specific indicators
+            for signal in technical_analysis.signals:
+                if signal.indicator_name == "Williams_R":
+                    scores['williams_r'] = signal.value
+                elif signal.indicator_name == "Stochastic":
+                    scores['stochastic_k'] = signal.value
+                    scores['stochastic_d'] = signal.value * 0.9  # Approximate %D
+        
+        # Sentiment scores
+        if sentiment_analysis:
+            scores['sentiment'] = sentiment_analysis.overall_sentiment + 50  # Convert to 0-100 scale
+        
+        # VIX scores
+        if vix_analysis:
+            scores['vix'] = vix_analysis.current_signal.fear_greed_score
+            scores['vix_sentiment'] = vix_analysis.current_signal.sentiment
+        
+        # Market structure scores
+        if market_structure_analysis:
+            scores['market_structure'] = market_structure_analysis.current_signal.structure_score
+        
+        # Risk scores (inverted - lower risk = higher score)
+        if risk_analysis:
+            scores['risk'] = 100 - risk_analysis.overall_risk_score
+        
+        # ML score (placeholder - integrate with your ML module)
+        scores['ml'] = (scores['technical'] + scores['sentiment']) / 2
+        
+        return scores
+    
+    def _calculate_weighted_signal(self, component_scores: Dict[str, float], 
+                                  quote_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate weighted overall signal using configured weights"""
+        
+        # Apply signal weights from config
+        weighted_score = (
+            component_scores['technical'] * config.SIGNAL_WEIGHTS['technical'] +
+            component_scores['sentiment'] * config.SIGNAL_WEIGHTS['sentiment'] +
+            component_scores['momentum'] * config.SIGNAL_WEIGHTS['momentum'] +
+            component_scores['ml'] * config.SIGNAL_WEIGHTS['ml_prediction'] +
+            component_scores['market_structure'] * config.SIGNAL_WEIGHTS['market_structure'] +
+            component_scores['vix'] * config.SIGNAL_WEIGHTS['vix_sentiment'] +
+            component_scores['risk'] * config.SIGNAL_WEIGHTS['risk_adjusted']
+        )
+        
+        # Normalize to 0-100 scale
+        confidence = max(0, min(100, weighted_score))
+        
+        # Determine signal type and direction
+        if confidence >= config.CONFIDENCE_THRESHOLDS['HYPER_BUY']:
+            signal_type = "HYPER_BUY"
+            direction = "UP"
+        elif confidence >= config.CONFIDENCE_THRESHOLDS['SOFT_BUY']:
+            signal_type = "SOFT_BUY"
+            direction = "UP"
+        elif confidence <= (100 - config.CONFIDENCE_THRESHOLDS['HYPER_SELL']):
+            signal_type = "HYPER_SELL"
+            direction = "DOWN"
+        elif confidence <= (100 - config.CONFIDENCE_THRESHOLDS['SOFT_SELL']):
+            signal_type = "SOFT_SELL"
+            direction = "DOWN"
+        else:
+            signal_type = "HOLD"
+            direction = "NEUTRAL"
+        
         return {
-            'lstm_predictions': {'predictions': {}, 'model_confidence': 0.5},
-            'ensemble_prediction': {'ensemble_direction': 'NEUTRAL', 'ensemble_confidence': 0.5},
-            'pattern_analysis': {'detected_pattern': 'no_pattern', 'pattern_confidence': 0.0},
-            'anomaly_data': {'anomaly_score': 0.0, 'anomaly_level': 'LOW'},
-            'ml_confidence': 50.0,
-    return {
-            'DEFENSIVE_ROTATION': ['Technology', 'Consumer Discretionary'],
-            'CYCLICAL_ROTATION': ['Utilities', 'REITs'],
-            'TECH_ROTATION': ['Energy', 'Utilities'],
-            'NEUTRAL_ROTATION': ['None', 'Balanced']
-        return lagging_map.get(theme, ['None'])
-    
-    def _get_default_breadth(self) -> Dict[str, Any]:
-        """Default breadth analysis"""
-        return {
+            'signal_type': signal_type,
+            'confidence': confidence,
+            'direction': direction
         }
     
-    def _get_default_rotation(self) -> Dict[str, Any]:
-        """Default rotation analysis"""
-        return {
-        }
+    def _generate_comprehensive_insights(self, technical_analysis: Optional[TechnicalAnalysis],
+                                        sentiment_analysis: Optional[SentimentAnalysis],
+                                        vix_analysis: Optional[VIXAnalysis],
+                                        market_structure_analysis: Optional[MarketStructureAnalysis],
+                                        risk_analysis: Optional[RiskAnalysis],
+                                        overall_signal: Dict[str, Any]) -> Tuple[List[str], List[str]]:
+        """Generate comprehensive reasons and warnings from all components"""
+        reasons = []
+        warnings = []
+        
+        # Technical insights
+        if technical_analysis:
+            if technical_analysis.overall_score > 70:
+                reasons.append(f"📊 Strong technical setup ({technical_analysis.overall_score:.0f}/100)")
+            elif technical_analysis.overall_score < 30:
+                reasons.append(f"📊 Weak technical setup ({technical_analysis.overall_score:.0f}/100)")
+            
+            # Add pattern insights
+            if technical_analysis.pattern_analysis.get('primary_pattern'):
+                pattern = technical_analysis.pattern_analysis['primary_pattern']
+                if pattern.get('confidence', 0) > 0.7:
+                    reasons.append(f"📈 Strong {pattern.get('pattern', 'pattern')} detected")
+        
+        # Sentiment insights
+        if sentiment_analysis:
+            if abs(sentiment_analysis.overall_sentiment) > 30:
+                direction = "bullish" if sentiment_analysis.overall_sentiment > 0 else "bearish"
+                reasons.append(f"💭 Strong {direction} sentiment ({sentiment_analysis.overall_sentiment:+.0f})")
+            
+            # Contrarian warnings
+            if sentiment_analysis.contrarian_signals:
+                warnings.extend([f"🔄 {signal}" for signal in sentiment_analysis.contrarian_signals[:2]])
+        
+        # VIX insights
+        if vix_analysis:
+            vix_signal = vix_analysis.current_signal
+            if vix_signal.contrarian_signal in ["STRONG_BUY", "STRONG_SELL"]:
+                reasons.append(f"😱 VIX contrarian signal: {vix_signal.contrarian_signal}")
+            
+            if vix_analysis.risk_warnings:
+                warnings.extend([f"⚡ {warning}" for warning in vix_analysis.risk_warnings[:2]])
+        
+        # Market structure insights
+        if market_structure_analysis:
+            structure_signal = market_structure_analysis.current_signal
+            if structure_signal.structure_score > 80:
+                reasons.append(f"🏗️ Strong market structure ({structure_signal.structure_score:.0f}/100)")
+            elif structure_signal.structure_score < 40:
+                warnings.append(f"🏗️ Weak market structure ({structure_signal.structure_score:.0f}/100)")
+            
+            # Regime insights
+            if structure_signal.market_regime in ["RISK_ON", "RISK_OFF"]:
+                reasons.append(f"📊 {structure_signal.market_regime.replace('_', '-')} environment")
+        
+        # Risk insights
+        if risk_analysis:
+            if risk_analysis.risk_level == "LOW":
+                reasons.append("✅ Low risk environment")
+            elif risk_analysis.risk_level in ["HIGH", "EXTREME"]:
+                warnings.append(f"⚠️ {risk_analysis.risk_level.lower()} risk detected")
+            
+            # Position sizing insights
+            if risk_analysis.position_risk.concentration_risk == "HIGH":
+                warnings.append("⚖️ High concentration risk - reduce position size")
+        
+        # Overall signal insights
+        if overall_signal['confidence'] > 80:
+            reasons.append(f"🎯 High confidence signal ({overall_signal['confidence']:.0f}%)")
+        elif overall_signal['confidence'] < 40:
+            warnings.append(f"❓ Low confidence signal ({overall_signal['confidence']:.0f}%)")
+        
+        return reasons[:5], warnings[:3]  # Limit to top insights
+    
+    def _assess_overall_data_quality(self, technical_analysis: Optional[TechnicalAnalysis],
+                                    sentiment_analysis: Optional[SentimentAnalysis],
+                                    vix_analysis: Optional[VIXAnalysis],
+                                    market_structure_analysis: Optional[MarketStructureAnalysis],
+                                    risk_analysis: Optional[RiskAnalysis]) -> str:
+        """Assess overall data quality across all components"""
+        
+        quality_scores = []
+        quality_weights = []
+        
+        # Technical data quality
+        if technical_analysis:
+            tech_signals = len(technical_analysis.signals)
+            tech_quality = "excellent" if tech_signals > 15 else "good" if tech_signals > 10 else "fair"
+            quality_scores.append({"excellent": 90, "good": 75, "fair": 60}.get(tech_quality, 50))
+            quality_weights.append(0.3)
+        
+        # Sentiment data quality
+        if sentiment_analysis:
+            sent_signals = len(sentiment_analysis.signals)
+            sent_quality = "excellent" if sent_signals > 3 else "good" if sent_signals > 2 else "fair"
+            quality_scores.append({"excellent": 85, "good": 70, "fair": 55}.get(sent_quality, 50))
+            quality_weights.append(0.25)
+        
+        # VIX data quality
+        if vix_analysis:
+            quality_scores.append(80)  # VIX data is generally reliable
+            quality_weights.append(0.15)
+        
+        # Market structure data quality
+        if market_structure_analysis:
+            quality_scores.append(75)  # Structure data is moderately reliable
+            quality_weights.append(0.2)
+        
+        # Risk data quality
+        if risk_analysis:
+            quality_scores.append(70)  # Risk calculations are estimation-based
+            quality_weights.append(0.1)
+        
+        if quality_scores:
+            weighted_quality = sum(s * w for s, w in zip(quality_scores, quality_weights)) / sum(quality_weights)
+            
+            if weighted_quality >= 85:
+                return "excellent"
+            elif weighted_quality >= 70:
+                return "good"
+            elif weighted_quality >= 55:
+                return "fair"
+            else:
+                return "poor"
+        else:
+            return "unknown"
+    
+    def _get_active_components(self) -> List[str]:
+        """Get list of active analysis components"""
+        components = []
+        if self.technical_analyzer:
+            components.append("technical")
+        if self.sentiment_analyzer:
+            components.append("sentiment")
+        if self.vix_analyzer:
+            components.append("vix")
+        if self.market_structure_analyzer:
+            components.append("market_structure")
+        if self.risk_analyzer:
+            components.append("risk")
+        return components
+    
+    def _generate_fallback_signal(self, symbol: str, quote_data: Dict[str, Any]) -> HYPERSignal:
+        """Generate fallback signal when analysis fails"""
+        return HYPERSignal(
+            symbol=symbol,
+            signal_type="HOLD",
+            confidence=50.0,
+            direction="NEUTRAL",
+            price=float(quote_data.get('price', 0)),
+            timestamp=datetime.now().isoformat(),
+            technical_score=50.0,
+            sentiment_score=50.0,
+            momentum_score=50.0,
+            ml_score=50.0,
+            vix_score=50.0,
+            market_structure_score=50.0,
+            risk_score=50.0,
+            reasons=["Fallback signal - analysis unavailable"],
+            warnings=["Limited analysis due to system error"],
+            data_quality="poor",
+            enhanced_features={'fallback': True}
+        )
+
+# Export the main engine
+__all__ = ['HYPERSignalEngine', 'HYPERSignal']
+
+logger.info("🌟 HYPERtrends v4.0 Modular Signal Engine loaded successfully!")
+logger.info("🎯 Ready for advanced multi-component signal generation")
