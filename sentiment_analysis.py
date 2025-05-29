@@ -942,9 +942,7 @@ class TwitterSimulator:
 # Export the main analyzer
 __all__ = ['AdvancedSentimentAnalyzer', 'SentimentAnalysis', 'SentimentSignal']
 
-logger.info("💭 Advanced Sentiment Analysis module loaded successfully")
-
-def overall_sentiment(self, signals: List[SentimentSignal]) -> Tuple[float, float, float]:
+logger.info("💭 Advanced Sentiment Analysis module loaded successfully")overall_sentiment(self, signals: List[SentimentSignal]) -> Tuple[float, float, float]:
         """Calculate overall sentiment from individual signals"""
         if not signals:
             return 0.0, 0.0, 0.0
