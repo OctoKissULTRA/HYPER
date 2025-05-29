@@ -6,7 +6,6 @@ import math
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
-import talib
 
 logger = logging.getLogger(__name__)
 
