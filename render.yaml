@@ -17,7 +17,10 @@ services:
         value: INFO
       - key: PYTHON_VERSION
         value: "3.11"
-      
+      - key: RH_USERNAME
+        value: "your@email.com"
+      - key: RH_PASSWORD
+        value: "yourSecurePassword"
       # ============================================
       # ROBINHOOD CREDENTIALS (Optional)
       # ============================================
