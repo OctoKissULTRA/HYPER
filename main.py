@@ -37,10 +37,6 @@ app = FastAPI(
     version="4.0.0-MODULAR"
 )
 
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
