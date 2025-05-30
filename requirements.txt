@@ -38,7 +38,7 @@ vaderSentiment==3.3.2
 # Scientific Computing
 scipy==1.11.4
 
-robin_stocks==2.1.2
+robin_stocks==3.4.0
 
 # Optional: Database support for future use
 # sqlalchemy==2.0.23
