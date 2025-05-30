@@ -463,9 +463,19 @@ async def websocket_endpoint(websocket: WebSocket):
 # STARTUP AND SHUTDOWN
 # ========================================
 
+
 @app.on_event("startup")
 async def startup_event():
-    logger.info("🚀 Starting HYPERtrends v4.0 Modular System...")
+    try:
+        logger.info("🚀 Starting HYPERtrends startup sequence...")
+
+        # SAFE MODE: Skip full initialization to avoid crashing on Render cold start
+        hyper_state.is_running = False
+
+        logger.warning("⚠️ Startup login skipped — waiting for manual /api/start trigger.")
+    except Exception as e:
+        logger.error(f"Startup crashed: {e}")
+
     
     success = await hyper_state.initialize()
     if success:
