@@ -21,7 +21,7 @@ services:
         value: "your@email.com"
       - key: RH_PASSWORD
         value: "yourSecurePassword"
-      
+
       # ============================================
       # OPTIONAL API KEYS (Future Features)
       # ============================================
@@ -33,7 +33,7 @@ services:
         value: ""
       - key: TWITTER_BEARER_TOKEN
         value: ""
-      
+
       # ============================================
       # PERFORMANCE OPTIMIZATIONS
       # ============================================
