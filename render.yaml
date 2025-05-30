@@ -21,15 +21,6 @@ services:
         value: "your@email.com"
       - key: RH_PASSWORD
         value: "yourSecurePassword"
-      # ============================================
-      # ROBINHOOD CREDENTIALS (Optional)
-      # ============================================
-      # Add your Robinhood credentials for real data
-      # If not provided, system uses dynamic simulation
-      - key: RH_USERNAME
-        value: ""  # Add your Robinhood username here
-      - key: RH_PASSWORD
-        value: ""  # Add your Robinhood password here
       
       # ============================================
       # OPTIONAL API KEYS (Future Features)
