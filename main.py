@@ -1,4 +1,4 @@
-# main.py – Final Production Version
+# FINAL PATCHED main.py
 
 import os
 import json
@@ -9,9 +9,9 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from config import config
+import config
 from data_sources import get_data_source
-from signal_engine import HYPERSignalEngine, HYPERSignal
+from signal_engine import HYPERSignalEngine
 
 # State and logger setup
 app = FastAPI(title="HYPERtrends v4.0")
@@ -164,7 +164,7 @@ async def signal_loop():
                 "timestamp": hyper_state["last_update"].isoformat()
             })
 
-            await asyncio.sleep(config.UPDATE_INTERVALS.get("signal_generation", 30))
+            await asyncio.sleep(config.UPDATE_INTERVALS["signal_generation"])
 
         except Exception as e:
             logger.error(f"❌ Signal generation loop error: {e}")
