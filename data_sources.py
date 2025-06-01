@@ -60,7 +60,7 @@ class DynamicMarketSimulator:
         time_since_change = time.time() - self.last_regime_change
         
         # Change regime every 15-45 minutes with some randomness
-        if time_since_change > random.uniform(900, 2700):  # 15-45 minutes:
+        if time_since_change > random.uniform(900, 2700):  # 15-45 minutes
             regimes = ['BULLISH', 'BEARISH', 'VOLATILE', 'CALM', 'NORMAL']
             weights = [0.25, 0.20, 0.15, 0.15, 0.25]  # Slightly favor bull/normal
             
@@ -75,28 +75,28 @@ class DynamicMarketSimulator:
         minute = now.minute
         
         # Market session effects
-        if 9 <= hour <= 16:  # Market hours:
-            if hour == 9 and minute < 30:  # Opening bell:
+        if 9 <= hour <= 16:  # Market hours
+            if hour == 9 and minute < 30:  # Opening bell
                 volatility_factor = 1.5
                 volume_factor = 2.0
-            elif hour == 15 and minute > 30:  # Closing hour:
+            elif hour == 15 and minute > 30:  # Closing hour
                 volatility_factor = 1.3
                 volume_factor = 1.5
-            elif 11 <= hour <= 13:  # Lunch lull:
+            elif 11 <= hour <= 13:  # Lunch lull
                 volatility_factor = 0.7
                 volume_factor = 0.8
-            else:  # Normal trading:
+            else:  # Normal trading
                 volatility_factor = 1.0
                 volume_factor = 1.0
-        else:  # After hours:
+        else:  # After hours
             volatility_factor = 0.4
             volume_factor = 0.3
         
         # Day of week effects
         weekday = now.weekday()
-        if weekday == 0:  # Monday:
+        if weekday == 0:  # Monday
             volatility_factor *= 1.2
-        elif weekday == 4:  # Friday:
+        elif weekday == 4:  # Friday
             volatility_factor *= 0.9
             volume_factor *= 0.8
         
@@ -590,14 +590,14 @@ class GoogleTrendsClient:
             time_since_update = current_time - trend_info['last_update']
             
             # Update momentum every few minutes with evolution
-            if time_since_update > 300:  # 5 minutes:
+            if time_since_update > 300:  # 5 minutes
                 # Evolve the trend
                 momentum_change = random.uniform(-10, 10)
                 trend_info['base_momentum'] += momentum_change
                 trend_info['base_momentum'] = max(-50, min(100, trend_info['base_momentum']))
                 
                 # Occasionally change trend direction
-                if random.random() < 0.1:  # 10% chance:
+                if random.random() < 0.1:  # 10% chance
                     trend_info['trend_direction'] = random.choice(['UP', 'DOWN', 'SIDEWAYS'])
                 
                 trend_info['last_update'] = current_time
@@ -607,7 +607,7 @@ class GoogleTrendsClient:
             
             # Time-based variations
             hour_of_day = datetime.now().hour
-            if 9 <= hour_of_day <= 16:  # Market hours boost:
+            if 9 <= hour_of_day <= 16:  # Market hours boost
                 current_momentum *= 1.2
             
             # Keyword-specific patterns
@@ -633,7 +633,7 @@ class GoogleTrendsClient:
             
             # Update history
             trend_info['momentum_history'].append(current_momentum)
-            if len(trend_info['momentum_history']) > 50:  # Keep last 50 points:
+            if len(trend_info['momentum_history']) > 50:  # Keep last 50 points
                 trend_info['momentum_history'].pop(0)
             
             # Calculate additional metrics
@@ -692,6 +692,7 @@ class HYPERDataAggregator:
     def __init__(self, api_key: str = None):
         # NOTE: api_key parameter kept for backward compatibility but ignored
         if api_key:
+            logger.info("ℹ️ Alpha Vantage API key provided but not used - using Robinhood + simulation")
         
         # Primary source: Enhanced Robinhood with better error handling
         self.robinhood_client = RobinhoodClient()
@@ -704,6 +705,7 @@ class HYPERDataAggregator:
         logger.info("🚀 Enhanced HYPER Data Aggregator initialized")
         logger.info("📱 Primary source: Robinhood (with enhanced error handling)")
         logger.info("🔄 Fallback: Dynamic market simulation (ML-ready)")
+        logger.info("🚫 Alpha Vantage: Removed completely")
     
     async def initialize(self) -> bool:
         """Initialize and test data sources with enhanced error handling"""
@@ -762,6 +764,7 @@ class HYPERDataAggregator:
                 'data_source_info': {
                     'primary': 'robinhood_enhanced',
                     'fallback': 'dynamic_simulation_enhanced',
+                    'alpha_vantage_removed': True,
                     'robinhood_authenticated': self.robinhood_client.authenticated,
                     'robinhood_rate_limited': not self.robinhood_available and self.robinhood_client.authenticated
                 }
@@ -861,5 +864,6 @@ logger.info("🚀 Enhanced Robinhood-Only Data Source loaded successfully!")
 logger.info("📱 Primary: Enhanced Robinhood API (with better error handling)")
 logger.info("🔄 Fallback: Enhanced dynamic market simulation")
 logger.info("🧠 ML-Ready: Time-evolving patterns and correlations")
+logger.info("🚫 Alpha Vantage: Completely removed")
 logger.info("✅ Zero external dependencies required")
 logger.info("⚡ Enhanced rate limiting and 2FA handling")
