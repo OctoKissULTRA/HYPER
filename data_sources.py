@@ -692,7 +692,6 @@ class HYPERDataAggregator:
     def __init__(self, api_key: str = None):
         # NOTE: api_key parameter kept for backward compatibility but ignored
         if api_key:
-            logger.info("ℹ️ Alpha Vantage API key provided but not used - using Robinhood + simulation")
         
         # Primary source: Enhanced Robinhood with better error handling
         self.robinhood_client = RobinhoodClient()
@@ -705,7 +704,6 @@ class HYPERDataAggregator:
         logger.info("🚀 Enhanced HYPER Data Aggregator initialized")
         logger.info("📱 Primary source: Robinhood (with enhanced error handling)")
         logger.info("🔄 Fallback: Dynamic market simulation (ML-ready)")
-        logger.info("🚫 Alpha Vantage: Removed completely")
     
     async def initialize(self) -> bool:
         """Initialize and test data sources with enhanced error handling"""
@@ -764,7 +762,6 @@ class HYPERDataAggregator:
                 'data_source_info': {
                     'primary': 'robinhood_enhanced',
                     'fallback': 'dynamic_simulation_enhanced',
-                    'alpha_vantage_removed': True,
                     'robinhood_authenticated': self.robinhood_client.authenticated,
                     'robinhood_rate_limited': not self.robinhood_available and self.robinhood_client.authenticated
                 }
@@ -864,6 +861,5 @@ logger.info("🚀 Enhanced Robinhood-Only Data Source loaded successfully!")
 logger.info("📱 Primary: Enhanced Robinhood API (with better error handling)")
 logger.info("🔄 Fallback: Enhanced dynamic market simulation")
 logger.info("🧠 ML-Ready: Time-evolving patterns and correlations")
-logger.info("🚫 Alpha Vantage: Completely removed")
 logger.info("✅ Zero external dependencies required")
 logger.info("⚡ Enhanced rate limiting and 2FA handling")
