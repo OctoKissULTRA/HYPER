@@ -9,7 +9,6 @@ import math
 import subprocess
 import sys
 import importlib
-import numpy as np
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
@@ -129,7 +128,7 @@ class DynamicMarketSimulator:
             logger.info(f"📊 Market regime changed to: {self.market_regime}")
     
     def generate_realistic_quote(self, symbol: str) -> Dict[str, Any]:
-        """Generate realistic, time-evolving quote data with JSON-safe types"""
+        """Generate realistic, time-evolving quote data"""
         # Update market regime periodically
         self._update_market_regime()
         
@@ -195,28 +194,28 @@ class DynamicMarketSimulator:
         else:
             market_status = 'CLOSED'
         
-        # Build comprehensive quote with JSON-safe types
+        # Build comprehensive quote
         return {
-            'symbol': str(symbol),
-            'open': float(open_price),
-            'high': float(high),
-            'low': float(low),
-            'price': float(new_price),
-            'volume': int(volume),
+            'symbol': symbol,
+            'open': round(open_price, 2),
+            'high': round(high, 2),
+            'low': round(low, 2),
+            'price': round(new_price, 2),
+            'volume': volume,
             'latest_trading_day': datetime.now().strftime('%Y-%m-%d'),
-            'previous_close': float(last_price),
-            'change': float(change),
+            'previous_close': round(last_price, 2),
+            'change': round(change, 2),
             'change_percent': f"{change_percent:.2f}",
             'timestamp': datetime.now().isoformat(),
             'data_source': 'enhanced_simulation',
             'enhanced_features': {
-                'market_hours': str(market_status),
-                'market_regime': str(self.market_regime),
+                'market_hours': market_status,
+                'market_regime': self.market_regime,
                 'volatility_regime': 'HIGH' if abs(change_percent) > 2 else 'NORMAL' if abs(change_percent) > 0.5 else 'LOW',
                 'data_freshness': 'real_time_simulation',
-                'session_time': float(time.time() - self.session_start),
-                'price_history_length': int(len(self.price_history[symbol])),
-                'regime_age_minutes': float((time.time() - self.last_regime_change) / 60)
+                'session_time': round(time.time() - self.session_start, 0),
+                'price_history_length': len(self.price_history[symbol]),
+                'regime_age_minutes': round((time.time() - self.last_regime_change) / 60, 1)
             }
         }
     
@@ -322,6 +321,7 @@ class RobinhoodClient:
         logger.info("🎯 LIVE Robinhood client initialized with sheriff authentication support")
     
     async def attempt_live_login(self):
+        logger.info("🔐 Attempting Robinhood login now...")
         """Attempt LIVE Robinhood login with sheriff authentication handling"""
         if not ROBIN_STOCKS_AVAILABLE:
             logger.info("ℹ️ robin_stocks not available - using enhanced simulation")
@@ -446,7 +446,7 @@ class RobinhoodClient:
                         
                 elif "429" in error_msg or "too many requests" in error_msg:
                     logger.warning("⚠️ Rate limit hit - will retry later")
-                    self.login_cooldown = 1800  # 30 minutes for rate limit
+                    self.login_cooldown = 300  # 30 minutes for rate limit
                     return False
                     
                 elif "credentials" in error_msg or "password" in error_msg:
@@ -499,7 +499,7 @@ class RobinhoodClient:
             return False
     
     async def get_global_quote(self, symbol: str) -> Dict[str, Any]:
-        """Get LIVE quote data from Robinhood with JSON-safe types"""
+        """Get LIVE quote data from Robinhood"""
         
         # Try LIVE Robinhood first if authenticated
         if ROBIN_STOCKS_AVAILABLE and self.authenticated:
@@ -544,31 +544,31 @@ class RobinhoodClient:
                     
                     quote = quote_data[0]
                     
-                    # Build comprehensive LIVE Robinhood quote data with JSON-safe types
+                    # Build comprehensive LIVE Robinhood quote data
                     previous_close = float(quote.get('previous_close', current_price))
                     change = current_price - previous_close
                     change_percent = (change / previous_close * 100) if previous_close > 0 else 0.0
                     
                     result = {
-                        'symbol': str(symbol),
-                        'open': float(quote.get('last_trade_price', current_price)),
+                        'symbol': symbol,
+                        'open': float(quote.get('last_trade_price', current_price)),  # Use last trade price as proxy
                         'high': float(quote.get('last_trade_price', current_price)),
                         'low': float(quote.get('last_trade_price', current_price)),
-                        'price': float(current_price),
+                        'price': current_price,
                         'volume': int(float(quote.get('volume', 0))),
                         'latest_trading_day': datetime.now().strftime('%Y-%m-%d'),
-                        'previous_close': float(previous_close),
-                        'change': float(change),
+                        'previous_close': previous_close,
+                        'change': change,
                         'change_percent': f"{change_percent:.2f}",
                         'timestamp': datetime.now().isoformat(),
                         'data_source': 'robinhood_live',
                         'enhanced_features': {
-                            'market_hours': str(self._get_market_hours_status()),
+                            'market_hours': self._get_market_hours_status(),
                             'data_freshness': 'real_time_live',
-                            'retail_sentiment': str(self._estimate_retail_sentiment(symbol, change_percent)),
-                            'request_count': int(self.request_count),
+                            'retail_sentiment': self._estimate_retail_sentiment(symbol, change_percent),
+                            'request_count': self.request_count,
                             'live_data': True,
-                            'sheriff_handled': bool(self.sheriff_handled),
+                            'sheriff_handled': self.sheriff_handled,
                             'authentication_method': 'sheriff_compatible'
                         }
                     }
@@ -606,20 +606,20 @@ class RobinhoodClient:
         change_percent = (change / price) * 100
         
         return {
-            'symbol': str(symbol),
-            'open': float(price - change*0.6),
-            'high': float(price + abs(change)*0.8),
-            'low': float(price - abs(change)*0.8),
-            'price': float(price),
-            'volume': int(random.randint(1000000, 50000000)),
+            'symbol': symbol,
+            'open': round(price - change*0.6, 2),
+            'high': round(price + abs(change)*0.8, 2),
+            'low': round(price - abs(change)*0.8, 2),
+            'price': round(price, 2),
+            'volume': random.randint(1000000, 50000000),
             'latest_trading_day': datetime.now().strftime('%Y-%m-%d'),
-            'previous_close': float(price - change),
-            'change': float(change),
+            'previous_close': round(price - change, 2),
+            'change': round(change, 2),
             'change_percent': f"{change_percent:.2f}",
             'timestamp': datetime.now().isoformat(),
             'data_source': 'robinhood_live_basic',
             'enhanced_features': {
-                'market_hours': str(self._get_market_hours_status()),
+                'market_hours': self._get_market_hours_status(),
                 'data_freshness': 'real_time_live_basic',
                 'live_data': True,
                 'sheriff_compatible': True
@@ -687,7 +687,7 @@ class GoogleTrendsClient:
         logger.info("📈 Enhanced Google Trends Client initialized")
     
     async def get_trends_data(self, keywords: List[str]) -> Dict[str, Any]:
-        """Generate dynamic, evolving trends data with JSON-safe types"""
+        """Generate dynamic, evolving trends data"""
         logger.debug(f"📈 Generating dynamic trends data for: {keywords}")
         
         current_time = time.time()
@@ -744,25 +744,25 @@ class GoogleTrendsClient:
             current_momentum += random.uniform(-5, 5)
             
             trend_data[keyword] = {
-                'momentum': float(current_momentum),
-                'current_value': int(random.randint(max(30, int(50 + current_momentum/2)), 100)),
-                'average_value': int(random.randint(40, 80)),
-                'retail_influence': float(min(1.0, max(0.1, (current_momentum + 50) / 100))),
+                'momentum': round(current_momentum, 1),
+                'current_value': random.randint(max(30, int(50 + current_momentum/2)), 100),
+                'average_value': random.randint(40, 80),
+                'retail_influence': min(1.0, max(0.1, (current_momentum + 50) / 100)),
                 'social_buzz': 'HIGH' if current_momentum > 50 else 'MEDIUM' if current_momentum > 0 else 'LOW',
-                'trend_direction': str(trend_info['trend_direction']),
-                'session_age_hours': float(session_age),
-                'evolution_factor': float(time_since_update / 3600)
+                'trend_direction': trend_info['trend_direction'],
+                'session_age_hours': round(session_age, 1),
+                'evolution_factor': round(time_since_update / 3600, 2)
             }
         
         return {
             'keyword_data': trend_data,
             'timestamp': datetime.now().isoformat(),
             'data_source': 'dynamic_trends_simulation',
-            'market_sentiment': str(self._calculate_overall_market_sentiment(trend_data)),
+            'market_sentiment': self._calculate_overall_market_sentiment(trend_data),
             'session_info': {
-                'session_age_hours': float(session_age),
-                'total_keywords_tracked': int(len(self.trend_history)),
-                'active_trends': int(len([k for k in trend_data.values() if abs(k['momentum']) > 10]))
+                'session_age_hours': round(session_age, 1),
+                'total_keywords_tracked': len(self.trend_history),
+                'active_trends': len([k for k in trend_data.values() if abs(k['momentum']) > 10])
             }
         }
     
@@ -829,8 +829,8 @@ class HYPERDataAggregator:
         
         # Update data sources status
         self.data_sources_status = {
-            'robinhood_live': bool(self.robinhood_live),
-            'sheriff_authentication': bool(ROBIN_STOCKS_AVAILABLE),
+            'robinhood_live': self.robinhood_live,
+            'sheriff_authentication': ROBIN_STOCKS_AVAILABLE,
             'simulation_fallback': True,
             'trends_enhanced': True,
             'last_health_check': datetime.now().isoformat(),
@@ -853,7 +853,7 @@ class HYPERDataAggregator:
     async def _background_login_retry(self):
         """Retry Robinhood login in background every 10 minutes"""
         while not self.robinhood_live:
-            await asyncio.sleep(600)  # Wait 10 minutes
+            await asyncio.sleep(60)  # Wait 10 minutes
             try:
                 logger.info("🔄 Background retry: Attempting Robinhood login...")
                 success = await self.robinhood_client.attempt_live_login()
@@ -899,27 +899,27 @@ class HYPERDataAggregator:
             self._update_live_data_percentage()
             
             result = {
-                'symbol': str(symbol),
+                'symbol': symbol,
                 'quote': quote_data,
                 'trends': trends_data,
                 'timestamp': datetime.now().isoformat(),
-                'processing_time': float(processing_time),
-                'data_quality': str(data_quality),
+                'processing_time': round(processing_time, 3),
+                'data_quality': data_quality,
                 'api_status': 'robinhood_live' if self.robinhood_live and quote_data.get('data_source', '').startswith('robinhood') else 'enhanced_simulation',
                 'enhanced_features': quote_data.get('enhanced_features', {}),
                 'ml_ready': True,
                 'data_source_info': {
                     'primary': 'robinhood_live_sheriff',
                     'fallback': 'enhanced_simulation',
-                    'sheriff_authentication': bool(ROBIN_STOCKS_AVAILABLE),
-                    'robinhood_authenticated': bool(self.robinhood_client.authenticated),
-                    'live_data_active': bool(quote_data.get('data_source', '').startswith('robinhood')),
-                    'system_health': str(self.system_health)
+                    'sheriff_authentication': ROBIN_STOCKS_AVAILABLE,
+                    'robinhood_authenticated': self.robinhood_client.authenticated,
+                    'live_data_active': quote_data.get('data_source', '').startswith('robinhood'),
+                    'system_health': self.system_health
                 },
                 'performance_metrics': {
-                    'total_requests': int(self.performance_metrics['total_requests']),
-                    'live_data_percentage': float(self.performance_metrics['live_data_percentage']),
-                    'avg_response_time': float(self.performance_metrics['average_response_time'])
+                    'total_requests': self.performance_metrics['total_requests'],
+                    'live_data_percentage': self.performance_metrics['live_data_percentage'],
+                    'avg_response_time': self.performance_metrics['average_response_time']
                 }
             }
             
@@ -934,11 +934,11 @@ class HYPERDataAggregator:
             # Emergency fallback
             emergency_quote = self.robinhood_client.market_simulator.generate_realistic_quote(symbol)
             return {
-                'symbol': str(symbol),
+                'symbol': symbol,
                 'quote': emergency_quote,
                 'trends': await self.trends_client.get_trends_data([symbol]),
                 'timestamp': datetime.now().isoformat(),
-                'processing_time': float(time.time() - start_time),
+                'processing_time': time.time() - start_time,
                 'data_quality': 'emergency_fallback',
                 'api_status': 'error',
                 'error': str(e),
@@ -1006,7 +1006,7 @@ class HYPERDataAggregator:
         
         # Calculate new average
         new_avg = ((current_avg * (total - 1)) + response_time) / total
-        self.performance_metrics['average_response_time'] = float(new_avg)
+        self.performance_metrics['average_response_time'] = round(new_avg, 3)
     
     def _update_live_data_percentage(self):
         """Update live data percentage"""
@@ -1015,20 +1015,20 @@ class HYPERDataAggregator:
         
         if total > 0:
             percentage = (robinhood / total) * 100
-            self.performance_metrics['live_data_percentage'] = float(percentage)
+            self.performance_metrics['live_data_percentage'] = round(percentage, 1)
     
     async def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status"""
         return {
-            'system_health': str(self.system_health),
-            'robinhood_live': bool(self.robinhood_live),
-            'sheriff_authentication': bool(ROBIN_STOCKS_AVAILABLE),
-            'authenticated': bool(self.robinhood_client.authenticated),
+            'system_health': self.system_health,
+            'robinhood_live': self.robinhood_live,
+            'sheriff_authentication': ROBIN_STOCKS_AVAILABLE,
+            'authenticated': self.robinhood_client.authenticated,
             'data_sources_status': self.data_sources_status,
             'performance_metrics': self.performance_metrics,
             'last_health_check': datetime.now().isoformat(),
             'credentials_provided': bool(os.getenv("RH_USERNAME") and os.getenv("RH_PASSWORD")),
-            'live_data_active': bool(self.robinhood_live and self.robinhood_client.authenticated)
+            'live_data_active': self.robinhood_live and self.robinhood_client.authenticated
         }
     
     async def close(self):
