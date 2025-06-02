@@ -298,7 +298,7 @@ class DynamicMarketSimulator:
         
         return movements
 
-class LiveRobinhoodClient:
+class RobinhoodClient:
     """LIVE Robinhood client with latest sheriff authentication"""
     
     def __init__(self):
@@ -497,7 +497,7 @@ class LiveRobinhoodClient:
             logger.info(f"ℹ️ Robinhood connection test error: {e}")
             return False
     
-    async def get_live_quote(self, symbol: str) -> Dict[str, Any]:
+    async def get_global_quote(self, symbol: str) -> Dict[str, Any]:
         """Get LIVE quote data from Robinhood"""
         
         # Try LIVE Robinhood first if authenticated
@@ -783,12 +783,12 @@ class GoogleTrendsClient:
         else:
             return 'BEARISH'
 
-class LiveHYPERDataAggregator:
+class HYPERDataAggregator:
     """LIVE HYPER Data Aggregator with Real Robinhood Data"""
     
     def __init__(self, api_key: str = None):
         # Primary source: LIVE Robinhood with sheriff authentication
-        self.robinhood_client = LiveRobinhoodClient()
+        self.robinhood_client = RobinhoodClient()
         self.trends_client = GoogleTrendsClient()
         
         # Status tracking
@@ -877,7 +877,7 @@ class LiveHYPERDataAggregator:
         
         try:
             # Get LIVE quote data (Robinhood first, then simulation)
-            quote_data = await self.robinhood_client.get_live_quote(symbol)
+            quote_data = await self.robinhood_client.get_global_quote(symbol)
             
             # Track data source
             if quote_data.get('data_source', '').startswith('robinhood'):
@@ -1036,7 +1036,7 @@ class LiveHYPERDataAggregator:
         logger.info("🔒 LIVE HYPER data aggregator cleaned up")
 
 # Export the main aggregator
-__all__ = ['LiveHYPERDataAggregator', 'LiveRobinhoodClient', 'DynamicMarketSimulator']
+__all__ = ['HYPERDataAggregator', 'RobinhoodClient', 'DynamicMarketSimulator']
 
 logger.info("🚀 Enhanced LIVE Robinhood Data Source loaded successfully!")
 logger.info("📱 Primary: LIVE Robinhood with sheriff authentication")
