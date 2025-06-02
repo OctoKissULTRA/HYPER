@@ -471,7 +471,7 @@ class RobinhoodClient:
         if not ROBIN_STOCKS_AVAILABLE or not self.authenticated:
             # Try to login first if not authenticated
             if not self.authenticated:
-                login_success = await await self.attempt_live_login()
+                login_success = await self.attempt_live_login()
                 if not login_success:
                     logger.info("ℹ️ Robinhood authentication failed - using simulation")
                     return False
