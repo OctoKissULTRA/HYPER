@@ -7,6 +7,19 @@ import time
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
+
+import numpy as np
+
+def make_json_safe(data):
+    """Recursively convert all non-serializable types (e.g., np types) to native Python types."""
+    if isinstance(data, dict):
+        return {k: make_json_safe(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [make_json_safe(i) for i in data]
+    elif isinstance(data, np.generic):  # catches np.bool_, np.int64, np.float32, etc.
+        return data.item()
+    else:
+        return data
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
