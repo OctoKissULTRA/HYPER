@@ -86,7 +86,6 @@ class DynamicMarketSimulator:
     """Enhanced dynamic market simulation with realistic behavior"""
     
     def __init__(self):
-        self.connection_attempts = 0
         self.session_start = time.time()
         self.price_history = {}
         self.volume_history = {}
@@ -303,7 +302,6 @@ class RobinhoodClient:
     """LIVE Robinhood client with latest sheriff authentication"""
     
     def __init__(self):
-        self.connection_attempts = 0
         self.session = None
         self.cache = {}
         self.cache_duration = 60  # 1 minute cache
@@ -323,8 +321,7 @@ class RobinhoodClient:
         logger.info("🎯 LIVE Robinhood client initialized with sheriff authentication support")
     
     async def attempt_live_login(self):
-        self.connection_attempts += 1
-        logger.info(f"🔐 [LOGIN] Attempt #{self.connection_attempts} to login...")
+        logger.info("🔐 Attempting Robinhood login now...")
         """Attempt LIVE Robinhood login with sheriff authentication handling"""
         if not ROBIN_STOCKS_AVAILABLE:
             logger.info("ℹ️ robin_stocks not available - using enhanced simulation")
@@ -449,7 +446,7 @@ class RobinhoodClient:
                         
                 elif "429" in error_msg or "too many requests" in error_msg:
                     logger.warning("⚠️ Rate limit hit - will retry later")
-                    self.login_cooldown = 1800  # 30 minutes for rate limit
+                    self.login_cooldown = 300  # 30 minutes for rate limit
                     return False
                     
                 elif "credentials" in error_msg or "password" in error_msg:
@@ -474,8 +471,7 @@ class RobinhoodClient:
         if not ROBIN_STOCKS_AVAILABLE or not self.authenticated:
             # Try to login first if not authenticated
             if not self.authenticated:
-                login_success = await self.attempt_live_login()
-        logger.info(f'✅ [LOGIN RESULT] Success status: {login_success}')
+                login_success = await await self.attempt_live_login()
                 if not login_success:
                     logger.info("ℹ️ Robinhood authentication failed - using simulation")
                     return False
@@ -686,7 +682,6 @@ class GoogleTrendsClient:
     """Enhanced Google Trends client with dynamic data"""
     
     def __init__(self):
-        self.connection_attempts = 0
         self.trend_history = {}
         self.session_start = time.time()
         logger.info("📈 Enhanced Google Trends Client initialized")
@@ -858,7 +853,7 @@ class HYPERDataAggregator:
     async def _background_login_retry(self):
         """Retry Robinhood login in background every 10 minutes"""
         while not self.robinhood_live:
-            await asyncio.sleep(600)  # Wait 10 minutes
+            await asyncio.sleep(60)  # Wait 10 minutes
             try:
                 logger.info("🔄 Background retry: Attempting Robinhood login...")
                 success = await self.robinhood_client.attempt_live_login()
