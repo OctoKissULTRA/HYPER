@@ -1,3 +1,4 @@
+
 services:
   - type: web
     name: hypertrends-v4
@@ -12,19 +13,17 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: DEMO_MODE
-        value: "true"
+        value: "false"
       - key: LOG_LEVEL
         value: INFO
       - key: PYTHON_VERSION
         value: "3.11"
       - key: RH_USERNAME
-        value: "your@email.com"
+        value: "your@email.com"  # 🔒 Replace with your Robinhood email
       - key: RH_PASSWORD
-        value: "yourSecurePassword"
+        value: "yourSecurePassword"  # 🔒 Replace with your Robinhood password
 
-      # ============================================
-      # OPTIONAL API KEYS (Future Features)
-      # ============================================
+      # Optional future API integrations
       - key: NEWS_API_KEY
         value: ""
       - key: REDDIT_CLIENT_ID
@@ -34,9 +33,7 @@ services:
       - key: TWITTER_BEARER_TOKEN
         value: ""
 
-      # ============================================
-      # PERFORMANCE OPTIMIZATIONS
-      # ============================================
+      # Performance tuning (optional)
       - key: WORKERS
         value: "1"
       - key: MAX_CONNECTIONS

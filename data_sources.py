@@ -12,19 +12,6 @@ import importlib
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
-
-import numpy as np
-
-def make_json_safe(data):
-    """Recursively convert all non-serializable types (e.g., np types) to native Python types."""
-    if isinstance(data, dict):
-        return {k: make_json_safe(v) for k, v in data.items()}
-    elif isinstance(data, list):
-        return [make_json_safe(i) for i in data]
-    elif isinstance(data, np.generic):  # catches np.bool_, np.int64, np.float32, etc.
-        return data.item()
-    else:
-        return data
 # Set up logging first
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -334,6 +321,7 @@ class RobinhoodClient:
         logger.info("🎯 LIVE Robinhood client initialized with sheriff authentication support")
     
     async def attempt_live_login(self):
+        logger.info("🔐 Attempting Robinhood login now...")
         """Attempt LIVE Robinhood login with sheriff authentication handling"""
         if not ROBIN_STOCKS_AVAILABLE:
             logger.info("ℹ️ robin_stocks not available - using enhanced simulation")
@@ -458,7 +446,7 @@ class RobinhoodClient:
                         
                 elif "429" in error_msg or "too many requests" in error_msg:
                     logger.warning("⚠️ Rate limit hit - will retry later")
-                    self.login_cooldown = 1800  # 30 minutes for rate limit
+                    self.login_cooldown = 300  # 30 minutes for rate limit
                     return False
                     
                 elif "credentials" in error_msg or "password" in error_msg:
@@ -865,7 +853,7 @@ class HYPERDataAggregator:
     async def _background_login_retry(self):
         """Retry Robinhood login in background every 10 minutes"""
         while not self.robinhood_live:
-            await asyncio.sleep(600)  # Wait 10 minutes
+            await asyncio.sleep(60)  # Wait 10 minutes
             try:
                 logger.info("🔄 Background retry: Attempting Robinhood login...")
                 success = await self.robinhood_client.attempt_live_login()
