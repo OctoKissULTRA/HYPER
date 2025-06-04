@@ -1,4 +1,4 @@
-# main.py - HYPERtrends v4.0 Modular Application - COMPLETE FIXED VERSION
+# main.py - HYPERtrends v4.0 - INSTANT STARTUP VERSION
 import os
 import asyncio
 import json
@@ -14,10 +14,6 @@ import uvicorn
 
 # Import configuration and modular components
 import config
-from data_sources import HYPERDataAggregator
-from signal_engine import HYPERSignalEngine, HYPERSignal
-from model_testing import ModelTester, TestingAPI
-from ml_learning import integrate_ml_learning, MLEnhancedSignalEngine, LearningAPI
 
 # ========================================
 # LOGGING SETUP
@@ -29,12 +25,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ========================================
-# FASTAPI APPLICATION
+# FASTAPI APPLICATION - INSTANT STARTUP
 # ========================================
 app = FastAPI(
-    title="🌟 HYPERtrends v4.0 - Modular Edition",
-    description="AI-powered trading signals with advanced modular architecture",
-    version="4.0.0-MODULAR"
+    title="🌟 HYPERtrends v4.0 - Instant Startup",
+    description="AI-powered trading signals with instant deployment",
+    version="4.0.0-INSTANT"
 )
 
 app.add_middleware(
@@ -46,102 +42,169 @@ app.add_middleware(
 )
 
 # ========================================
-# GLOBAL STATE
+# MINIMAL GLOBAL STATE FOR INSTANT STARTUP
 # ========================================
-class ModularHYPERState:
+class InstantHYPERState:
     def __init__(self):
         self.is_running = False
+        self.initialization_complete = False
+        self.startup_time = datetime.now()
+        self.connected_clients = []
+        self.current_signals = {}
+        self.last_update = None
+        
+        # Lazy-loaded components (loaded after startup)
         self.data_aggregator = None
         self.signal_engine = None
         self.ml_enhanced_engine = None
-        self.model_tester = None
-        self.learning_api = None
-        self.testing_api = None
-        
-        self.current_signals = {}
-        self.enhanced_signals = {}
-        self.connected_clients = []
-        self.last_update = None
-        self.startup_time = datetime.now()
         
         self.stats = {
-            "total_signals_generated": 0,
-            "clients_connected": 0,
+            "status": "starting",
             "uptime_start": datetime.now(),
-            "successful_cycles": 0,
-            "errors_encountered": 0,
-            "average_confidence": 0.0,
-            "last_error": None,
-            "data_source_status": config.get_data_source_status(),
             "robinhood_available": config.has_robinhood_credentials(),
-            "modular_components": [],
-            "component_performance": {}
+            "data_source_status": config.get_data_source_status(),
+            "initialization_complete": False
         }
-    
-    async def initialize(self):
-        logger.info("🚀 Initializing HYPERtrends v4.0 Modular System...")
         
+        logger.info("⚡ Instant HYPER state initialized")
+
+hyper_state = InstantHYPERState()
+
+# ========================================
+# INSTANT STARTUP - NO DELAYS
+# ========================================
+@app.on_event("startup")
+async def instant_startup():
+    """INSTANT startup - bind port immediately, initialize components later"""
+    try:
+        logger.info("⚡ INSTANT STARTUP - Port binding immediately!")
+        
+        # Mark as started immediately - no delays
+        hyper_state.stats["status"] = "online"
+        
+        # Schedule background initialization (don't wait for it)
+        asyncio.create_task(background_initialization())
+        
+        logger.info("✅ Port bound! Background initialization scheduled.")
+        
+    except Exception as e:
+        logger.error(f"❌ Startup error: {e}")
+        # Even if there's an error, mark as online so port binds
+        hyper_state.stats["status"] = "online_with_errors"
+
+async def background_initialization():
+    """Initialize components in background after port is bound"""
+    try:
+        logger.info("🔧 Starting background initialization...")
+        await asyncio.sleep(2)  # Give port time to bind first
+        
+        # Now load the heavy components
+        from data_sources import HYPERDataAggregator
+        from signal_engine import HYPERSignalEngine
+        
+        logger.info("📡 Loading data aggregator...")
+        hyper_state.data_aggregator = HYPERDataAggregator()
+        
+        logger.info("🧠 Loading signal engine...")
+        hyper_state.signal_engine = HYPERSignalEngine()
+        
+        # Test Robinhood connection
+        if hyper_state.data_aggregator:
+            await hyper_state.data_aggregator.initialize()
+        
+        # Generate initial signals
+        if hyper_state.signal_engine:
+            logger.info("🎯 Generating initial signals...")
+            initial_signals = await hyper_state.signal_engine.generate_all_signals()
+            hyper_state.current_signals = initial_signals
+            hyper_state.last_update = datetime.now()
+        
+        # Start signal generation loop
+        hyper_state.is_running = True
+        hyper_state.initialization_complete = True
+        hyper_state.stats["initialization_complete"] = True
+        hyper_state.stats["status"] = "fully_operational"
+        
+        logger.info("✅ Background initialization complete!")
+        
+        # Start the signal loop
+        asyncio.create_task(signal_generation_loop())
+        
+    except Exception as e:
+        logger.error(f"❌ Background initialization failed: {e}")
+        hyper_state.stats["status"] = "online_simulation_only"
+        # Create fallback signals so something works
+        await create_fallback_signals()
+
+async def create_fallback_signals():
+    """Create basic fallback signals when initialization fails"""
+    try:
+        logger.info("🔄 Creating fallback signals...")
+        fallback_signals = {}
+        
+        for symbol in config.TICKERS:
+            # Create a basic signal structure
+            fallback_signals[symbol] = {
+                "symbol": symbol,
+                "signal_type": "HOLD",
+                "confidence": 50.0,
+                "direction": "NEUTRAL",
+                "price": {"QQQ": 435.50, "SPY": 525.25, "NVDA": 892.75, "AAPL": 198.80, "MSFT": 452.90}.get(symbol, 100.0),
+                "timestamp": datetime.now().isoformat(),
+                "technical_score": 50.0,
+                "sentiment_score": 50.0,
+                "data_source": "fallback"
+            }
+        
+        hyper_state.current_signals = fallback_signals
+        hyper_state.last_update = datetime.now()
+        hyper_state.is_running = True
+        
+        logger.info("✅ Fallback signals created")
+        
+    except Exception as e:
+        logger.error(f"❌ Fallback signal creation failed: {e}")
+
+async def signal_generation_loop():
+    """Signal generation loop (only runs after background init)"""
+    logger.info("🚀 Starting signal generation loop...")
+    
+    while hyper_state.is_running:
         try:
-            # Initialize data aggregator
-            self.data_aggregator = HYPERDataAggregator()
-            if hasattr(self.data_aggregator, 'initialize'):
-                await self.data_aggregator.initialize()
+            if hyper_state.signal_engine and hyper_state.data_aggregator:
+                # Generate new signals
+                all_signals = await hyper_state.signal_engine.generate_all_signals()
+                hyper_state.current_signals = all_signals
+                hyper_state.last_update = datetime.now()
+                
+                # Broadcast to WebSocket clients
+                await broadcast_signals(all_signals)
+                
+                logger.info(f"📊 Updated signals for {len(all_signals)} symbols")
             
-            # Initialize modular signal engine
-            self.signal_engine = HYPERSignalEngine()
-            
-            # Track active components
-            if hasattr(self.signal_engine, '_get_active_components'):
-                self.stats["modular_components"] = self.signal_engine._get_active_components()
-            
-            # Initialize testing framework
-            try:
-                self.model_tester = ModelTester(self.signal_engine)
-                self.testing_api = TestingAPI(self.model_tester)
-                logger.info("✅ Testing framework initialized")
-            except Exception as e:
-                logger.warning(f"⚠️ Testing framework failed: {e}")
-            
-            # Initialize ML learning
-            try:
-                self.ml_enhanced_engine, self.learning_api = integrate_ml_learning(
-                    self.signal_engine, self.model_tester
-                )
-                logger.info("✅ ML learning integration successful")
-            except Exception as e:
-                logger.warning(f"⚠️ ML learning failed: {e}")
-            
-            # Validate configuration
-            config.validate_config()
-            
-            component_count = len(self.stats.get("modular_components", []))
-            logger.info(f"✅ Modular system initialized with {component_count} active components")
-            
-            return True
+            await asyncio.sleep(config.UPDATE_INTERVALS.get("signal_generation", 30))
             
         except Exception as e:
-            logger.error(f"❌ Modular initialization failed: {e}")
-            return False
-
-hyper_state = ModularHYPERState()
+            logger.error(f"❌ Signal generation error: {e}")
+            await asyncio.sleep(30)
 
 # ========================================
 # WEBSOCKET MANAGER
 # ========================================
-class ModularConnectionManager:
+class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
     
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
-        hyper_state.stats["clients_connected"] = len(self.active_connections)
-        logger.info(f"Client connected. Active: {len(self.active_connections)}")
+        hyper_state.connected_clients = self.active_connections
+        logger.info(f"WebSocket connected. Total: {len(self.active_connections)}")
     
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
-            hyper_state.stats["clients_connected"] = len(self.active_connections)
+            hyper_state.connected_clients = self.active_connections
     
     async def broadcast(self, message: dict):
         if not self.active_connections:
@@ -158,285 +221,246 @@ class ModularConnectionManager:
         
         for conn in disconnected:
             self.disconnect(conn)
-    
-    def serialize_modular_signals(self, signals):
-        """Enhanced serialization for modular signals"""
-        if not signals:
-            return {}
-        
-        serialized = {}
-        for symbol, signal_data in signals.items():
-            try:
-                if hasattr(signal_data, '__dict__'):
-                    signal = signal_data
-                    
-                    signal_dict = {
-                        "symbol": signal.symbol,
-                        "signal_type": getattr(signal, 'signal_type', 'HOLD'),
-                        "confidence": float(getattr(signal, 'confidence', 0)),
-                        "direction": getattr(signal, 'direction', 'NEUTRAL'),
-                        "price": float(getattr(signal, 'price', 0)),
-                        "timestamp": getattr(signal, 'timestamp', datetime.now().isoformat()),
-                        "technical_score": float(getattr(signal, 'technical_score', 50)),
-                        "sentiment_score": float(getattr(signal, 'sentiment_score', 50)),
-                        "momentum_score": float(getattr(signal, 'momentum_score', 50)),
-                        "ml_score": float(getattr(signal, 'ml_score', 50)),
-                        "vix_score": float(getattr(signal, 'vix_score', 50)),
-                        "market_structure_score": float(getattr(signal, 'market_structure_score', 50)),
-                        "risk_score": float(getattr(signal, 'risk_score', 50)),
-                        "williams_r": float(getattr(signal, 'williams_r', -50)),
-                        "stochastic_k": float(getattr(signal, 'stochastic_k', 50)),
-                        "stochastic_d": float(getattr(signal, 'stochastic_d', 50)),
-                        "vix_sentiment": getattr(signal, 'vix_sentiment', 'NEUTRAL'),
-                        "data_quality": getattr(signal, 'data_quality', 'unknown'),
-                        "reasons": getattr(signal, 'reasons', [])[:3],
-                        "warnings": getattr(signal, 'warnings', [])[:2],
-                        "enhanced_features": getattr(signal, 'enhanced_features', {}),
-                        "components_used": getattr(signal, 'enhanced_features', {}).get('components_used', [])
-                    }
-                    
-                    serialized[symbol] = signal_dict
-                else:
-                    serialized[symbol] = signal_data
-            except Exception as e:
-                logger.error(f"Error serializing signal for {symbol}: {e}")
-                serialized[symbol] = {"symbol": symbol, "error": str(e)}
-        
-        return serialized
 
-manager = ModularConnectionManager()
+manager = ConnectionManager()
 
-# ========================================
-# SIGNAL GENERATION LOOP
-# ========================================
-async def modular_signal_generation_loop():
-    logger.info("🚀 Starting modular signal generation loop...")
-    
-    while hyper_state.is_running:
-        try:
-            start_time = time.time()
-            all_signals = {}
-            component_performance = {}
-            
-            for symbol in config.TICKERS:
-                try:
-                    symbol_data = await hyper_state.data_aggregator.get_comprehensive_data(symbol)
-                    
-                    signal_start = time.time()
-                    signal = await hyper_state.signal_engine.generate_signal(
-                        symbol, 
-                        symbol_data.get('quote', {}),
-                        symbol_data.get('trends', {}),
-                        symbol_data.get('historical_data', [])
-                    )
-                    signal_time = time.time() - signal_start
-                    
-                    all_signals[symbol] = signal
-                    component_performance[symbol] = {
-                        'generation_time': signal_time,
-                        'components_used': signal.enhanced_features.get('components_used', []),
-                        'data_quality': signal.data_quality
-                    }
-                    
-                except Exception as e:
-                    logger.error(f"❌ Signal generation failed for {symbol}: {e}")
-                    all_signals[symbol] = hyper_state.signal_engine._generate_fallback_signal(
-                        symbol, {'price': 100.0}
-                    )
-            
-            # Update state
-            hyper_state.current_signals = all_signals
-            hyper_state.last_update = datetime.now()
-            hyper_state.stats["total_signals_generated"] += len(all_signals)
-            hyper_state.stats["successful_cycles"] += 1
-            hyper_state.stats["component_performance"] = component_performance
-            
-            confidences = [s.confidence for s in all_signals.values() if hasattr(s, 'confidence')]
-            hyper_state.stats["average_confidence"] = sum(confidences) / len(confidences) if confidences else 0
-            
-            generation_time = time.time() - start_time
-            
-            signal_summary = []
-            for symbol, signal in all_signals.items():
-                signal_type = getattr(signal, 'signal_type', 'HOLD')
-                confidence = getattr(signal, 'confidence', 0)
-                components = len(getattr(signal, 'enhanced_features', {}).get('components_used', []))
-                signal_summary.append(f"{symbol}:{signal_type}({confidence:.0f}%)")
-            
-            logger.info(f"📊 Generated signals: {', '.join(signal_summary)} ({generation_time:.2f}s)")
-            
-            await manager.broadcast({
-                "type": "modular_signal_update",
-                "signals": manager.serialize_modular_signals(all_signals),
-                "timestamp": hyper_state.last_update.isoformat(),
-                "stats": hyper_state.stats.copy(),
-                "generation_time": generation_time,
-                "modular_info": {
-                    "active_components": hyper_state.stats.get("modular_components", []),
-                    "component_performance": component_performance,
-                    "data_source_status": config.get_data_source_status(),
-                    "version": "4.0.0-MODULAR"
+async def broadcast_signals(signals):
+    """Broadcast signals to all connected clients"""
+    try:
+        serialized_signals = {}
+        for symbol, signal in signals.items():
+            if hasattr(signal, '__dict__'):
+                serialized_signals[symbol] = {
+                    "symbol": getattr(signal, 'symbol', symbol),
+                    "signal_type": getattr(signal, 'signal_type', 'HOLD'),
+                    "confidence": float(getattr(signal, 'confidence', 50)),
+                    "direction": getattr(signal, 'direction', 'NEUTRAL'),
+                    "price": float(getattr(signal, 'price', 100)),
+                    "timestamp": getattr(signal, 'timestamp', datetime.now().isoformat())
                 }
-            })
-            
-            await asyncio.sleep(config.UPDATE_INTERVALS["signal_generation"])
-            
-        except Exception as e:
-            hyper_state.stats["errors_encountered"] += 1
-            hyper_state.stats["last_error"] = str(e)
-            logger.error(f"💥 Signal generation error: {e}")
-            await asyncio.sleep(30)
+            else:
+                serialized_signals[symbol] = signal
+        
+        await manager.broadcast({
+            "type": "signal_update",
+            "signals": serialized_signals,
+            "timestamp": datetime.now().isoformat(),
+            "status": hyper_state.stats["status"]
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Broadcast error: {e}")
 
 # ========================================
-# API ROUTES
+# API ROUTES - INSTANT RESPONSE
 # ========================================
 
 @app.get("/health")
 async def health_check():
-    """Standard health check with modular info"""
+    """Instant health check - always responds immediately"""
     uptime = (datetime.now() - hyper_state.stats["uptime_start"]).total_seconds()
     
     return {
         "status": "healthy",
-        "version": "4.0.0-MODULAR",
+        "version": "4.0.0-INSTANT",
         "environment": config.ENVIRONMENT,
-        "demo_mode": config.DEMO_MODE,
-        "modular_architecture": {
-            "enabled": True,
-            "active_components": hyper_state.stats.get("modular_components", []),
-            "component_count": len(hyper_state.stats.get("modular_components", [])),
-            "total_possible_components": 5
-        },
-        "data_source": {
-            "primary": "robinhood",
-            "fallback": "dynamic_simulation",
-            "robinhood_credentials": config.has_robinhood_credentials(),
-            "status": config.get_data_source_status()
-        },
-        "is_running": hyper_state.is_running,
         "uptime_seconds": uptime,
+        "initialization_complete": hyper_state.initialization_complete,
+        "is_running": hyper_state.is_running,
+        "robinhood_credentials": config.has_robinhood_credentials(),
+        "data_source_status": config.get_data_source_status(),
+        "connected_clients": len(manager.active_connections),
         "last_update": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
         "stats": hyper_state.stats,
-        "tickers": config.TICKERS,
-        "connected_clients": len(manager.active_connections)
+        "instant_startup": True
     }
 
 @app.get("/", response_class=HTMLResponse)
-async def get_frontend():
-    """Serve the HYPERtrends v4.0 dashboard"""
+async def get_dashboard():
+    """Serve dashboard - instant response"""
+    
+    # Check if index.html exists
     try:
         if os.path.exists("index.html"):
             with open("index.html", "r", encoding="utf-8") as f:
                 return HTMLResponse(content=f.read())
     except Exception as e:
-        logger.error(f"Error serving index.html: {e}")
+        logger.error(f"Error loading index.html: {e}")
     
-    fallback_html = '''
+    # Instant fallback dashboard
+    html_content = f'''
     <!DOCTYPE html>
     <html>
     <head>
-        <title>HYPERtrends v4.0 - Modular Edition</title>
+        <title>HYPERtrends v4.0 - Instant Startup</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #000428, #004e92); color: #00ffff; text-align: center; padding: 50px; margin: 0; }
-            .container { max-width: 800px; margin: 0 auto; }
-            h1 { font-size: 3.5em; margin-bottom: 10px; text-shadow: 0 0 20px #00ffff; }
-            h2 { font-size: 1.8em; margin-bottom: 30px; opacity: 0.9; }
-            .status { background: rgba(0, 255, 255, 0.1); padding: 25px; border-radius: 15px; margin: 25px 0; border: 2px solid #00ffff; box-shadow: 0 0 30px rgba(0, 255, 255, 0.3); }
-            .components { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
-            .component { background: rgba(0, 100, 255, 0.2); padding: 15px; border-radius: 10px; border: 1px solid #0066ff; }
-            @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
-            .pulse { animation: pulse 2s infinite; }
+            body {{ 
+                font-family: 'Segoe UI', Arial, sans-serif; 
+                background: linear-gradient(135deg, #000428, #004e92); 
+                color: #00ffff; 
+                text-align: center; 
+                padding: 50px; 
+                margin: 0; 
+            }}
+            .container {{ max-width: 900px; margin: 0 auto; }}
+            h1 {{ 
+                font-size: 4em; 
+                margin-bottom: 20px; 
+                text-shadow: 0 0 30px #00ffff;
+                animation: glow 2s ease-in-out infinite alternate;
+            }}
+            @keyframes glow {{
+                from {{ text-shadow: 0 0 20px #00ffff; }}
+                to {{ text-shadow: 0 0 40px #00ffff, 0 0 60px #0066ff; }}
+            }}
+            .status-card {{ 
+                background: rgba(0, 255, 255, 0.1); 
+                padding: 30px; 
+                border-radius: 15px; 
+                margin: 30px 0; 
+                border: 2px solid #00ffff; 
+                box-shadow: 0 0 50px rgba(0, 255, 255, 0.3); 
+            }}
+            .status-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+                margin: 30px 0;
+            }}
+            .status-item {{
+                background: rgba(0, 100, 255, 0.2);
+                padding: 20px;
+                border-radius: 10px;
+                border: 1px solid #0066ff;
+            }}
+            .pulse {{ animation: pulse 2s infinite; }}
+            @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.7; }} }}
+            .api-links {{ margin-top: 30px; }}
+            .api-links a {{ 
+                color: #00ffff; 
+                text-decoration: none; 
+                margin: 0 15px; 
+                padding: 10px 20px;
+                border: 1px solid #00ffff;
+                border-radius: 5px;
+                transition: all 0.3s;
+            }}
+            .api-links a:hover {{ 
+                background: rgba(0, 255, 255, 0.2); 
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            }}
         </style>
     </head>
     <body>
         <div class="container">
-            <h1 class="pulse">🌟 HYPERtrends</h1>
-            <h2>v4.0 Modular Edition</h2>
-            <div class="status">
-                <h3>🚀 Modular Architecture Active</h3>
-                <p>Advanced AI-powered trading signals with modular components</p>
+            <h1 class="pulse">⚡ HYPERtrends</h1>
+            <h2>v4.0 Instant Startup Edition</h2>
+            
+            <div class="status-card">
+                <h3>🚀 System Status</h3>
                 <p><strong>Status:</strong> <span id="status" class="pulse">Online</span></p>
-                
-                <div class="components">
-                    <div class="component">📊 Technical Analysis<br><small>25+ Indicators</small></div>
-                    <div class="component">💭 Sentiment Analysis<br><small>Multi-source NLP</small></div>
-                    <div class="component">😱 VIX Fear/Greed<br><small>Contrarian Signals</small></div>
-                    <div class="component">🏗️ Market Structure<br><small>Breadth + Sectors</small></div>
-                    <div class="component">⚠️ Risk Analysis<br><small>VaR + Position Sizing</small></div>
+                <p><strong>Environment:</strong> {config.ENVIRONMENT}</p>
+                <p><strong>Robinhood:</strong> {'✅ Configured' if config.has_robinhood_credentials() else '❌ Not configured'}</p>
+                <p><strong>Data Source:</strong> {config.get_data_source_status()}</p>
+            </div>
+            
+            <div class="status-grid">
+                <div class="status-item">
+                    <h4>📊 Technical Analysis</h4>
+                    <p>25+ Advanced Indicators</p>
                 </div>
-                
-                <div>
-                    <p>API Health: <a href="/health" style="color: #00ffff;">/health</a></p>
-                    <p>API Docs: <a href="/docs" style="color: #00ffff;">/docs</a></p>
+                <div class="status-item">
+                    <h4>💭 Sentiment Analysis</h4>
+                    <p>Multi-source NLP Processing</p>
+                </div>
+                <div class="status-item">
+                    <h4>😱 VIX Fear/Greed</h4>
+                    <p>Contrarian Signal Detection</p>
+                </div>
+                <div class="status-item">
+                    <h4>🏗️ Market Structure</h4>
+                    <p>Breadth & Sector Analysis</p>
+                </div>
+                <div class="status-item">
+                    <h4>⚠️ Risk Analysis</h4>
+                    <p>VaR & Position Sizing</p>
+                </div>
+                <div class="status-item">
+                    <h4>🤖 ML Enhancement</h4>
+                    <p>Neural Network Predictions</p>
                 </div>
             </div>
+            
+            <div class="api-links">
+                <a href="/health">System Health</a>
+                <a href="/api/signals">Current Signals</a>
+                <a href="/docs">API Documentation</a>
+            </div>
+            
+            <p style="margin-top: 40px; opacity: 0.8;">
+                🔥 Production-grade AI trading signals with instant deployment
+            </p>
         </div>
+        
+        <script>
+            // Auto-refresh status
+            setInterval(async () => {{
+                try {{
+                    const response = await fetch('/health');
+                    const data = await response.json();
+                    const statusEl = document.getElementById('status');
+                    
+                    if (data.initialization_complete) {{
+                        statusEl.textContent = 'Fully Operational';
+                        statusEl.style.color = '#00ff41';
+                    }} else {{
+                        statusEl.textContent = 'Initializing...';
+                        statusEl.style.color = '#ffff00';
+                    }}
+                }} catch (e) {{
+                    document.getElementById('status').textContent = 'Checking...';
+                }}
+            }}, 3000);
+        </script>
     </body>
     </html>
     '''
-    return HTMLResponse(content=fallback_html)
+    
+    return HTMLResponse(content=html_content)
 
 @app.get("/api/signals")
-async def get_current_signals():
-    """Get current modular signals"""
+async def get_signals():
+    """Get current signals - instant response"""
     return {
-        "signals": manager.serialize_modular_signals(hyper_state.current_signals),
+        "signals": hyper_state.current_signals,
         "timestamp": hyper_state.last_update.isoformat() if hyper_state.last_update else None,
-        "stats": hyper_state.stats,
-        "modular_info": {
-            "version": "4.0.0-MODULAR",
-            "active_components": hyper_state.stats.get("modular_components", []),
-            "component_performance": hyper_state.stats.get("component_performance", {}),
-            "data_source_status": config.get_data_source_status()
-        }
+        "initialization_complete": hyper_state.initialization_complete,
+        "status": hyper_state.stats["status"],
+        "version": "4.0.0-INSTANT"
     }
-
-@app.get("/api/signals/{symbol}")
-async def get_signal_for_symbol(symbol: str):
-    """Get detailed modular signal for specific symbol"""
-    symbol = symbol.upper()
-    if symbol not in config.TICKERS:
-        raise HTTPException(status_code=404, detail=f"Symbol {symbol} not tracked")
-    
-    if symbol in hyper_state.current_signals:
-        signal = hyper_state.current_signals[symbol]
-        serialized = manager.serialize_modular_signals({symbol: signal})
-        return serialized[symbol]
-    else:
-        raise HTTPException(status_code=404, detail=f"No signal available for {symbol}")
 
 @app.post("/api/start")
 async def start_system():
-    """Start the modular system"""
-    if hyper_state.is_running:
-        return {"status": "already_running", "version": "4.0.0-MODULAR"}
-    
-    if not hyper_state.signal_engine:
-        success = await hyper_state.initialize()
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to initialize modular system")
+    """Start system - instant response"""
+    if not hyper_state.initialization_complete:
+        # Trigger background initialization if not already done
+        asyncio.create_task(background_initialization())
+        return {"status": "initializing", "message": "Background initialization started"}
     
     hyper_state.is_running = True
-    hyper_state.stats["uptime_start"] = datetime.now()
-    asyncio.create_task(modular_signal_generation_loop())
-    
-    return {
-        "status": "started", 
-        "version": "4.0.0-MODULAR",
-        "message": "Modular signal generation started",
-        "active_components": hyper_state.stats.get("modular_components", []),
-        "data_source": config.get_data_source_status()
-    }
+    return {"status": "started", "message": "Signal generation started"}
 
 @app.post("/api/stop")
 async def stop_system():
-    """Stop the modular system"""
+    """Stop system - instant response"""
     hyper_state.is_running = False
-    return {"status": "stopped", "version": "4.0.0-MODULAR"}
+    return {"status": "stopped", "message": "Signal generation stopped"}
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    """Enhanced WebSocket with modular data"""
+    """WebSocket endpoint for real-time updates"""
     await manager.connect(websocket)
     
     try:
@@ -448,9 +472,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_text(json.dumps({
                     "type": "pong",
                     "timestamp": datetime.now().isoformat(),
-                    "version": "4.0.0-MODULAR",
-                    "active_components": hyper_state.stats.get("modular_components", []),
-                    "data_source_status": config.get_data_source_status()
+                    "status": hyper_state.stats["status"],
+                    "initialization_complete": hyper_state.initialization_complete
                 }))
     
     except WebSocketDisconnect:
@@ -459,67 +482,51 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}")
         manager.disconnect(websocket)
 
-# ========================================
-# STARTUP AND SHUTDOWN
-# ========================================
-
-@app.on_event("startup")
-async def startup_event():
-    logger.info("🚀 Starting HYPERtrends v4.0 Modular System...")
-    
-    success = await hyper_state.initialize()
-    if success:
-        try:
-            initial_signals = await hyper_state.signal_engine.generate_all_signals()
-            hyper_state.current_signals = initial_signals
-            hyper_state.last_update = datetime.now()
-            
-            active_components = len(hyper_state.stats.get("modular_components", []))
-            logger.info(f"✅ Initial signals generated with {active_components} components")
-        except Exception as e:
-            logger.error(f"Failed to generate initial signals: {e}")
-        
-        hyper_state.is_running = True
-        hyper_state.stats["uptime_start"] = datetime.now()
-        asyncio.create_task(modular_signal_generation_loop())
-        
-        logger.info("🔥 HYPERtrends v4.0 Modular System auto-started!")
-        logger.info(f"🎯 Active components: {', '.join(hyper_state.stats.get('modular_components', []))}")
-        
-        if config.has_robinhood_credentials():
-            logger.info("📱 Robinhood integration: ACTIVE")
-        else:
-            logger.info("🔄 Dynamic simulation: ACTIVE")
-
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("⏸️ Shutting down HYPERtrends v4.0 Modular System...")
+    """Cleanup on shutdown"""
+    logger.info("⏸️ Shutting down HYPERtrends...")
     hyper_state.is_running = False
     
+    # Close WebSocket connections
     for connection in manager.active_connections.copy():
         try:
             await connection.close()
         except:
             pass
     
+    # Cleanup data aggregator
     if hyper_state.data_aggregator and hasattr(hyper_state.data_aggregator, 'close'):
-        await hyper_state.data_aggregator.close()
+        try:
+            await hyper_state.data_aggregator.close()
+        except:
+            pass
     
-    logger.info("👋 HYPERtrends v4.0 Modular System shutdown complete")
+    logger.info("👋 Shutdown complete")
 
 # ========================================
-# MAIN EXECUTION
+# MAIN EXECUTION - INSTANT STARTUP
 # ========================================
 if __name__ == "__main__":
-    logger.info("🌟 Starting HYPERtrends v4.0 - Modular Edition")
+    # Print startup info
+    logger.info("⚡ Starting HYPERtrends v4.0 - INSTANT STARTUP")
     logger.info(f"🔧 Environment: {config.ENVIRONMENT}")
     logger.info(f"📱 Robinhood: {'✅ Available' if config.has_robinhood_credentials() else '❌ Not configured'}")
-    logger.info(f"🔄 Demo Mode: {config.DEMO_MODE}")
     
-    uvicorn.run(
-        app,
-        host=config.SERVER_CONFIG["host"],
-        port=config.SERVER_CONFIG["port"],
-        reload=config.SERVER_CONFIG["reload"],
-        access_log=config.SERVER_CONFIG["access_log"]
-    )
+    # Get server configuration with environment PORT
+    host = "0.0.0.0"
+    port = int(os.environ.get("PORT", config.SERVER_CONFIG.get("port", 8000)))
+    
+    logger.info(f"🚀 INSTANT startup on {host}:{port}")
+    
+    try:
+        uvicorn.run(
+            app,
+            host=host,
+            port=port,
+            log_level="info",
+            access_log=True
+        )
+    except Exception as e:
+        logger.error(f"💥 Server start failed: {e}")
+        raise
