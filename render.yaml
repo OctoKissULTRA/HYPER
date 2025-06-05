@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: hypertrends-v4
+    name: hypertrends-alpaca
     env: python
     plan: starter
     region: oregon
@@ -11,39 +11,16 @@ services:
     envVars:
       - key: ENVIRONMENT
         value: production
-      - key: DEMO_MODE
-        value: "true"
-      - key: LOG_LEVEL
-        value: INFO
-      - key: PYTHON_VERSION
-        value: "3.11"
-      - key: RH_USERNAME
-        value: "your@email.com"
-      - key: RH_PASSWORD
-        value: "yourSecurePassword"
-
-      # ============================================
-      # OPTIONAL API KEYS (Future Features)
-      # ============================================
-      - key: NEWS_API_KEY
-        value: ""
-      - key: REDDIT_CLIENT_ID
-        value: ""
-      - key: REDDIT_SECRET
-        value: ""
-      - key: TWITTER_BEARER_TOKEN
-        value: ""
-
-      # ============================================
-      # PERFORMANCE OPTIMIZATIONS
-      # ============================================
-      - key: WORKERS
-        value: "1"
-      - key: MAX_CONNECTIONS
-        value: "100"
-      - key: KEEPALIVE_TIMEOUT
-        value: "65"
-
+      - key: USE_SANDBOX
+        value: "True"
+      - key: DATA_SOURCE
+        value: alpaca
+      - key: APCA_API_KEY_ID
+        sync: false
+      - key: APCA_API_SECRET_KEY
+        sync: false
+      - key: VERBOSE
+        value: "False"
     disk:
       name: hyper-data
       mountPath: /app/data
