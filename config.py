@@ -1,18 +1,23 @@
+
 import os
 
 # ========================================
 # HYPER CONFIGURATION (ALPACA DEPLOYMENT)
 # ========================================
 
-ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
+# ENVIRONMENT SETTINGS
+ENVIRONMENT = os.getenv("ENVIRONMENT", "production")  # development or production
 USE_SANDBOX = os.getenv("USE_SANDBOX", "True") == "True"
-DATA_SOURCE = os.getenv("DATA_SOURCE", "alpaca")
+DATA_SOURCE = os.getenv("DATA_SOURCE", "alpaca")  # should now reflect Alpaca
 
+# API CREDENTIALS
 APCA_API_KEY_ID = os.getenv("APCA_API_KEY_ID", "")
 APCA_API_SECRET_KEY = os.getenv("APCA_API_SECRET_KEY", "")
 
+# TICKERS TO TRACK
 TICKERS = ["QQQ", "SPY", "NVDA", "AAPL", "MSFT"]
 
+# CONFIDENCE THRESHOLDS
 CONFIDENCE_THRESHOLDS = {
     "HYPER_BUY": 85,
     "SOFT_BUY": 65,
@@ -20,6 +25,7 @@ CONFIDENCE_THRESHOLDS = {
     "SELL": 0
 }
 
+# ENABLED MODULES
 ENABLED_MODULES = {
     "technical_indicators": True,
     "sentiment_analysis": True,
@@ -29,4 +35,5 @@ ENABLED_MODULES = {
     "ml_models": True,
 }
 
+# DEBUG / VERBOSE LOGGING
 VERBOSE = os.getenv("VERBOSE", "False") == "True"
