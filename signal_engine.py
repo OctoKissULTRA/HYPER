@@ -71,7 +71,7 @@ class HYPERSignalEngine:
         logger.info("🚀 Initializing HYPERtrends v4.0 Modular Signal Engine...")
         
         # Technical Analysis
-        if config.is_feature_enabled('enable_advanced_technical'):
+        if config.is_feature_enabled('technical_indicators'):
             self.technical_analyzer = AdvancedTechnicalAnalyzer(config.TECHNICAL_PARAMS)
             logger.info("✅ Technical Analyzer loaded (25+ indicators)")
         else:
@@ -79,7 +79,7 @@ class HYPERSignalEngine:
             logger.info("⚠️ Technical Analyzer disabled")
         
         # Sentiment Analysis
-        if config.is_feature_enabled('enable_sentiment_analysis'):
+        if config.is_feature_enabled('sentiment_analysis'):
             self.sentiment_analyzer = AdvancedSentimentAnalyzer(config.SENTIMENT_CONFIG)
             logger.info("✅ Sentiment Analyzer loaded (multi-source NLP)")
         else:
@@ -87,7 +87,7 @@ class HYPERSignalEngine:
             logger.info("⚠️ Sentiment Analyzer disabled")
         
         # VIX Analysis
-        if config.is_feature_enabled('enable_vix_analysis'):
+        if config.is_feature_enabled('vix_analysis'):
             self.vix_analyzer = AdvancedVIXAnalyzer(config.VIX_CONFIG)
             logger.info("✅ VIX Analyzer loaded (fear/greed detection)")
         else:
@@ -95,7 +95,7 @@ class HYPERSignalEngine:
             logger.info("⚠️ VIX Analyzer disabled")
         
         # Market Structure Analysis
-        if config.is_feature_enabled('enable_market_structure'):
+        if config.is_feature_enabled('market_structure'):
             self.market_structure_analyzer = AdvancedMarketStructureAnalyzer(config.MARKET_STRUCTURE_CONFIG)
             logger.info("✅ Market Structure Analyzer loaded (breadth + sectors)")
         else:
@@ -103,7 +103,7 @@ class HYPERSignalEngine:
             logger.info("⚠️ Market Structure Analyzer disabled")
         
         # Risk Analysis
-        if config.is_feature_enabled('enable_risk_metrics'):
+        if config.is_feature_enabled('risk_analysis'):
             self.risk_analyzer = AdvancedRiskAnalyzer(config.RISK_CONFIG)
             logger.info("✅ Risk Analyzer loaded (VaR + position sizing)")
         else:
