@@ -35,11 +35,6 @@ scikit-learn==1.3.2
 xgboost==2.0.2
 lightgbm==4.1.0
 
-# Technical Analysis
-
-ta-lib==0.4.28
-TA-Lib==0.4.28
-
 # Sentiment Analysis and NLP
 
 textblob==0.17.1
@@ -69,7 +64,6 @@ seaborn==0.13.0
 # Database and Storage
 
 sqlalchemy==2.0.23
-sqlite3
 
 # Environment and Configuration
 
@@ -135,31 +129,9 @@ mypy==1.7.1
 
 # Production WSGI/ASGI Servers
 
-uvloop==0.19.0; sys_platform != “win32”
+uvloop==0.19.0; sys_platform != ‘win32’
 
-# Optional ML Libraries (Advanced Features)
-
-# tensorflow==2.15.0
-
-# torch==2.1.2
-
-# transformers==4.36.2
-
-# Optional Real-time Data
-
-# websocket-client==1.6.4
-
-# python-socketio==5.10.0
-
-# Optional Advanced Analytics
-
-# quantlib==1.32
-
-# zipline-reloaded==3.0.3
-
-# Environment-specific optimizations
-
-# For production deployment on Render
+# Production deployment on Render
 
 gunicorn[gevent]==21.2.0
 
@@ -186,10 +158,6 @@ python-json-logger==2.0.7
 # Production monitoring
 
 prometheus-client==0.19.0
-
-# Error tracking (optional)
-
-# sentry-sdk[fastapi]==1.39.2
 
 # Load balancing and health checks
 
@@ -246,14 +214,6 @@ shortuuid==1.0.11
 # Concurrent processing
 
 concurrent-futures==3.1.1
-
-# Memory-mapped files for large datasets
-
-mmap
-
-# Process management
-
-supervisor==4.2.5
 
 # Health check utilities
 
@@ -331,10 +291,6 @@ apscheduler==3.10.4
 # Profiling and optimization
 
 line-profiler==4.1.1
-
-# Memory profiling
-
-pympler==0.9
 
 # Network latency measurement
 
