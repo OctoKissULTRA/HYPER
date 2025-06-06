@@ -322,3 +322,228 @@ else:
 return {“error”: “unable_to_serialize”, “type”: str(type(signal))}
 except Exception as e:
 logger.error(f”Signal serialization error: {e}”)
+return {“error”: str(e)}
+
+async def signal_generation_loop():
+“”“Background signal generation loop”””
+while hyper_state.is_running:
+try:
+await asyncio.sleep(config.UPDATE_INTERVALS[“signal_generation”])
+
+```
+        if hyper_state.signal_engine and hyper_state.data_aggregator:
+            new_signals = await generate_all_signals()
+            hyper_state.current_signals = new_signals
+            hyper_state.last_update = datetime.now()
+            
+            # Broadcast to WebSocket clients
+            await manager.broadcast({
+                "type": "signal_update",
+                "signals": new_signals,
+                "timestamp": datetime.now().isoformat()
+            })
+            
+    except Exception as e:
+        logger.error(f"❌ Signal generation loop error: {e}")
+        await asyncio.sleep(30)  # Wait before retrying
+```
+
+# ========================================
+
+# API ENDPOINTS
+
+# ========================================
+
+@app.get(”/”, response_class=HTMLResponse)
+async def dashboard():
+“”“Main dashboard”””
+try:
+with open(“index.html”, “r”) as f:
+return HTMLResponse(f.read())
+except FileNotFoundError:
+return HTMLResponse(”<h1>HYPERtrends v4.0</h1><p>Dashboard loading…</p>”)
+
+@app.get(”/health”)
+async def health_check():
+“”“Health check endpoint”””
+return {
+“status”: “healthy”,
+“timestamp”: datetime.now().isoformat(),
+“system_status”: hyper_state.stats[“status”],
+“initialization_complete”: hyper_state.initialization_complete,
+“uptime_seconds”: (datetime.now() - hyper_state.startup_time).total_seconds(),
+“connected_clients”: len(hyper_state.connected_clients),
+“signals_available”: len(hyper_state.current_signals)
+}
+
+@app.get(”/api/signals”)
+async def get_signals():
+“”“Get current trading signals”””
+return {
+“status”: “success”,
+“signals”: hyper_state.current_signals,
+“last_update”: hyper_state.last_update.isoformat() if hyper_state.last_update else None,
+“timestamp”: datetime.now().isoformat(),
+“system_status”: hyper_state.stats[“status”]
+}
+
+@app.get(”/api/signals/{symbol}”)
+async def get_signal(symbol: str):
+“”“Get signal for specific symbol”””
+symbol = symbol.upper()
+
+```
+if symbol in hyper_state.current_signals:
+    return {
+        "status": "success",
+        "symbol": symbol,
+        "signal": hyper_state.current_signals[symbol],
+        "timestamp": datetime.now().isoformat()
+    }
+else:
+    raise HTTPException(status_code=404, detail=f"Signal for {symbol} not found")
+```
+
+@app.post(”/api/signals/refresh”)
+async def refresh_signals():
+“”“Manual signal refresh”””
+try:
+if hyper_state.signal_engine and hyper_state.data_aggregator:
+new_signals = await generate_all_signals()
+hyper_state.current_signals = new_signals
+hyper_state.last_update = datetime.now()
+
+```
+        return {
+            "status": "success",
+            "message": "Signals refreshed",
+            "signals": new_signals,
+            "timestamp": datetime.now().isoformat()
+        }
+    else:
+        raise HTTPException(status_code=503, detail="Signal engine not available")
+except Exception as e:
+    raise HTTPException(status_code=500, detail=str(e))
+```
+
+@app.get(”/api/system/status”)
+async def system_status():
+“”“System status information”””
+return {
+“status”: hyper_state.stats[“status”],
+“initialization_complete”: hyper_state.initialization_complete,
+“uptime”: (datetime.now() - hyper_state.startup_time).total_seconds(),
+“data_source”: config.get_data_source_status(),
+“alpaca_available”: config.has_alpaca_credentials(),
+“connected_clients”: len(hyper_state.connected_clients),
+“signals_generated”: hyper_state.stats[“signals_generated”],
+“last_update”: hyper_state.last_update.isoformat() if hyper_state.last_update else None,
+“components”: {
+“data_aggregator”: hyper_state.data_aggregator is not None,
+“signal_engine”: hyper_state.signal_engine is not None,
+“ml_engine”: hyper_state.ml_engine is not None,
+“model_tester”: hyper_state.model_tester is not None
+}
+}
+
+# ML and Testing endpoints
+
+@app.get(”/api/ml/status”)
+async def ml_status():
+“”“ML system status”””
+if hyper_state.ml_engine:
+# Return ML status from the learning API
+return {“status”: “active”, “message”: “ML system operational”}
+else:
+return {“status”: “inactive”, “message”: “ML system not available”}
+
+@app.get(”/api/testing/status”)
+async def testing_status():
+“”“Model testing status”””
+if hyper_state.testing_api:
+return await hyper_state.testing_api.get_test_status()
+else:
+return {“status”: “inactive”, “message”: “Testing framework not available”}
+
+@app.get(”/api/testing/backtest”)
+async def run_backtest(days: int = 7):
+“”“Run backtest”””
+if hyper_state.testing_api:
+return await hyper_state.testing_api.run_quick_backtest(days)
+else:
+raise HTTPException(status_code=503, detail=“Testing framework not available”)
+
+# ========================================
+
+# WEBSOCKET ENDPOINT
+
+# ========================================
+
+@app.websocket(”/ws”)
+async def websocket_endpoint(websocket: WebSocket):
+“”“WebSocket endpoint for real-time updates”””
+await manager.connect(websocket)
+try:
+# Send initial data
+await websocket.send_text(json.dumps({
+“type”: “initial_data”,
+“signals”: hyper_state.current_signals,
+“timestamp”: datetime.now().isoformat(),
+“status”: hyper_state.stats[“status”]
+}, default=str))
+
+```
+    # Keep connection alive
+    while True:
+        try:
+            # Wait for ping from client or send periodic updates
+            await asyncio.sleep(30)
+            await websocket.send_text(json.dumps({
+                "type": "heartbeat",
+                "timestamp": datetime.now().isoformat(),
+                "connected_clients": len(manager.active_connections)
+            }, default=str))
+        except:
+            break
+            
+except WebSocketDisconnect:
+    manager.disconnect(websocket)
+except Exception as e:
+    logger.error(f"WebSocket error: {e}")
+    manager.disconnect(websocket)
+```
+
+# ========================================
+
+# SHUTDOWN
+
+# ========================================
+
+@app.on_event(“shutdown”)
+async def shutdown_event():
+“”“Cleanup on shutdown”””
+logger.info(“🛑 Shutting down HYPERtrends…”)
+hyper_state.is_running = False
+
+```
+# Cleanup components
+if hyper_state.data_aggregator:
+    await hyper_state.data_aggregator.cleanup()
+
+logger.info("✅ Shutdown complete")
+```
+
+# ========================================
+
+# MAIN
+
+# ========================================
+
+if **name** == “**main**”:
+uvicorn.run(
+app,
+host=config.SERVER_CONFIG[“host”],
+port=config.SERVER_CONFIG[“port”],
+reload=config.SERVER_CONFIG[“reload”],
+log_level=“info”
+)
