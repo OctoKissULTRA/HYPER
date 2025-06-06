@@ -235,9 +235,9 @@ try:
             # Generate signal
             signal = await hyper_state.signal_engine.generate_signal(
                 symbol=symbol,
-                quote_data=data.get('quote', {}),
-                trends_data=data.get('trends', {}),
-                historical_data=data.get('historical', [])
+                quote_data=data.get("quote", {}),
+                trends_data=data.get("trends", {}),
+                historical_data=data.get("historical", [])
             )
             
             # Convert signal to serializable format
@@ -306,13 +306,13 @@ return {
 def serialize_signal(signal) -> Dict[str, Any]:
 “”“Convert signal object to serializable dict”””
 try:
-if hasattr(signal, ‘**dict**’):
+if hasattr(signal, “**dict**”):
 result = {}
 for key, value in signal.**dict**.items():
-if not key.startswith(’*’) and not callable(value):
-if hasattr(value, ‘**dict**’):  # Nested objects
+if not key.startswith(”*”) and not callable(value):
+if hasattr(value, “**dict**”):  # Nested objects
 result[key] = {k: v for k, v in value.**dict**.items()
-if not k.startswith(’*’) and not callable(v)}
+if not k.startswith(”*”) and not callable(v)}
 else:
 result[key] = value
 return result
