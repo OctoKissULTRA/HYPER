@@ -1,175 +1,58 @@
-# ============================================
+# Core FastAPI and Server
 
-# HYPERTRENDS v4.0 - ALPACA PRODUCTION DEPS
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+gunicorn==21.2.0
+websockets==12.0
 
-# ============================================
+# Data Processing
 
-# Core FastAPI and Server (Required)
+pandas==2.1.3
+numpy==1.24.3
+scipy==1.11.4
 
-fastapi>=0.100.0
-uvicorn[standard]>=0.20.0
-gunicorn>=20.0.0
-python-multipart>=0.0.5
-websockets>=11.0
+# HTTP Client
 
-# Alpaca Markets SDK (Primary Data Source)
+aiohttp==3.9.1
+httpx==0.25.2
+requests==2.31.0
 
-alpaca-py>=0.20.0
+# Alpaca Markets SDK
 
-# HTTP and Async Support (Required)
+alpaca-py==0.12.1
 
-aiohttp>=3.8.0
-httpx>=0.24.0
-requests>=2.28.0
+# Machine Learning (Optional but recommended)
 
-# Data Processing and Analysis (Required)
+scikit-learn==1.3.2
+xgboost==2.0.2
+lightgbm==4.1.0
 
-pandas>=2.0.0
-numpy>=1.24.0
-scipy>=1.10.0
+# Sentiment Analysis (Optional)
 
-# Machine Learning and AI (Core)
+textblob==0.17.1
+vaderSentiment==3.3.2
 
-scikit-learn>=1.3.0
-xgboost>=1.7.0
+# Date/Time Utilities
 
-# Sentiment Analysis and NLP
+python-dateutil==2.8.2
 
-textblob>=0.17.0
-vaderSentiment>=3.3.0
-nltk>=3.8.0
+# Environment Management
 
-# Google Trends
+python-dotenv==1.0.0
 
-pytrends>=4.9.0
+# Async Database (Optional)
 
-# Financial Data and APIs
+asyncpg==0.29.0
+aiosqlite==0.19.0
 
-yfinance>=0.2.0
+# Performance Monitoring
 
-# Time Series and Statistical Analysis
+psutil==5.9.6
 
-statsmodels>=0.14.0
+# JSON and Data Validation
 
-# Visualization and Charting
+pydantic==2.5.0
 
-plotly>=5.15.0
-matplotlib>=3.7.0
+# Additional utilities
 
-# Database and Storage
-
-sqlalchemy>=2.0.0
-
-# Environment and Configuration
-
-python-dotenv>=1.0.0
-pydantic>=2.0.0
-
-# Date and Time Utilities
-
-python-dateutil>=2.8.0
-pytz>=2023.0
-
-# Performance and Monitoring
-
-psutil>=5.9.0
-
-# JSON and Data Serialization
-
-orjson>=3.9.0
-
-# Mathematical and Scientific Computing
-
-sympy>=1.11
-
-# Security and Authentication
-
-cryptography>=40.0.0
-
-# Logging
-
-structlog>=23.0.0
-
-# Production WSGI/ASGI Servers
-
-uvloop>=0.17.0
-
-# Enhanced async support
-
-anyio>=4.0.0
-
-# Load balancing and health checks
-
-starlette>=0.27.0
-
-# Rate limiting
-
-slowapi>=0.1.8
-
-# CORS and security
-
-python-jose[cryptography]>=3.3.0
-
-# Data validation
-
-email-validator>=2.0.0
-
-# JSON schema validation
-
-jsonschema>=4.17.0
-
-# UUID utilities
-
-shortuuid>=1.0.0
-
-# Health check utilities
-
-healthcheck>=1.3.0
-
-# Advanced data structures
-
-sortedcontainers>=2.4.0
-
-# String processing optimization
-
-regex>=2023.0.0
-
-# Advanced JSON handling
-
-simplejson>=3.19.0
-
-# Timezone handling
-
-babel>=2.12.0
-
-# Advanced HTTP features
-
-httpcore>=1.0.0
-
-# Async utilities
-
-aiofiles>=23.0.0
-
-# API rate limiting
-
-limits>=3.5.0
-
-# Advanced caching
-
-diskcache>=5.6.0
-
-# Network monitoring
-
-netifaces>=0.11.0
-
-# Advanced configuration
-
-dynaconf>=3.2.0
-
-# Advanced scheduling
-
-apscheduler>=3.10.0
-
-# Advanced string matching
-
-fuzzywuzzy>=0.18.0
+typing-extensions==4.8.0
