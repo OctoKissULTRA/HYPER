@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-“””
+"""
 HYPERtrends v4.0 - Production Startup Script
 Alpaca Markets Integration Edition
-“””
+"""
 
 import os
 import sys
@@ -15,8 +15,8 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(**file**)))
 
 def setup_logging():
-“”“Setup production logging”””
-log_level = os.getenv(“LOG_LEVEL”, “INFO”)
+"""Setup production logging"""
+log_level = os.getenv("LOG_LEVEL", "INFO")
 
 ```
 logging.basicConfig(
@@ -36,13 +36,13 @@ if log_level != "DEBUG":
 ```
 
 def check_dependencies():
-“”“Check critical dependencies”””
+"""Check critical dependencies"""
 critical_imports = [
-(“fastapi”, “FastAPI web framework”),
-(“uvicorn”, “ASGI server”),
-(“pandas”, “Data processing”),
-(“numpy”, “Numerical computing”),
-(“aiohttp”, “Async HTTP client”)
+("fastapi", "FastAPI web framework"),
+("uvicorn", "ASGI server"),
+("pandas", "Data processing"),
+("numpy", "Numerical computing"),
+("aiohttp", "Async HTTP client")
 ]
 
 ```
@@ -80,8 +80,8 @@ return True
 ```
 
 def check_configuration():
-“”“Check system configuration”””
-print(”\n🔧 Checking configuration…”)
+"""Check system configuration"""
+print("\n🔧 Checking configuration…")
 
 ```
 try:
@@ -115,8 +115,8 @@ except Exception as e:
 ```
 
 def print_startup_banner():
-“”“Print startup banner”””
-banner = “””
+"""Print startup banner"""
+banner = """
 ⚡ ████████████████████████████████████████ ⚡
 ⚡                                          ⚡
 ⚡        HYPERtrends v4.0 - ALPACA         ⚡
@@ -146,8 +146,8 @@ print()
 ```
 
 async def test_system_components():
-“”“Test critical system components”””
-print(“🧪 Testing system components…”)
+"""Test critical system components"""
+print("🧪 Testing system components…")
 
 ```
 try:
@@ -176,7 +176,7 @@ except Exception as e:
 ```
 
 def main():
-“”“Main startup function”””
+"""Main startup function"""
 print_startup_banner()
 
 ```
@@ -245,5 +245,5 @@ except Exception as e:
     sys.exit(1)
 ```
 
-if **name** == “**main**”:
+if **name** == "**main**":
 main()

@@ -1,236 +1,50 @@
 services:
+  - type: web
+    name: hypertrends-v4
+    env: python
+    plan: starter
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app --bind 0.0.0.0:$PORT --worker-class uvicorn.workers.UvicornWorker --workers 1 --timeout 120
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEMO_MODE
+        value: "true"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: RH_USERNAME
+        value: "your@email.com"
+      - key: RH_PASSWORD
+        value: "yourSecurePassword"
 
-- type: web
-  name: hypertrends-alpaca-v4
-  env: python
-  plan: starter
-  region: oregon
-  buildCommand: |
-  pip install –upgrade pip setuptools wheel &&
-  pip install -r requirements.txt &&
-  python -c “import sys; print(‘Python version:’, sys.version)” &&
-  python -c “import config; print(‘Config loaded successfully’)”
-  startCommand: |
-  gunicorn main:app   
-  –bind 0.0.0.0:$PORT   
-  –worker-class uvicorn.workers.UvicornWorker   
-  –workers 1   
-  –timeout 120   
-  –keepalive 65   
-  –max-requests 1000   
-  –max-requests-jitter 100   
-  –preload   
-  –access-logfile -   
-  –error-logfile -
-  healthCheckPath: /health
-  autoDeploy: true
-  disk:
-  name: hypertrends-data
-  mountPath: /app/data
-  sizeGB: 2
-  envVars:
-  
-  # Environment Configuration
-  - key: ENVIRONMENT
-    value: production
-  
-  # Alpaca API Configuration (Primary Data Source)
-  - key: APCA_API_KEY_ID
-    value: PK2AML2QK9VUI5J1G1BC
-  - key: APCA_API_SECRET_KEY
-    sync: false  # Set in Render dashboard
-  - key: USE_SANDBOX
-    value: “True”  # Use paper trading for safety
-  
-  # Application Configuration
-  - key: PORT
-    fromService:
-    type: web
-    name: hypertrends-alpaca-v4
-    property: port
-  
-  # Security Configuration
-  - key: CORS_ORIGINS
-    value: “*”  # Configure appropriately for production
-  
-  # Performance Configuration
-  - key: LOG_LEVEL
-    value: INFO
-  - key: VERBOSE
-    value: “False”
-  
-  # Feature Flags
-  - key: ENABLE_ML_PREDICTIONS
-    value: “True”
-  - key: ENABLE_LIVE_TRADING
-    value: “False”  # Disabled for safety
-  - key: ENABLE_ADVANCED_RISK
-    value: “True”
-  - key: ENABLE_REAL_TIME_NEWS
-    value: “True”
-  
-  # Database Configuration (Optional)
-  
-  # - key: DATABASE_URL
-  
-  # fromDatabase:
-  
-  # name: hypertrends-db
-  
-  # property: connectionString
-  
-  # Redis Configuration (Optional)
-  
-  # - key: REDIS_URL
-  
-  # fromDatabase:
-  
-  # name: hypertrends-redis
-  
-  # property: connectionString
-  
-  # Monitoring and Alerts (Optional)
-  
-  # - key: SENTRY_DSN
-  
-  # sync: false
-  
-  # Third-party API Keys (Optional)
-  - key: NEWS_API_KEY
-    sync: false
-  - key: ALPHA_VANTAGE_API_KEY
-    sync: false
-  
-  # ML Model Configuration
-  - key: ML_MODEL_VERSION
-    value: “v4.0”
-  - key: PREDICTION_CONFIDENCE_THRESHOLD
-    value: “0.6”
-  
-  # Rate Limiting
-  - key: MAX_REQUESTS_PER_MINUTE
-    value: “100”
-  
-  # Cache Configuration
-  - key: CACHE_TTL_SECONDS
-    value: “300”
-  
-  # Data Quality Thresholds
-  - key: MIN_DATA_QUALITY_SCORE
-    value: “0.7”
-  
-  # Async Configuration
-  - key: MAX_CONCURRENT_REQUESTS
-    value: “50”
-  
-  # WebSocket Configuration
-  - key: MAX_WEBSOCKET_CONNECTIONS
-    value: “100”
-  
-  # Background Task Configuration
-  - key: SIGNAL_UPDATE_INTERVAL
-    value: “30”  # seconds
-  - key: ML_RETRAIN_INTERVAL
-    value: “3600”  # 1 hour
-  
-  # Memory Management
-  - key: MAX_MEMORY_USAGE_PERCENT
-    value: “80”
-  
-  # Error Handling
-  - key: MAX_RETRY_ATTEMPTS
-    value: “3”
-  - key: RETRY_DELAY_SECONDS
-    value: “5”
-  
-  # Production Optimizations
-  - key: PRELOAD_MODELS
-    value: “True”
-  - key: ENABLE_CACHING
-    value: “True”
-  - key: ENABLE_COMPRESSION
-    value: “True”
-  
-  # Development/Debug (Disabled in Production)
-  - key: DEBUG
-    value: “False”
-  - key: ENABLE_DEBUG_ENDPOINTS
-    value: “False”
-  - key: ENABLE_PROFILING
-    value: “False”
+      # ============================================
+      # OPTIONAL API KEYS (Future Features)
+      # ============================================
+      - key: NEWS_API_KEY
+        value: ""
+      - key: REDDIT_CLIENT_ID
+        value: ""
+      - key: REDDIT_SECRET
+        value: ""
+      - key: TWITTER_BEARER_TOKEN
+        value: ""
 
-# Optional: Database Services
+      # ============================================
+      # PERFORMANCE OPTIMIZATIONS
+      # ============================================
+      - key: WORKERS
+        value: "1"
+      - key: MAX_CONNECTIONS
+        value: "100"
+      - key: KEEPALIVE_TIMEOUT
+        value: "65"
 
-# databases:
-
-# - name: hypertrends-db
-
-# databaseName: hypertrends
-
-# user: hypertrends_user
-
-# plan: starter
-
-# 
-
-# - name: hypertrends-redis
-
-# plan: starter
-
-# Optional: Background Services
-
-# - type: worker
-
-# name: hypertrends-ml-trainer
-
-# env: python
-
-# buildCommand: pip install -r requirements.txt
-
-# startCommand: python ml_trainer.py
-
-# envVarsFrom:
-
-# - fromService:
-
-# type: web
-
-# name: hypertrends-alpaca-v4
-
-# plan: starter
-
-# Optional: Cron Jobs for Maintenance
-
-# - type: cron
-
-# name: model-retrain
-
-# schedule: “0 2 * * *”  # Daily at 2 AM
-
-# buildCommand: pip install -r requirements.txt
-
-# startCommand: python scripts/retrain_models.py
-
-# envVarsFrom:
-
-# - fromService:
-
-# type: web
-
-# name: hypertrends-alpaca-v4
-
-# Build and Deployment Notes:
-
-# 1. The application uses Alpaca Markets as the primary data source
-
-# 2. All sensitive API keys should be set in the Render dashboard
-
-# 3. The system gracefully falls back to simulation if APIs are unavailable
-
-# 4. Health check endpoint ensures service availability
-
-# 5. Disk storage is used for ML model persistence and caching
-
-# 6. Worker processes are limited to 1 for WebSocket compatibility
-
-# 7. Auto-deploy is enabled for CI/CD integration
+    disk:
+      name: hyper-data
+      mountPath: /app/data
+      sizeGB: 1

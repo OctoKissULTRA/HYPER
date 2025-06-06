@@ -21,7 +21,7 @@ logger = logging.getLogger(**name**)
 
 @dataclass
 class HYPERSignal:
-“”“Enhanced HYPER trading signal - Alpaca Production Ready v4.0”””
+"""Enhanced HYPER trading signal - Alpaca Production Ready v4.0"""
 symbol: str
 signal_type: str  # HYPER_BUY, SOFT_BUY, HOLD, SOFT_SELL, HYPER_SELL
 confidence: float  # 0-100
@@ -76,7 +76,7 @@ enhanced_features: Dict[str, Any] = field(default_factory=dict)
 ```
 
 class HYPERSignalEngine:
-“”“Production HYPER Signal Engine with Alpaca Integration”””
+"""Production HYPER Signal Engine with Alpaca Integration"""
 
 ```
 def __init__(self):
@@ -828,7 +828,7 @@ async def warm_up_analyzers(self):
 
 # Export the main engine
 
-**all** = [‘HYPERSignalEngine’, ‘HYPERSignal’]
+**all** = ['HYPERSignalEngine', 'HYPERSignal']
 
-logger.info(“🌟 HYPERtrends v4.0 Signal Engine with Alpaca integration loaded successfully!”)
-logger.info(“🎯 Ready for production-grade signal generation with live market data”)
+logger.info("🌟 HYPERtrends v4.0 Signal Engine with Alpaca integration loaded successfully!")
+logger.info("🎯 Ready for production-grade signal generation with live market data")

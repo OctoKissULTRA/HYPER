@@ -22,7 +22,7 @@ from alpaca.trading.requests import GetAssetsRequest
 from alpaca.trading.enums import AssetClass
 ALPACA_AVAILABLE = True
 except ImportError as e:
-logging.warning(f”Alpaca SDK not available: {e}”)
+logging.warning(f"Alpaca SDK not available: {e}")
 ALPACA_AVAILABLE = False
 
 import config
@@ -30,7 +30,7 @@ import config
 logger = logging.getLogger(**name**)
 
 class AlpacaDataClient:
-“”“Production Alpaca Markets data client with advanced features”””
+"""Production Alpaca Markets data client with advanced features"""
 
 ```
 def __init__(self):
@@ -379,7 +379,7 @@ async def cleanup(self):
 ```
 
 class EnhancedMarketSimulator:
-“”“Enhanced market simulation for fallback scenarios”””
+"""Enhanced market simulation for fallback scenarios"""
 
 ```
 def __init__(self):
@@ -645,7 +645,7 @@ def _get_market_hours_status(self) -> str:
 ```
 
 class GoogleTrendsClient:
-“”“Enhanced Google Trends client”””
+"""Enhanced Google Trends client"""
 
 ```
 def __init__(self):
@@ -726,7 +726,7 @@ def _calculate_market_sentiment(self, trend_data: Dict) -> str:
 ```
 
 class HYPERDataAggregator:
-“”“Main data aggregator with Alpaca integration”””
+"""Main data aggregator with Alpaca integration"""
 
 ```
 def __init__(self):
@@ -914,9 +914,9 @@ async def cleanup(self):
 
 # Export main classes
 
-**all** = [‘HYPERDataAggregator’, ‘AlpacaDataClient’, ‘EnhancedMarketSimulator’]
+**all** = ['HYPERDataAggregator', 'AlpacaDataClient', 'EnhancedMarketSimulator']
 
-logger.info(“🚀 Alpaca-integrated data sources loaded successfully!”)
-logger.info(“📈 Primary: Alpaca Markets API with live data”)
-logger.info(“🔄 Fallback: Enhanced market simulation”)
-logger.info(“🎯 Production-ready with comprehensive error handling”)
+logger.info("🚀 Alpaca-integrated data sources loaded successfully!")
+logger.info("📈 Primary: Alpaca Markets API with live data")
+logger.info("🔄 Fallback: Enhanced market simulation")
+logger.info("🎯 Production-ready with comprehensive error handling")
