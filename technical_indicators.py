@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TechnicalSignal:
-    """Individual technical indicator signal""""
+    """Individual technical indicator signal"""
     indicator_name: str
     value: float
     signal_strength: float  # 0-100
@@ -23,7 +23,7 @@ class TechnicalSignal:
 
 @dataclass
 class TechnicalAnalysis:
-    """Complete technical analysis result""""
+    """Complete technical analysis result"""
     overall_score: float
     direction: str
     confidence: float
@@ -34,7 +34,7 @@ class TechnicalAnalysis:
     volume_analysis: Dict[str, Any]
 
 class AdvancedTechnicalAnalyzer:
-    """Advanced Technical Analysis with 25+ indicators""""
+    """Advanced Technical Analysis with 25+ indicators"""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -66,7 +66,7 @@ class AdvancedTechnicalAnalyzer:
     
     async def analyze(self, symbol: str, quote_data: Dict[str, Any], 
                      historical_data: Optional[List[Dict]] = None) -> TechnicalAnalysis:
-        """Complete technical analysis with all indicators""""
+        """Complete technical analysis with all indicators"""
         try:
             # Generate or use historical data
             if not historical_data:
@@ -131,7 +131,7 @@ class AdvancedTechnicalAnalyzer:
     
     async def _analyze_momentum_oscillators(self, prices: np.ndarray, 
                                           highs: np.ndarray, lows: np.ndarray) -> List[TechnicalSignal]:
-        """Analyze momentum oscillators (RSI, Williams %R, Stochastic, etc.)""""
+        """Analyze momentum oscillators (RSI, Williams %R, Stochastic, etc.)"""
         signals = []
         
         try:
@@ -220,7 +220,7 @@ class AdvancedTechnicalAnalyzer:
         return signals
     
     async def _analyze_trend_indicators(self, prices: np.ndarray, volumes: np.ndarray) -> List[TechnicalSignal]:
-        """Analyze trend-following indicators""""
+        """Analyze trend-following indicators"""
         signals = []
         
         try:
@@ -300,7 +300,7 @@ class AdvancedTechnicalAnalyzer:
     
     async def _analyze_volatility_indicators(self, prices: np.ndarray, 
                                            highs: np.ndarray, lows: np.ndarray) -> List[TechnicalSignal]:
-        """Analyze volatility-based indicators""""
+        """Analyze volatility-based indicators"""
         signals = []
         
         try:
@@ -361,7 +361,7 @@ class AdvancedTechnicalAnalyzer:
         return signals
     
     async def _analyze_volume_indicators(self, prices: np.ndarray, volumes: np.ndarray) -> List[TechnicalSignal]:
-        """Analyze volume-based indicators""""
+        """Analyze volume-based indicators"""
         signals = []
         
         try:
@@ -415,7 +415,7 @@ class AdvancedTechnicalAnalyzer:
     
     async def _calculate_key_levels(self, prices: np.ndarray, 
                                    highs: np.ndarray, lows: np.ndarray) -> Dict[str, float]:
-        """Calculate key support/resistance levels""""
+        """Calculate key support/resistance levels"""
         try:
             current_price = prices[-1]
             
@@ -471,7 +471,7 @@ class AdvancedTechnicalAnalyzer:
             }
     
     def _calculate_overall_score(self, signals: List[TechnicalSignal]) -> Tuple[float, str, float]:
-        """Calculate overall technical score from individual signals""""
+        """Calculate overall technical score from individual signals"""
         if not signals:
             return 50.0, "NEUTRAL", 0.5
         
@@ -528,7 +528,7 @@ class AdvancedTechnicalAnalyzer:
     # ========================================
     
     def _calculate_rsi(self, prices: np.ndarray, period: int) -> np.ndarray:
-        """Calculate RSI""""
+        """Calculate RSI"""
         deltas = np.diff(prices)
         seed = deltas[:period+1]
         up = seed[seed >= 0].sum() / period
@@ -555,7 +555,7 @@ class AdvancedTechnicalAnalyzer:
     
     def _calculate_williams_r(self, highs: np.ndarray, lows: np.ndarray, 
                              closes: np.ndarray, period: int) -> np.ndarray:
-        """Calculate Williams %R""""
+        """Calculate Williams %R"""
         williams_r = np.zeros_like(closes)
         for i in range(period-1, len(closes)):
             highest_high = np.max(highs[i-period+1:i+1])
@@ -565,7 +565,7 @@ class AdvancedTechnicalAnalyzer:
     
     def _calculate_stochastic(self, highs: np.ndarray, lows: np.ndarray, 
                              closes: np.ndarray, k_period: int, d_period: int) -> Tuple[np.ndarray, np.ndarray]:
-        """Calculate Stochastic Oscillator""""
+        """Calculate Stochastic Oscillator"""
         k_values = np.zeros_like(closes)
         for i in range(k_period-1, len(closes)):
             highest_high = np.max(highs[i-k_period+1:i+1])
@@ -576,7 +576,7 @@ class AdvancedTechnicalAnalyzer:
         return k_values, d_values
     
     def _calculate_macd(self, prices: np.ndarray, fast: int, slow: int, signal: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Calculate MACD""""
+        """Calculate MACD"""
         ema_fast = self._calculate_ema(prices, fast)
         ema_slow = self._calculate_ema(prices, slow)
         macd_line = ema_fast - ema_slow
@@ -585,7 +585,7 @@ class AdvancedTechnicalAnalyzer:
         return macd_line, signal_line, histogram
     
     def _calculate_ema(self, prices: np.ndarray, period: int) -> np.ndarray:
-        """Calculate Exponential Moving Average""""
+        """Calculate Exponential Moving Average"""
         ema = np.zeros_like(prices)
         ema[0] = prices[0]
         multiplier = 2 / (period + 1)
@@ -594,14 +594,14 @@ class AdvancedTechnicalAnalyzer:
         return ema
     
     def _calculate_sma(self, values: np.ndarray, period: int) -> np.ndarray:
-        """Calculate Simple Moving Average""""
+        """Calculate Simple Moving Average"""
         sma = np.zeros_like(values)
         for i in range(period-1, len(values)):
             sma[i] = np.mean(values[i-period+1:i+1])
         return sma
     
     def _generate_realistic_history(self, symbol: str, quote_data: Dict[str, Any], periods: int = 100) -> List[Dict]:
-        """Generate realistic price history for technical analysis""""
+        """Generate realistic price history for technical analysis"""
         current_price = float(quote_data.get('price', 100))
         change_percent = float(quote_data.get('change_percent', 0))
         
@@ -655,7 +655,7 @@ class AdvancedTechnicalAnalyzer:
         return history
     
     def _calculate_cci(self, highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int) -> np.ndarray:
-        """Calculate Commodity Channel Index""""
+        """Calculate Commodity Channel Index"""
         typical_prices = (highs + lows + closes) / 3
         cci = np.zeros_like(closes)
         
@@ -669,7 +669,7 @@ class AdvancedTechnicalAnalyzer:
     
     def _calculate_mfi(self, highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, 
                        volumes: np.ndarray, period: int) -> np.ndarray:
-        """Calculate Money Flow Index""""
+        """Calculate Money Flow Index"""
         typical_prices = (highs + lows + closes) / 3
         money_flow = typical_prices * volumes
         mfi = np.zeros_like(closes)
@@ -691,7 +691,7 @@ class AdvancedTechnicalAnalyzer:
         return mfi
     
     def _calculate_adx(self, prices: np.ndarray, period: int) -> np.ndarray:
-        """Calculate Average Directional Index""""
+        """Calculate Average Directional Index"""
         # Simplified ADX calculation
         adx = np.zeros_like(prices)
         price_changes = np.diff(prices)
@@ -713,7 +713,7 @@ class AdvancedTechnicalAnalyzer:
         return adx
     
     def _calculate_bollinger_bands(self, prices: np.ndarray, period: int, std_dev: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Calculate Bollinger Bands""""
+        """Calculate Bollinger Bands"""
         middle = self._calculate_sma(prices, period)
         std = np.zeros_like(prices)
         
@@ -726,7 +726,7 @@ class AdvancedTechnicalAnalyzer:
         return upper, middle, lower
     
     def _calculate_atr(self, highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, period: int) -> np.ndarray:
-        """Calculate Average True Range""""
+        """Calculate Average True Range"""
         atr = np.zeros_like(closes)
         
         for i in range(1, len(closes)):
@@ -744,7 +744,7 @@ class AdvancedTechnicalAnalyzer:
     
     def _calculate_keltner_channels(self, highs: np.ndarray, lows: np.ndarray, 
                                    closes: np.ndarray, period: int, multiplier: float) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Calculate Keltner Channels""""
+        """Calculate Keltner Channels"""
         middle = self._calculate_ema(closes, period)
         atr = self._calculate_atr(highs, lows, closes, period)
         
@@ -754,7 +754,7 @@ class AdvancedTechnicalAnalyzer:
         return upper, middle, lower
     
     def _calculate_obv(self, prices: np.ndarray, volumes: np.ndarray) -> np.ndarray:
-        """Calculate On-Balance Volume""""
+        """Calculate On-Balance Volume"""
         obv = np.zeros_like(prices)
         obv[0] = volumes[0]
         
@@ -769,7 +769,7 @@ class AdvancedTechnicalAnalyzer:
         return obv
     
     def _calculate_roc(self, values: np.ndarray, period: int) -> np.ndarray:
-        """Calculate Rate of Change""""
+        """Calculate Rate of Change"""
         roc = np.zeros_like(values)
         for i in range(period, len(values)):
             if values[i-period] != 0:
@@ -777,7 +777,7 @@ class AdvancedTechnicalAnalyzer:
         return roc
     
     def _calculate_vwap(self, prices: np.ndarray, volumes: np.ndarray, period: int) -> np.ndarray:
-        """Calculate Volume Weighted Average Price""""
+        """Calculate Volume Weighted Average Price"""
         vwap = np.zeros_like(prices)
         
         for i in range(period-1, len(prices)):
@@ -788,7 +788,7 @@ class AdvancedTechnicalAnalyzer:
         return vwap
     
     def _calculate_parabolic_sar(self, prices: np.ndarray, acceleration: float = 0.02, maximum: float = 0.2) -> np.ndarray:
-        """Calculate Parabolic SAR""""
+        """Calculate Parabolic SAR"""
         sar = np.zeros_like(prices)
         trend = 1  # 1 for uptrend, -1 for downtrend
         af = acceleration
@@ -825,7 +825,7 @@ class AdvancedTechnicalAnalyzer:
         return sar
     
     def _detect_rsi_divergence(self, rsi: np.ndarray, prices: np.ndarray) -> bool:
-        """Detect RSI divergence with price""""
+        """Detect RSI divergence with price"""
         if len(rsi) < 20:
             return False
         
@@ -842,7 +842,7 @@ class AdvancedTechnicalAnalyzer:
         return (price_trend > 0 and rsi_trend < -5) or (price_trend < 0 and rsi_trend > 5)
     
     def _detect_macd_divergence(self, macd_histogram: np.ndarray, prices: np.ndarray) -> bool:
-        """Detect MACD divergence with price""""
+        """Detect MACD divergence with price"""
         if len(macd_histogram) < 20:
             return False
         
@@ -856,7 +856,7 @@ class AdvancedTechnicalAnalyzer:
     
     async def _analyze_chart_patterns(self, prices: np.ndarray, highs: np.ndarray, 
                                      lows: np.ndarray, volumes: np.ndarray) -> Dict[str, Any]:
-        """Advanced chart pattern analysis""""
+        """Advanced chart pattern analysis"""
         try:
             if len(prices) < 20:
                 return {"pattern": "insufficient_data", "confidence": 0.0}
@@ -903,7 +903,7 @@ class AdvancedTechnicalAnalyzer:
             return {"pattern": "analysis_error", "confidence": 0.0}
     
     def _detect_double_patterns(self, highs: np.ndarray, lows: np.ndarray, prices: np.ndarray) -> Dict[str, Any]:
-        """Detect double top/bottom patterns""""
+        """Detect double top/bottom patterns"""
         if len(highs) < 20:
             return {"detected": False}
         
@@ -955,7 +955,7 @@ class AdvancedTechnicalAnalyzer:
         return {"detected": False}
     
     def _detect_triangle_patterns(self, highs: np.ndarray, lows: np.ndarray) -> Dict[str, Any]:
-        """Detect triangle patterns (ascending, descending, symmetrical)""""
+        """Detect triangle patterns (ascending, descending, symmetrical)"""
         if len(highs) < 15:
             return {"detected": False}
         
@@ -992,7 +992,7 @@ class AdvancedTechnicalAnalyzer:
         return {"detected": False}
     
     def _detect_flag_patterns(self, prices: np.ndarray, volumes: np.ndarray) -> Dict[str, Any]:
-        """Detect flag and pennant patterns""""
+        """Detect flag and pennant patterns"""
         if len(prices) < 15:
             return {"detected": False}
         
@@ -1025,7 +1025,7 @@ class AdvancedTechnicalAnalyzer:
         return {"detected": False}
     
     def _detect_head_shoulders(self, highs: np.ndarray, lows: np.ndarray) -> Dict[str, Any]:
-        """Detect head and shoulders patterns""""
+        """Detect head and shoulders patterns"""
         if len(highs) < 25:
             return {"detected": False}
         
@@ -1083,7 +1083,7 @@ class AdvancedTechnicalAnalyzer:
         return {"detected": False}
     
     async def _analyze_momentum_strength(self, prices: np.ndarray, volumes: np.ndarray) -> Dict[str, Any]:
-        """Analyze momentum strength and sustainability""""
+        """Analyze momentum strength and sustainability"""
         try:
             if len(prices) < 10:
                 return {"momentum": "insufficient_data"}
@@ -1127,7 +1127,7 @@ class AdvancedTechnicalAnalyzer:
             return {"momentum": "analysis_error"}
     
     async def _analyze_volume_profile(self, prices: np.ndarray, volumes: np.ndarray) -> Dict[str, Any]:
-        """Analyze volume profile and distribution""""
+        """Analyze volume profile and distribution"""
         try:
             if len(prices) < 20:
                 return {"volume_profile": "insufficient_data"}
@@ -1166,7 +1166,7 @@ class AdvancedTechnicalAnalyzer:
             return {"volume_profile": "analysis_error"}
     
     def _generate_enhanced_technical_analysis(self, symbol: str, quote_data: Dict[str, Any]) -> TechnicalAnalysis:
-        """Generate enhanced technical analysis when insufficient data""""
+        """Generate enhanced technical analysis when insufficient data"""
         try:
             current_price = float(quote_data.get('price', 100))
             change_percent = float(quote_data.get('change_percent', 0))

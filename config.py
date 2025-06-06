@@ -236,7 +236,7 @@ MONITORING_CONFIG = {
 }
 
 def validate_config() -> bool:
-"""Validate configuration settings""""
+"""Validate configuration settings"""
 try:
 # Check required Alpaca credentials
 if not ALPACA_CONFIG["api_key"]:
@@ -268,7 +268,7 @@ except Exception as e:
 ```
 
 def get_alpaca_credentials() -> Dict[str, str]:
-"""Get Alpaca API credentials""""
+"""Get Alpaca API credentials"""
 return {
 "api_key": ALPACA_CONFIG["api_key"],
 "secret_key": ALPACA_CONFIG["secret_key"],
@@ -277,13 +277,13 @@ return {
 }
 
 def has_alpaca_credentials() -> bool:
-"""Check if Alpaca credentials are configured""""
+"""Check if Alpaca credentials are configured"""
 return bool(ALPACA_CONFIG["api_key"] and (
 ALPACA_CONFIG["secret_key"] or ALPACA_CONFIG["use_sandbox"]
 ))
 
 def get_data_source_status() -> str:
-"""Get current data source status""""
+"""Get current data source status"""
 if has_alpaca_credentials():
 env_type = "Paper Trading" if ALPACA_CONFIG["use_sandbox"] else "Live Trading""
 return f"Alpaca Markets ({env_type})""
@@ -291,11 +291,11 @@ else:
 return "Simulation Mode""
 
 def is_production() -> bool:
-"""Check if running in production""""
+"""Check if running in production"""
 return ENVIRONMENT == "production""
 
 def is_development() -> bool:
-"""Check if running in development""""
+"""Check if running in development"""
 return ENVIRONMENT == "development""
 
 # Initialize logging

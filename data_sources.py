@@ -30,7 +30,7 @@ import config
 logger = logging.getLogger(__name__)
 
 class AlpacaDataClient:
-"""Production Alpaca Markets data client with advanced features""""
+"""Production Alpaca Markets data client with advanced features"""
 
 ```
 def __init__(self):
@@ -49,7 +49,7 @@ def __init__(self):
     logger.info("📈 Alpaca data client initialized")
 
 async def initialize(self) -> bool:
-    """Initialize Alpaca clients""""
+    """Initialize Alpaca clients"""
     try:
         if not ALPACA_AVAILABLE:
             logger.warning("⚠️ Alpaca SDK not available - using simulation")
@@ -91,7 +91,7 @@ async def initialize(self) -> bool:
         return False
 
 async def _test_connection(self):
-    """Test Alpaca connection""""
+    """Test Alpaca connection"""
     try:
         # Test with a simple quote request
         test_request = StockLatestQuoteRequest(symbol_or_symbols=["AAPL"])
@@ -113,7 +113,7 @@ async def _test_connection(self):
         raise
 
 async def get_real_time_quote(self, symbol: str) -> Dict[str, Any]:
-    """Get real-time quote from Alpaca""""
+    """Get real-time quote from Alpaca"""
     try:
         # Check cache first
         cache_key = f"quote_{symbol}_{time.time() // self.cache_duration}""
@@ -222,7 +222,7 @@ async def get_real_time_quote(self, symbol: str) -> Dict[str, Any]:
 
 async def get_historical_bars(self, symbol: str, timeframe: str = "1Day", 
                              limit: int = 100) -> List[Dict[str, Any]]:
-    """Get historical bar data from Alpaca""""
+    """Get historical bar data from Alpaca"""
     try:
         if not self.authenticated:
             return self._generate_historical_simulation(symbol, limit)
@@ -283,7 +283,7 @@ async def get_historical_bars(self, symbol: str, timeframe: str = "1Day",
         return self._generate_historical_simulation(symbol, limit)
 
 async def get_market_status(self) -> Dict[str, Any]:
-    """Get market status from Alpaca""""
+    """Get market status from Alpaca"""
     try:
         if not self.trading_client:
             return self._get_simulated_market_status()
@@ -304,15 +304,15 @@ async def get_market_status(self) -> Dict[str, Any]:
         return self._get_simulated_market_status()
 
 async def _get_simulated_quote(self, symbol: str) -> Dict[str, Any]:
-    """Get simulated quote data""""
+    """Get simulated quote data"""
     return self.fallback_simulator.generate_realistic_quote(symbol)
 
 def _generate_historical_simulation(self, symbol: str, periods: int) -> List[Dict[str, Any]]:
-    """Generate simulated historical data""""
+    """Generate simulated historical data"""
     return self.fallback_simulator.generate_historical_data(symbol, periods)
 
 def _get_simulated_market_status(self) -> Dict[str, Any]:
-    """Get simulated market status""""
+    """Get simulated market status"""
     now = datetime.now()
     hour = now.hour
     
@@ -329,7 +329,7 @@ def _get_simulated_market_status(self) -> Dict[str, Any]:
     }
 
 async def _rate_limit_wait(self):
-    """Implement rate limiting""""
+    """Implement rate limiting"""
     current_time = time.time()
     time_since_last = current_time - self.last_request_time
     
@@ -340,7 +340,7 @@ async def _rate_limit_wait(self):
     self.last_request_time = time.time()
 
 def _get_market_hours_status(self) -> str:
-    """Get current market hours status""""
+    """Get current market hours status"""
     now = datetime.now()
     hour = now.hour
     weekday = now.weekday()
@@ -357,7 +357,7 @@ def _get_market_hours_status(self) -> str:
         return 'CLOSED'"
 
 def _calculate_spread_bps(self, bid: float, ask: float) -> float:
-    """Calculate bid-ask spread in basis points""""
+    """Calculate bid-ask spread in basis points"""
     if not bid or not ask or bid <= 0 or ask <= 0:
         return 10.0  # Default spread
     
@@ -368,7 +368,7 @@ def _calculate_spread_bps(self, bid: float, ask: float) -> float:
     return round(spread_bps, 1)
 
 async def cleanup(self):
-    """Cleanup resources""""
+    """Cleanup resources"""
     if self.data_stream:
         try:
             await self.data_stream.close()
@@ -379,7 +379,7 @@ async def cleanup(self):
 ```
 
 class EnhancedMarketSimulator:
-"""Enhanced market simulation for fallback scenarios""""
+"""Enhanced market simulation for fallback scenarios"""
 
 ```
 def __init__(self):
@@ -395,7 +395,7 @@ def __init__(self):
     logger.info("📈 Enhanced Market Simulator initialized")
 
 def _initialize_market_state(self):
-    """Initialize market state with realistic starting conditions""""
+    """Initialize market state with realistic starting conditions"""
     base_prices = {
         'QQQ': 450.25,
         'SPY': 535.80,
@@ -414,7 +414,7 @@ def _initialize_market_state(self):
         self.trend_momentum[symbol] = random.uniform(-0.3, 0.3)
 
 def generate_realistic_quote(self, symbol: str) -> Dict[str, Any]:
-    """Generate highly realistic quote data""""
+    """Generate highly realistic quote data"""
     # Update market regime periodically
     self._update_market_regime()
     
@@ -497,7 +497,7 @@ def generate_realistic_quote(self, symbol: str) -> Dict[str, Any]:
     }
 
 def generate_historical_data(self, symbol: str, periods: int) -> List[Dict[str, Any]]:
-    """Generate realistic historical bar data""""
+    """Generate realistic historical bar data"""
     if symbol not in self.price_history:
         self._initialize_market_state()
     
@@ -546,7 +546,7 @@ def generate_historical_data(self, symbol: str, periods: int) -> List[Dict[str, 
     return history
 
 def _update_market_regime(self):
-    """Update market regime based on time and events""""
+    """Update market regime based on time and events"""
     time_since_change = time.time() - self.last_regime_change
     
     if time_since_change > random.uniform(900, 2700):  # 15-45 minutes
@@ -558,7 +558,7 @@ def _update_market_regime(self):
         logger.debug(f"📊 Market regime changed to: {self.market_regime}")
 
 def _calculate_time_based_factors(self):
-    """Calculate volatility and volume factors based on time""""
+    """Calculate volatility and volume factors based on time"""
     now = datetime.now()
     hour = now.hour
     minute = now.minute
@@ -591,7 +591,7 @@ def _calculate_time_based_factors(self):
     return volatility_factor, volume_factor
 
 def _generate_price_movement(self, symbol: str, volatility_factor: float) -> float:
-    """Generate realistic price movement""""
+    """Generate realistic price movement"""
     # Market-wide movement
     market_move = random.gauss(0, 0.003)  # ±0.3% base
     
@@ -627,7 +627,7 @@ def _generate_price_movement(self, symbol: str, volatility_factor: float) -> flo
     return final_move
 
 def _get_market_hours_status(self) -> str:
-    """Get market hours status""""
+    """Get market hours status"""
     now = datetime.now()
     hour = now.hour
     weekday = now.weekday()
@@ -645,7 +645,7 @@ def _get_market_hours_status(self) -> str:
 ```
 
 class GoogleTrendsClient:
-"""Enhanced Google Trends client""""
+"""Enhanced Google Trends client"""
 
 ```
 def __init__(self):
@@ -654,7 +654,7 @@ def __init__(self):
     logger.info("📈 Google Trends client initialized")
 
 async def get_trends_data(self, keywords: List[str]) -> Dict[str, Any]:
-    """Get dynamic trends data""""
+    """Get dynamic trends data"""
     trend_data = {}
     current_time = time.time()
     session_age = (current_time - self.session_start) / 3600
@@ -707,7 +707,7 @@ async def get_trends_data(self, keywords: List[str]) -> Dict[str, Any]:
     }
 
 def _calculate_market_sentiment(self, trend_data: Dict) -> str:
-    """Calculate overall market sentiment""""
+    """Calculate overall market sentiment"""
     if not trend_data:
         return 'NEUTRAL'"
     
@@ -726,7 +726,7 @@ def _calculate_market_sentiment(self, trend_data: Dict) -> str:
 ```
 
 class HYPERDataAggregator:
-"""Main data aggregator with Alpaca integration""""
+"""Main data aggregator with Alpaca integration"""
 
 ```
 def __init__(self):
@@ -749,7 +749,7 @@ def __init__(self):
     logger.info("🚀 HYPER Data Aggregator initialized with Alpaca integration")
 
 async def initialize(self) -> bool:
-    """Initialize data aggregator""""
+    """Initialize data aggregator"""
     logger.info("🔧 Initializing HYPER Data Aggregator...")
     
     try:
@@ -768,7 +768,7 @@ async def initialize(self) -> bool:
         return False
 
 async def get_comprehensive_data(self, symbol: str) -> Dict[str, Any]:
-    """Get comprehensive market data""""
+    """Get comprehensive market data"""
     start_time = time.time()
     self.performance_metrics['total_requests'] += 1
     
@@ -821,7 +821,7 @@ async def get_comprehensive_data(self, symbol: str) -> Dict[str, Any]:
         return self._generate_fallback_data(symbol)
 
 def _get_keywords_for_symbol(self, symbol: str) -> List[str]:
-    """Get trending keywords for symbol""""
+    """Get trending keywords for symbol"""
     keyword_map = {
         'QQQ': ['QQQ ETF', 'NASDAQ 100', 'tech stocks', 'technology ETF'],
         'SPY': ['SPY ETF', 'S&P 500', 'market index', 'broad market'],
@@ -832,7 +832,7 @@ def _get_keywords_for_symbol(self, symbol: str) -> List[str]:
     return keyword_map.get(symbol, [symbol, f'{symbol} stock'])
 
 def _assess_data_quality(self, quote_data: Dict, trends_data: Dict, historical_data: List) -> str:
-    """Assess overall data quality""""
+    """Assess overall data quality"""
     quality_score = 0
     
     # Quote data quality
@@ -864,7 +864,7 @@ def _assess_data_quality(self, quote_data: Dict, trends_data: Dict, historical_d
         return 'poor'"
 
 def _update_performance_metrics(self, response_time: float):
-    """Update performance metrics""""
+    """Update performance metrics"""
     total = self.performance_metrics['total_requests']
     current_avg = self.performance_metrics['average_response_time']
     
@@ -877,7 +877,7 @@ def _update_performance_metrics(self, response_time: float):
         self.performance_metrics['live_data_percentage'] = round((alpaca_requests / total) * 100, 1)
 
 def _generate_fallback_data(self, symbol: str) -> Dict[str, Any]:
-    """Generate fallback data""""
+    """Generate fallback data"""
     fallback_quote = self.alpaca_client.fallback_simulator.generate_realistic_quote(symbol)
     
     return {
@@ -892,7 +892,7 @@ def _generate_fallback_data(self, symbol: str) -> Dict[str, Any]:
     }
 
 async def get_system_status(self) -> Dict[str, Any]:
-    """Get system status""""
+    """Get system status"""
     market_status = await self.alpaca_client.get_market_status()
     
     return {
@@ -907,7 +907,7 @@ async def get_system_status(self) -> Dict[str, Any]:
     }
 
 async def cleanup(self):
-    """Cleanup resources""""
+    """Cleanup resources"""
     await self.alpaca_client.cleanup()
     logger.info("🧹 HYPER data aggregator cleanup completed")
 ```

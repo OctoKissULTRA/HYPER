@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class HYPERSignal:
-"""Enhanced HYPER trading signal - Alpaca Production Ready v4.0""""
+"""Enhanced HYPER trading signal - Alpaca Production Ready v4.0"""
 symbol: str
 signal_type: str  # HYPER_BUY, SOFT_BUY, HOLD, SOFT_SELL, HYPER_SELL
 confidence: float  # 0-100
@@ -76,7 +76,7 @@ enhanced_features: Dict[str, Any] = field(default_factory=dict)
 ```
 
 class HYPERSignalEngine:
-"""Production HYPER Signal Engine with Alpaca Integration""""
+"""Production HYPER Signal Engine with Alpaca Integration"""
 
 ```
 def __init__(self):
@@ -134,7 +134,7 @@ def __init__(self):
 async def generate_signal(self, symbol: str, quote_data: Dict[str, Any], 
                          trends_data: Optional[Dict] = None,
                          historical_data: Optional[List[Dict]] = None) -> HYPERSignal:
-    """Generate comprehensive HYPER signal using Alpaca data""""
+    """Generate comprehensive HYPER signal using Alpaca data"""
     try:
         # Check cache first
         cache_key = f"{symbol}_{time.time() // self.cache_duration}""
@@ -306,7 +306,7 @@ async def generate_signal(self, symbol: str, quote_data: Dict[str, Any],
         return self._generate_fallback_signal(symbol, quote_data)
 
 def _extract_alpaca_features(self, quote_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Extract Alpaca-specific features from quote data""""
+    """Extract Alpaca-specific features from quote data"""
     enhanced_features = quote_data.get('enhanced_features', {})
     
     return {
@@ -323,7 +323,7 @@ def _extract_alpaca_features(self, quote_data: Dict[str, Any]) -> Dict[str, Any]
     }
 
 def _calculate_alpaca_data_quality(self, quote_data: Dict[str, Any]) -> float:
-    """Calculate data quality score for Alpaca data""""
+    """Calculate data quality score for Alpaca data"""
     score = 0.0
     
     # Data source quality
@@ -358,7 +358,7 @@ def _calculate_alpaca_data_quality(self, quote_data: Dict[str, Any]) -> float:
     return min(100.0, score)
 
 async def generate_all_signals(self, data_aggregator) -> Dict[str, HYPERSignal]:
-    """Generate signals for all configured tickers using data aggregator""""
+    """Generate signals for all configured tickers using data aggregator"""
     logger.info(f"🎯 Generating signals for {len(config.TICKERS)} tickers...")
     
     signals = {}
@@ -385,7 +385,7 @@ async def generate_all_signals(self, data_aggregator) -> Dict[str, HYPERSignal]:
     return signals
 
 async def _generate_single_signal_with_data(self, symbol: str, data_aggregator) -> HYPERSignal:
-    """Generate signal for single symbol with data aggregator""""
+    """Generate signal for single symbol with data aggregator"""
     try:
         # Get comprehensive data
         data = await data_aggregator.get_comprehensive_data(symbol)
@@ -405,7 +405,7 @@ async def _generate_single_signal_with_data(self, symbol: str, data_aggregator) 
 # Individual analysis method wrappers (same as before)
 async def _run_technical_analysis(self, symbol: str, quote_data: Dict[str, Any], 
                                  historical_data: Optional[List[Dict]]) -> Optional[TechnicalAnalysis]:
-    """Run technical analysis""""
+    """Run technical analysis"""
     try:
         return await self.technical_analyzer.analyze(symbol, quote_data, historical_data)
     except Exception as e:
@@ -414,7 +414,7 @@ async def _run_technical_analysis(self, symbol: str, quote_data: Dict[str, Any],
 
 async def _run_sentiment_analysis(self, symbol: str, quote_data: Dict[str, Any], 
                                  trends_data: Optional[Dict]) -> Optional[SentimentAnalysis]:
-    """Run sentiment analysis""""
+    """Run sentiment analysis"""
     try:
         return await self.sentiment_analyzer.analyze(symbol, quote_data, trends_data)
     except Exception as e:
@@ -422,7 +422,7 @@ async def _run_sentiment_analysis(self, symbol: str, quote_data: Dict[str, Any],
         return None
 
 async def _run_vix_analysis(self, symbol: str, quote_data: Dict[str, Any]) -> Optional[VIXAnalysis]:
-    """Run VIX analysis""""
+    """Run VIX analysis"""
     try:
         return await self.vix_analyzer.analyze(symbol, quote_data)
     except Exception as e:
@@ -430,7 +430,7 @@ async def _run_vix_analysis(self, symbol: str, quote_data: Dict[str, Any]) -> Op
         return None
 
 async def _run_market_structure_analysis(self, symbol: str, quote_data: Dict[str, Any]) -> Optional[MarketStructureAnalysis]:
-    """Run market structure analysis""""
+    """Run market structure analysis"""
     try:
         return await self.market_structure_analyzer.analyze(symbol, quote_data)
     except Exception as e:
@@ -439,7 +439,7 @@ async def _run_market_structure_analysis(self, symbol: str, quote_data: Dict[str
 
 async def _run_risk_analysis(self, symbol: str, quote_data: Dict[str, Any], 
                             historical_data: Optional[List[Dict]]) -> Optional[RiskAnalysis]:
-    """Run risk analysis""""
+    """Run risk analysis"""
     try:
         return await self.risk_analyzer.analyze(symbol, quote_data, historical_data)
     except Exception as e:
@@ -452,7 +452,7 @@ def _extract_component_scores(self, technical_analysis: Optional[TechnicalAnalys
                              market_structure_analysis: Optional[MarketStructureAnalysis],
                              risk_analysis: Optional[RiskAnalysis],
                              alpaca_features: Dict[str, Any]) -> Dict[str, float]:
-    """Extract component scores with Alpaca feature integration""""
+    """Extract component scores with Alpaca feature integration"""
     scores = {
         'technical': 50.0,
         'sentiment': 50.0,
@@ -529,7 +529,7 @@ def _extract_component_scores(self, technical_analysis: Optional[TechnicalAnalys
 def _calculate_weighted_signal(self, component_scores: Dict[str, float], 
                               quote_data: Dict[str, Any],
                               alpaca_features: Dict[str, Any]) -> Dict[str, Any]:
-    """Calculate weighted signal with Alpaca data quality considerations""""
+    """Calculate weighted signal with Alpaca data quality considerations"""
     
     # Base weighted score
     weighted_score = (
@@ -593,7 +593,7 @@ def _generate_comprehensive_insights(self, technical_analysis: Optional[Technica
                                     risk_analysis: Optional[RiskAnalysis],
                                     overall_signal: Dict[str, Any],
                                     alpaca_features: Dict[str, Any]) -> Tuple[List[str], List[str], List[str]]:
-    """Generate comprehensive insights with Alpaca data context""""
+    """Generate comprehensive insights with Alpaca data context"""
     reasons = []
     warnings = []
     recommendations = []
@@ -688,7 +688,7 @@ def _assess_overall_data_quality(self, technical_analysis: Optional[TechnicalAna
                                 market_structure_analysis: Optional[MarketStructureAnalysis],
                                 risk_analysis: Optional[RiskAnalysis],
                                 alpaca_features: Dict[str, Any]) -> str:
-    """Assess overall data quality with Alpaca metrics""""
+    """Assess overall data quality with Alpaca metrics"""
     
     quality_scores = []
     quality_weights = []
@@ -739,7 +739,7 @@ def _assess_overall_data_quality(self, technical_analysis: Optional[TechnicalAna
         return "unknown""
 
 def _get_active_components(self) -> List[str]:
-    """Get list of active analysis components""""
+    """Get list of active analysis components"""
     components = []
     if self.technical_analyzer:
         components.append("technical")
@@ -754,7 +754,7 @@ def _get_active_components(self) -> List[str]:
     return components
 
 def _generate_fallback_signal(self, symbol: str, quote_data: Dict[str, Any]) -> HYPERSignal:
-    """Generate fallback signal when analysis fails""""
+    """Generate fallback signal when analysis fails"""
     return HYPERSignal(
         symbol=symbol,
         signal_type="HOLD",
@@ -780,7 +780,7 @@ def _generate_fallback_signal(self, symbol: str, quote_data: Dict[str, Any]) -> 
     )
 
 def get_engine_stats(self) -> Dict[str, Any]:
-    """Get signal engine statistics""""
+    """Get signal engine statistics"""
     return {
         "generation_count": self.generation_count,
         "last_generation_time": self.last_generation_time.isoformat() if self.last_generation_time else None,
@@ -797,12 +797,12 @@ def get_engine_stats(self) -> Dict[str, Any]:
     }
 
 def clear_cache(self):
-    """Clear signal cache""""
+    """Clear signal cache"""
     self.signal_cache.clear()
     logger.info("🗑️ Signal cache cleared")
 
 async def warm_up_analyzers(self):
-    """Warm up all analyzers with test data""""
+    """Warm up all analyzers with test data"""
     logger.info("🔥 Warming up analyzers...")
     
     test_quote = {

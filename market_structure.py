@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SectorData:
-    """Individual sector performance data""""
+    """Individual sector performance data"""
     sector: str
     performance_1d: float
     performance_5d: float
@@ -27,7 +27,7 @@ class SectorData:
 
 @dataclass
 class BreadthSignal:
-    """Market breadth signal""""
+    """Market breadth signal"""
     advancing_stocks: int
     declining_stocks: int
     unchanged_stocks: int
@@ -40,7 +40,7 @@ class BreadthSignal:
 
 @dataclass
 class MarketStructureSignal:
-    """Complete market structure signal""""
+    """Complete market structure signal"""
     breadth_signal: BreadthSignal
     sector_rotation: Dict[str, SectorData]
     leadership_analysis: Dict[str, Any]
@@ -53,7 +53,7 @@ class MarketStructureSignal:
 
 @dataclass
 class MarketStructureAnalysis:
-    """Complete market structure analysis""""
+    """Complete market structure analysis"""
     current_signal: MarketStructureSignal
     market_health: str  # HEALTHY, CAUTION, UNHEALTHY, DETERIORATING
     participation_quality: str
@@ -64,7 +64,7 @@ class MarketStructureAnalysis:
     structural_trends: Dict[str, Any]
 
 class AdvancedMarketStructureAnalyzer:
-    """Advanced Market Structure and Sector Rotation Analysis""""
+    """Advanced Market Structure and Sector Rotation Analysis"""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -98,7 +98,7 @@ class AdvancedMarketStructureAnalyzer:
     
     async def analyze(self, symbol: str, quote_data: Dict[str, Any], 
                      market_data: Optional[Dict] = None) -> MarketStructureAnalysis:
-        """Complete market structure analysis""""
+        """Complete market structure analysis"""
         try:
             # Check cache first
             cache_key = f"structure_{time.time() // self.cache_duration}""
@@ -200,7 +200,7 @@ class AdvancedMarketStructureAnalyzer:
     
     async def _analyze_market_leadership(self, sector_rotation: Dict[str, SectorData], 
                                         breadth_signal: BreadthSignal) -> Dict[str, Any]:
-        """Analyze market leadership characteristics""""
+        """Analyze market leadership characteristics"""
         try:
             # Find leading sectors
             leading_sectors = []
@@ -256,7 +256,7 @@ class AdvancedMarketStructureAnalyzer:
     def _determine_market_regime(self, breadth_signal: BreadthSignal, 
                                 sector_rotation: Dict[str, SectorData],
                                 institutional_flow: Dict[str, Any]) -> str:
-        """Determine current market regime""""
+        """Determine current market regime"""
         try:
             regime_scores = {
                 'RISK_ON': 0,
@@ -306,7 +306,7 @@ class AdvancedMarketStructureAnalyzer:
             return "UNCERTAINTY""
     
     def _identify_rotation_theme(self, sector_rotation: Dict[str, SectorData]) -> str:
-        """Identify current sector rotation theme""""
+        """Identify current sector rotation theme"""
         try:
             # Sort sectors by performance
             sorted_sectors = sorted(sector_rotation.items(), 
@@ -350,7 +350,7 @@ class AdvancedMarketStructureAnalyzer:
     def _calculate_structure_score(self, breadth_signal: BreadthSignal,
                                   sector_rotation: Dict[str, SectorData],
                                   institutional_flow: Dict[str, Any]) -> float:
-        """Calculate overall market structure health score""""
+        """Calculate overall market structure health score"""
         try:
             score = 0
             
@@ -405,7 +405,7 @@ class AdvancedMarketStructureAnalyzer:
     
     def _assess_momentum_quality(self, breadth_signal: BreadthSignal,
                                 sector_rotation: Dict[str, SectorData]) -> str:
-        """Assess quality of market momentum""""
+        """Assess quality of market momentum"""
         try:
             quality_factors = []
             
@@ -456,7 +456,7 @@ class AdvancedMarketStructureAnalyzer:
     def _perform_risk_assessment(self, breadth_signal: BreadthSignal,
                                 sector_rotation: Dict[str, SectorData],
                                 market_regime: str) -> Dict[str, Any]:
-        """Perform market structure risk assessment""""
+        """Perform market structure risk assessment"""
         try:
             risk_factors = []
             risk_level = "LOW""
@@ -513,7 +513,7 @@ class AdvancedMarketStructureAnalyzer:
             return {'risk_level': 'UNKNOWN', 'risk_factors': []}
     
     def _analyze_market_health(self, market_signal: MarketStructureSignal) -> str:
-        """Analyze overall market health""""
+        """Analyze overall market health"""
         try:
             health_score = market_signal.structure_score
             
@@ -547,7 +547,7 @@ class AdvancedMarketStructureAnalyzer:
     
     def _assess_participation_quality(self, breadth_signal: BreadthSignal,
                                      sector_rotation: Dict[str, SectorData]) -> str:
-        """Assess quality of market participation""""
+        """Assess quality of market participation"""
         try:
             # Count positive sectors
             positive_sectors = sum(1 for s in sector_rotation.values() if s.relative_strength > 0)
@@ -573,7 +573,7 @@ class AdvancedMarketStructureAnalyzer:
     
     def _identify_rotation_opportunities(self, sector_rotation: Dict[str, SectorData],
                                         rotation_theme: str) -> List[str]:
-        """Identify sector rotation opportunities""""
+        """Identify sector rotation opportunities"""
         opportunities = []
         
         try:
@@ -615,7 +615,7 @@ class AdvancedMarketStructureAnalyzer:
     
     def _generate_risk_warnings(self, market_signal: MarketStructureSignal,
                                market_health: str) -> List[str]:
-        """Generate market structure risk warnings""""
+        """Generate market structure risk warnings"""
         warnings = []
         
         try:
@@ -659,7 +659,7 @@ class AdvancedMarketStructureAnalyzer:
     
     def _generate_strategic_recommendations(self, market_signal: MarketStructureSignal,
                                            symbol: str) -> List[str]:
-        """Generate strategic recommendations based on market structure""""
+        """Generate strategic recommendations based on market structure"""
         recommendations = []
         
         try:
@@ -710,7 +710,7 @@ class AdvancedMarketStructureAnalyzer:
             return ["Strategic analysis unavailable"]
     
     def _analyze_correlation_breakdown(self, sector_rotation: Dict[str, SectorData]) -> Dict[str, float]:
-        """Analyze sector correlation patterns""""
+        """Analyze sector correlation patterns"""
         try:
             # Calculate dispersion of sector performance
             performances = [s.relative_strength for s in sector_rotation.values()]
@@ -736,7 +736,7 @@ class AdvancedMarketStructureAnalyzer:
             return {'average_sector_correlation': 0.6}
     
     def _identify_structural_trends(self, market_signal: MarketStructureSignal) -> Dict[str, Any]:
-        """Identify longer-term structural trends""""
+        """Identify longer-term structural trends"""
         try:
             trends = {}
             
@@ -769,7 +769,7 @@ class AdvancedMarketStructureAnalyzer:
             return {'trends': 'analysis_unavailable'}
     
     def _update_structure_history(self, market_signal: MarketStructureSignal):
-        """Update market structure analysis history""""
+        """Update market structure analysis history"""
         history_entry = {
             'timestamp': datetime.now(),
             'regime': market_signal.market_regime,
@@ -785,7 +785,7 @@ class AdvancedMarketStructureAnalyzer:
             self.breadth_history.pop(0)
     
     def _generate_fallback_analysis(self) -> MarketStructureAnalysis:
-        """Generate fallback analysis when main analysis fails""""
+        """Generate fallback analysis when main analysis fails"""
         fallback_breadth = BreadthSignal(
             advancing_stocks=1500,
             declining_stocks=1500,
@@ -837,14 +837,14 @@ class AdvancedMarketStructureAnalyzer:
         )
 
 class BreadthAnalyzer:
-    """Analyze market breadth indicators""""
+    """Analyze market breadth indicators"""
     
     def __init__(self):
         self.breadth_cache = {}
         logger.info("📊 Breadth Analyzer initialized")
     
     async def analyze_breadth(self, symbol: str, quote_data: Dict[str, Any]) -> BreadthSignal:
-        """Analyze market breadth indicators""""
+        """Analyze market breadth indicators"""
         try:
             change_percent = float(quote_data.get('change_percent', 0))
             volume = quote_data.get('volume', 0)
@@ -906,7 +906,7 @@ class BreadthAnalyzer:
             return self._generate_fallback_breadth()
     
     def _detect_breadth_divergence(self, price_change: float, breadth_ratio: float) -> bool:
-        """Detect breadth divergence from price action""""
+        """Detect breadth divergence from price action"""
         # Positive price with poor breadth = bearish divergence
         # Negative price with good breadth = bullish divergence
         
@@ -918,7 +918,7 @@ class BreadthAnalyzer:
             return False
     
     def _generate_fallback_breadth(self) -> BreadthSignal:
-        """Generate fallback breadth signal""""
+        """Generate fallback breadth signal"""
         return BreadthSignal(
             advancing_stocks=1500,
             declining_stocks=1500,
@@ -932,7 +932,7 @@ class BreadthAnalyzer:
         )
 
 class SectorRotationAnalyzer:
-    """Analyze sector rotation patterns""""
+    """Analyze sector rotation patterns"""
     
     def __init__(self, sectors: List[str]):
         self.sectors = sectors
@@ -940,7 +940,7 @@ class SectorRotationAnalyzer:
         logger.info(f"🔄 Sector Rotation Analyzer initialized with {len(sectors)} sectors")
     
     async def analyze_sector_rotation(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, SectorData]:
-        """Analyze sector rotation patterns""""
+        """Analyze sector rotation patterns"""
         try:
             change_percent = float(quote_data.get('change_percent', 0))
             
@@ -975,7 +975,7 @@ class SectorRotationAnalyzer:
             return {}
     
     def _generate_sector_performance(self, sector: str, market_change: float) -> Dict[str, Any]:
-        """Generate realistic sector performance data""""
+        """Generate realistic sector performance data"""
         try:
             # Sector characteristics and typical behavior
             sector_profiles = {
@@ -1058,14 +1058,14 @@ class SectorRotationAnalyzer:
             }
 
 class InstitutionalFlowAnalyzer:
-    """Analyze institutional money flow patterns""""
+    """Analyze institutional money flow patterns"""
     
     def __init__(self):
         logger.info("🏦 Institutional Flow Analyzer initialized")
     
     async def analyze_flow(self, symbol: str, quote_data: Dict[str, Any], 
                           sector_rotation: Dict[str, SectorData]) -> Dict[str, Any]:
-        """Analyze institutional money flow""""
+        """Analyze institutional money flow"""
         try:
             change_percent = float(quote_data.get('change_percent', 0))
             volume = quote_data.get('volume', 0)
@@ -1113,13 +1113,13 @@ class InstitutionalFlowAnalyzer:
             return {'sentiment': 'NEUTRAL', 'flow_strength': 'MODERATE'}
 
 class MarketMicrostructureAnalyzer:
-    """Analyze market microstructure patterns""""
+    """Analyze market microstructure patterns"""
     
     def __init__(self):
         logger.info("🔬 Market Microstructure Analyzer initialized")
     
     async def analyze_microstructure(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze market microstructure indicators""""
+        """Analyze market microstructure indicators"""
         try:
             current_price = float(quote_data.get('price', 100))
             volume = quote_data.get('volume', 0)
@@ -1154,7 +1154,7 @@ class MarketMicrostructureAnalyzer:
             return {'microstructure_health': 'UNKNOWN'}
     
     def _estimate_bid_ask_spread(self, symbol: str, volume: int, volatility: float) -> float:
-        """Estimate bid-ask spread in basis points""""
+        """Estimate bid-ask spread in basis points"""
         base_spreads = {'SPY': 1.0, 'QQQ': 1.2, 'AAPL': 2.0, 'MSFT': 1.8, 'NVDA': 3.0}
         base_spread = base_spreads.get(symbol, 2.5)
         
@@ -1164,14 +1164,14 @@ class MarketMicrostructureAnalyzer:
         return round(base_spread * volume_factor * volatility_factor, 1)
     
     def _calculate_order_flow_imbalance(self, change_percent: float, volume: int) -> float:
-        """Calculate order flow imbalance""""
+        """Calculate order flow imbalance"""
         base_imbalance = change_percent * 0.1
         volume_multiplier = min(2.0, volume / 20000000)
         imbalance = base_imbalance * volume_multiplier
         return round(max(-1.0, min(1.0, imbalance)), 3)
     
     def _estimate_market_impact(self, volume: int, change_percent: float) -> float:
-        """Estimate market impact score""""
+        """Estimate market impact score"""
         if volume == 0:
             return 0.5
         
@@ -1180,7 +1180,7 @@ class MarketMicrostructureAnalyzer:
         return round(min(1.0, price_impact / 10), 3)
     
     def _assess_liquidity(self, symbol: str, volume: int, spread_bps: float) -> float:
-        """Assess overall liquidity score (0-100)""""
+        """Assess overall liquidity score (0-100)"""
         base_liquidity = {'SPY': 95, 'QQQ': 90, 'AAPL': 85, 'MSFT': 85, 'NVDA': 75}
         base_score = base_liquidity.get(symbol, 70)
         
@@ -1191,7 +1191,7 @@ class MarketMicrostructureAnalyzer:
         return round(max(0, min(100, total_score)), 1)
     
     def _assess_price_discovery(self, change_percent: float, volume: int, spread_bps: float) -> str:
-        """Assess price discovery quality""""
+        """Assess price discovery quality"""
         volume_quality = "GOOD" if volume > 15000000 else "MODERATE" if volume > 5000000 else "POOR""
         spread_quality = "GOOD" if spread_bps < 3 else "MODERATE" if spread_bps < 6 else "POOR""
         movement_quality = "GOOD" if abs(change_percent) < 3 else "MODERATE" if abs(change_percent) < 6 else "POOR""
@@ -1210,7 +1210,7 @@ class MarketMicrostructureAnalyzer:
             return "POOR""
     
     def _assess_microstructure_health(self, spread_bps: float, liquidity_score: float, price_discovery: str) -> str:
-        """Assess overall microstructure health""""
+        """Assess overall microstructure health"""
         health_score = 0
         
         if spread_bps < 2:

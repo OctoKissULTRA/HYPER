@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SentimentSignal:
-    """Individual sentiment signal""""
+    """Individual sentiment signal"""
     source: str
     sentiment_score: float  # -100 to +100
     confidence: float  # 0-1
@@ -40,7 +40,7 @@ class SentimentSignal:
 
 @dataclass
 class SentimentAnalysis:
-    """Complete sentiment analysis result""""
+    """Complete sentiment analysis result"""
     overall_sentiment: float  # -100 to +100
     confidence: float
     trend_momentum: float
@@ -53,7 +53,7 @@ class SentimentAnalysis:
     contrarian_signals: List[str]
 
 class AdvancedSentimentAnalyzer:
-    """Advanced Multi-Source Sentiment Analysis""""
+    """Advanced Multi-Source Sentiment Analysis"""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -85,7 +85,7 @@ class AdvancedSentimentAnalyzer:
     
     async def analyze(self, symbol: str, quote_data: Dict[str, Any], 
                      trends_data: Optional[Dict] = None) -> SentimentAnalysis:
-        """Complete sentiment analysis from all sources""""
+        """Complete sentiment analysis from all sources"""
         try:
             # Check cache first
             cache_key = f"{symbol}_{time.time() // self.cache_duration}""
@@ -161,7 +161,7 @@ class AdvancedSentimentAnalyzer:
             return self._generate_fallback_sentiment(symbol)
     
     async def _analyze_news_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Optional[SentimentSignal]:
-        """Analyze news sentiment""""
+        """Analyze news sentiment"""
         try:
             # Get simulated news data
             news_data = await self.news_simulator.get_news_sentiment(symbol, quote_data)
@@ -225,7 +225,7 @@ class AdvancedSentimentAnalyzer:
     
     async def _analyze_social_sentiment(self, symbol: str, quote_data: Dict[str, Any], 
                                        trends_data: Optional[Dict] = None) -> List[SentimentSignal]:
-        """Analyze general social media sentiment""""
+        """Analyze general social media sentiment"""
         signals = []
         
         try:
@@ -248,7 +248,7 @@ class AdvancedSentimentAnalyzer:
         return signals
     
     async def _analyze_reddit_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Optional[SentimentSignal]:
-        """Analyze Reddit sentiment""""
+        """Analyze Reddit sentiment"""
         try:
             reddit_data = await self.reddit_simulator.get_reddit_sentiment(symbol, quote_data)
             
@@ -262,7 +262,7 @@ class AdvancedSentimentAnalyzer:
             return None
     
     async def _analyze_twitter_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Optional[SentimentSignal]:
-        """Analyze Twitter sentiment""""
+        """Analyze Twitter sentiment"""
         try:
             twitter_data = await self.twitter_simulator.get_twitter_sentiment(symbol, quote_data)
             
@@ -276,7 +276,7 @@ class AdvancedSentimentAnalyzer:
             return None
     
     async def _analyze_institutional_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Optional[SentimentSignal]:
-        """Analyze institutional sentiment (estimated)""""
+        """Analyze institutional sentiment (estimated)"""
         try:
             current_price = float(quote_data.get('price', 100))
             change_percent = float(quote_data.get('change_percent', 0))
@@ -334,7 +334,7 @@ class AdvancedSentimentAnalyzer:
             return None
     
     async def _analyze_trends_sentiment(self, symbol: str, trends_data: Dict) -> Optional[SentimentSignal]:
-        """Analyze Google Trends-based sentiment""""
+        """Analyze Google Trends-based sentiment"""
         try:
             keyword_data = trends_data.get('keyword_data', {})
             
@@ -388,7 +388,7 @@ class AdvancedSentimentAnalyzer:
             return None
     
     def _process_social_data(self, symbol: str, social_data: Dict, source: str) -> Optional[SentimentSignal]:
-        """Process social media data into sentiment signal""""
+        """Process social media data into sentiment signal"""
         try:
             posts = social_data.get('posts', [])
             
@@ -448,7 +448,7 @@ class AdvancedSentimentAnalyzer:
             return None
     
     def _analyze_text_sentiment(self, text: str) -> float:
-        """Analyze sentiment of text using available libraries""""
+        """Analyze sentiment of text using available libraries"""
         if not text:
             return 0.0
         
@@ -477,7 +477,7 @@ class AdvancedSentimentAnalyzer:
         return np.mean(sentiments) if sentiments else 0.0
     
     def _rule_based_sentiment(self, text: str) -> float:
-        """Simple rule-based sentiment analysis""""
+        """Simple rule-based sentiment analysis"""
         text = text.lower()
         
         # Positive words
@@ -507,7 +507,7 @@ class AdvancedSentimentAnalyzer:
         return max(-1.0, min(1.0, sentiment_score * 10))  # Scale and bound
     
     def _extract_keywords(self, text: str, symbol: str) -> List[str]:
-        """Extract relevant keywords from text""""
+        """Extract relevant keywords from text"""
         text = text.lower()
         
         # Common trading/financial keywords
@@ -542,7 +542,7 @@ class AdvancedSentimentAnalyzer:
         return keywords
     
     def _calculate_fear_greed_indicator(self, overall_sentiment: float, signals: List[SentimentSignal]) -> str:
-        """Calculate fear/greed indicator""""
+        """Calculate fear/greed indicator"""
         # Extreme sentiment often indicates fear or greed
         extreme_signals = sum(1 for s in signals if abs(s.sentiment_score) > 60)
         high_volume_signals = sum(1 for s in signals if s.volume > 50)
@@ -559,7 +559,7 @@ class AdvancedSentimentAnalyzer:
             return "EXTREME_FEAR""
     
     def _identify_contrarian_signals(self, signals: List[SentimentSignal], overall_sentiment: float) -> List[str]:
-        """Identify contrarian signals""""
+        """Identify contrarian signals"""
         contrarian_signals = []
         
         # Check for extreme sentiment (contrarian opportunity)
@@ -580,7 +580,7 @@ class AdvancedSentimentAnalyzer:
         return contrarian_signals
     
     def _detect_contrarian_news(self, news_data: Dict, sentiment: float) -> bool:
-        """Detect contrarian news patterns""""
+        """Detect contrarian news patterns"""
         try:
             articles = news_data.get('articles', [])
             
@@ -600,7 +600,7 @@ class AdvancedSentimentAnalyzer:
             return False
     
     def _detect_contrarian_social(self, social_data: Dict, sentiment: float) -> bool:
-        """Detect contrarian social media patterns""""
+        """Detect contrarian social media patterns"""
         try:
             posts = social_data.get('posts', [])
             
@@ -617,7 +617,7 @@ class AdvancedSentimentAnalyzer:
             return False
     
     def _update_trend_history(self, symbol: str, sentiment: float):
-        """Update sentiment trend history""""
+        """Update sentiment trend history"""
         if symbol not in self.trend_history:
             self.trend_history[symbol] = []
         
@@ -631,7 +631,7 @@ class AdvancedSentimentAnalyzer:
             self.trend_history[symbol].pop(0)
     
     def _calculate_overall_sentiment(self, signals: List[SentimentSignal]) -> Tuple[float, float, float]:
-        """Calculate overall sentiment from individual signals""""
+        """Calculate overall sentiment from individual signals"""
         if not signals:
             return 0.0, 0.0, 0.0
         
@@ -661,7 +661,7 @@ class AdvancedSentimentAnalyzer:
         return round(overall_sentiment, 1), round(confidence, 3), round(trend_momentum, 1)
     
     def _calculate_trend_momentum(self, signals: List[SentimentSignal]) -> float:
-        """Calculate sentiment trend momentum""""
+        """Calculate sentiment trend momentum"""
         try:
             # Look at recent vs older signals
             now = datetime.now()
@@ -686,7 +686,7 @@ class AdvancedSentimentAnalyzer:
             return 0.0
     
     def _extract_key_themes(self, signals: List[SentimentSignal]) -> List[str]:
-        """Extract key themes from sentiment signals""""
+        """Extract key themes from sentiment signals"""
         try:
             all_keywords = []
             for signal in signals:
@@ -706,7 +706,7 @@ class AdvancedSentimentAnalyzer:
             return []
     
     def _determine_retail_sentiment(self, signals: List[SentimentSignal]) -> str:
-        """Determine overall retail sentiment""""
+        """Determine overall retail sentiment"""
         retail_sources = ['reddit', 'twitter', 'social_general']
         retail_signals = [s for s in signals if s.source in retail_sources]
         
@@ -727,7 +727,7 @@ class AdvancedSentimentAnalyzer:
             return "VERY_BEARISH""
     
     def _determine_institutional_sentiment(self, signals: List[SentimentSignal]) -> str:
-        """Determine institutional sentiment""""
+        """Determine institutional sentiment"""
         institutional_signals = [s for s in signals if s.source in ['institutional', 'news']]
         
         if not institutional_signals:
@@ -743,7 +743,7 @@ class AdvancedSentimentAnalyzer:
             return "BEARISH""
     
     def _calculate_social_buzz_level(self, signals: List[SentimentSignal]) -> str:
-        """Calculate social media buzz level""""
+        """Calculate social media buzz level"""
         total_volume = sum(s.volume for s in signals if s.source in ['reddit', 'twitter', 'social_general'])
         high_intensity_signals = sum(1 for s in signals if s.emotional_intensity == "HIGH")
         
@@ -755,7 +755,7 @@ class AdvancedSentimentAnalyzer:
             return "LOW""
     
     def _generate_fallback_sentiment(self, symbol: str) -> SentimentAnalysis:
-        """Generate fallback sentiment analysis""""
+        """Generate fallback sentiment analysis"""
         return SentimentAnalysis(
             overall_sentiment=0.0,
             confidence=0.3,
@@ -770,14 +770,14 @@ class AdvancedSentimentAnalyzer:
         )
 
 class NewsSimulator:
-    """Simulate news sentiment data""""
+    """Simulate news sentiment data"""
     
     def __init__(self):
         self.news_cache = {}
         logger.info("📰 News Simulator initialized")
     
     async def get_news_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate realistic news sentiment data""""
+        """Generate realistic news sentiment data"""
         try:
             change_percent = float(quote_data.get('change_percent', 0))
             
@@ -800,7 +800,7 @@ class NewsSimulator:
             return {'articles': []}
     
     def _generate_news_article(self, symbol: str, change_percent: float, index: int) -> Dict[str, Any]:
-        """Generate a single news article""""
+        """Generate a single news article"""
         # Article templates based on market movement
         if change_percent > 3:
             headlines = [
@@ -853,7 +853,7 @@ class NewsSimulator:
         }
     
     def _calculate_news_distribution(self, articles: List[Dict]) -> Dict[str, int]:
-        """Calculate sentiment distribution of articles""""
+        """Calculate sentiment distribution of articles"""
         positive = sum(1 for a in articles if a.get('sentiment_score', 0) > 0.1)
         negative = sum(1 for a in articles if a.get('sentiment_score', 0) < -0.1)
         neutral = len(articles) - positive - negative
@@ -865,13 +865,13 @@ class NewsSimulator:
         }
 
 class SocialMediaSimulator:
-    """Simulate general social media sentiment""""
+    """Simulate general social media sentiment"""
     
     def __init__(self):
         logger.info("📱 Social Media Simulator initialized")
     
     async def get_social_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate social media sentiment data""""
+        """Generate social media sentiment data"""
         try:
             posts = []
             num_posts = np.random.randint(10, 25)  # 10-24 posts
@@ -890,7 +890,7 @@ class SocialMediaSimulator:
             return {'posts': []}
     
     def _generate_social_post(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate a single social media post""""
+        """Generate a single social media post"""
         change_percent = float(quote_data.get('change_percent', 0))
         
         # Post templates
@@ -930,13 +930,13 @@ class SocialMediaSimulator:
         }
 
 class RedditSimulator:
-    """Simulate Reddit sentiment""""
+    """Simulate Reddit sentiment"""
     
     def __init__(self):
         logger.info("🔴 Reddit Simulator initialized")
     
     async def get_reddit_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate Reddit sentiment data""""
+        """Generate Reddit sentiment data"""
         try:
             posts = []
             num_posts = np.random.randint(5, 15)  # 5-14 posts
@@ -955,14 +955,14 @@ class RedditSimulator:
             return {'posts': []}
     
     def _generate_reddit_post(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate a Reddit post""""
+        """Generate a Reddit post"""
         change_percent = float(quote_data.get('change_percent', 0))
         
         # Reddit-style posts
         if change_percent > 3:
             texts = [
                 f"{symbol} to the moon! 🚀🚀🚀 Diamond hands!",
-                f"YOLO'd into {symbol} calls, printing money! 💎🙌",
+                f"YOLO'd into {symbol} calls, printing money! 💎🙌",'
                 f"{symbol} gang eating good tonight! 🔥",
                 f"Called the {symbol} breakout! Who's with me? 🦍""
             ]
@@ -970,7 +970,7 @@ class RedditSimulator:
         elif change_percent < -3:
             texts = [
                 f"{symbol} puts are printing! 📉",
-                f"Told y'all {symbol} was overvalued 🐻",
+                f"Told y'all {symbol} was overvalued 🐻",'
                 f"{symbol} bag holders in shambles 💀",
                 f"Time to short {symbol}? Bears feasting 🩸""
             ]
@@ -979,7 +979,7 @@ class RedditSimulator:
             texts = [
                 f"Anyone else watching {symbol}? Thoughts?",
                 f"{symbol} looking like a good entry point",
-                f"What's the play on {symbol}? Bullish or bearish?",
+                f"What's the play on {symbol}? Bullish or bearish?",'
                 f"{symbol} technical analysis - neutral zone""
             ]
             sentiment_bias = 0.0
@@ -996,13 +996,13 @@ class RedditSimulator:
         }
 
 class TwitterSimulator:
-    """Simulate Twitter sentiment""""
+    """Simulate Twitter sentiment"""
     
     def __init__(self):
         logger.info("🐦 Twitter Simulator initialized")
     
     async def get_twitter_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate Twitter sentiment data""""
+        """Generate Twitter sentiment data"""
         try:
             posts = []
             num_posts = np.random.randint(8, 20)  # 8-19 tweets
@@ -1021,7 +1021,7 @@ class TwitterSimulator:
             return {'posts': []}
     
     def _generate_twitter_post(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate a Twitter post""""
+        """Generate a Twitter post"""
         change_percent = float(quote_data.get('change_percent', 0))
         
         # Twitter-style posts
