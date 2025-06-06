@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class RiskMetrics:
-    """Individual risk metrics"""
+    """Individual risk metrics""""
     var_95: float  # 5% Value at Risk
     var_99: float  # 1% Value at Risk
     expected_shortfall: float  # Conditional VaR
@@ -31,7 +31,7 @@ class RiskMetrics:
 
 @dataclass
 class PositionRisk:
-    """Position-specific risk analysis"""
+    """Position-specific risk analysis""""
     position_size_recommendation: float
     kelly_criterion: float
     optimal_stop_loss: float
@@ -43,7 +43,7 @@ class PositionRisk:
 
 @dataclass
 class PortfolioRisk:
-    """Portfolio-level risk metrics"""
+    """Portfolio-level risk metrics""""
     portfolio_var: float
     diversification_ratio: float
     correlation_risk: str
@@ -55,7 +55,7 @@ class PortfolioRisk:
 
 @dataclass
 class AnomalySignal:
-    """Anomaly detection signal"""
+    """Anomaly detection signal""""
     anomaly_score: float  # 0-100
     anomaly_type: str  # PRICE, VOLUME, VOLATILITY, CORRELATION
     severity: str  # LOW, MEDIUM, HIGH, EXTREME
@@ -66,7 +66,7 @@ class AnomalySignal:
 
 @dataclass
 class RiskAnalysis:
-    """Complete risk analysis result"""
+    """Complete risk analysis result""""
     overall_risk_score: float  # 0-100
     risk_level: str  # LOW, MODERATE, HIGH, EXTREME
     risk_metrics: RiskMetrics
@@ -79,7 +79,7 @@ class RiskAnalysis:
     tail_risk_events: List[str]
 
 class AdvancedRiskAnalyzer:
-    """Advanced Risk Analysis with ML-Enhanced Anomaly Detection"""
+    """Advanced Risk Analysis with ML-Enhanced Anomaly Detection""""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -108,10 +108,10 @@ class AdvancedRiskAnalyzer:
     async def analyze(self, symbol: str, quote_data: Dict[str, Any], 
                      historical_data: Optional[List[Dict]] = None,
                      portfolio_context: Optional[Dict] = None) -> RiskAnalysis:
-        """Complete risk analysis"""
+        """Complete risk analysis""""
         try:
             # Check cache first
-            cache_key = f"risk_{symbol}_{time.time() // self.cache_duration}"
+            cache_key = f"risk_{symbol}_{time.time() // self.cache_duration}""
             if cache_key in self.risk_cache:
                 logger.debug("📋 Using cached risk analysis")
                 return self.risk_cache[cache_key]
@@ -181,7 +181,7 @@ class AdvancedRiskAnalyzer:
     
     async def _calculate_risk_metrics(self, symbol: str, quote_data: Dict[str, Any], 
                                      historical_data: List[Dict]) -> RiskMetrics:
-        """Calculate comprehensive risk metrics"""
+        """Calculate comprehensive risk metrics""""
         try:
             # Extract price data
             prices = np.array([float(d.get('close', d.get('price', 0))) for d in historical_data])
@@ -256,7 +256,7 @@ class AdvancedRiskAnalyzer:
     
     async def _analyze_position_risk(self, symbol: str, quote_data: Dict[str, Any], 
                                     risk_metrics: RiskMetrics) -> PositionRisk:
-        """Analyze position-specific risk"""
+        """Analyze position-specific risk""""
         try:
             current_price = float(quote_data.get('price', 100))
             
@@ -287,11 +287,11 @@ class AdvancedRiskAnalyzer:
             
             # Concentration risk assessment
             if position_size_recommendation > 0.15:
-                concentration_risk = "HIGH"
+                concentration_risk = "HIGH""
             elif position_size_recommendation > 0.10:
-                concentration_risk = "MODERATE"
+                concentration_risk = "MODERATE""
             else:
-                concentration_risk = "LOW"
+                concentration_risk = "LOW""
             
             return PositionRisk(
                 position_size_recommendation=round(position_size_recommendation, 4),
@@ -310,7 +310,7 @@ class AdvancedRiskAnalyzer:
     
     async def _analyze_portfolio_risk(self, symbol: str, risk_metrics: RiskMetrics, 
                                      portfolio_context: Optional[Dict] = None) -> PortfolioRisk:
-        """Analyze portfolio-level risk"""
+        """Analyze portfolio-level risk""""
         try:
             # Simulated portfolio analysis (in practice, would use actual portfolio data)
             portfolio_var = risk_metrics.var_95 * 0.8  # Diversification benefit
@@ -320,11 +320,11 @@ class AdvancedRiskAnalyzer:
             
             # Correlation risk
             if abs(risk_metrics.correlation_spy) > 0.8:
-                correlation_risk = "HIGH"
+                correlation_risk = "HIGH""
             elif abs(risk_metrics.correlation_spy) > 0.6:
-                correlation_risk = "MODERATE"
+                correlation_risk = "MODERATE""
             else:
-                correlation_risk = "LOW"
+                correlation_risk = "LOW""
             
             # Sector concentration (simulated)
             sector_concentration = {
@@ -368,7 +368,7 @@ class AdvancedRiskAnalyzer:
     def _calculate_overall_risk_score(self, risk_metrics: RiskMetrics, 
                                      position_risk: PositionRisk,
                                      anomaly_signals: List[AnomalySignal]) -> float:
-        """Calculate overall risk score (0-100)"""
+        """Calculate overall risk score (0-100)""""
         try:
             score = 50  # Base score
             
@@ -417,22 +417,22 @@ class AdvancedRiskAnalyzer:
             return 50.0
     
     def _determine_risk_level(self, risk_score: float, anomaly_signals: List[AnomalySignal]) -> str:
-        """Determine risk level based on score and anomalies"""
+        """Determine risk level based on score and anomalies""""
         extreme_anomalies = sum(1 for a in anomaly_signals if a.severity == "EXTREME")
         
         if extreme_anomalies > 0 or risk_score >= 85:
-            return "EXTREME"
+            return "EXTREME""
         elif risk_score >= 70:
-            return "HIGH"
+            return "HIGH""
         elif risk_score >= 45:
-            return "MODERATE"
+            return "MODERATE""
         else:
-            return "LOW"
+            return "LOW""
     
     def _generate_risk_warnings(self, risk_metrics: RiskMetrics, 
                                position_risk: PositionRisk,
                                anomaly_signals: List[AnomalySignal]) -> List[str]:
-        """Generate risk warnings"""
+        """Generate risk warnings""""
         warnings = []
         
         try:
@@ -477,7 +477,7 @@ class AdvancedRiskAnalyzer:
     
     def _generate_risk_recommendations(self, symbol: str, risk_metrics: RiskMetrics,
                                       position_risk: PositionRisk, risk_level: str) -> List[str]:
-        """Generate risk management recommendations"""
+        """Generate risk management recommendations""""
         recommendations = []
         
         try:
@@ -527,7 +527,7 @@ class AdvancedRiskAnalyzer:
     
     def _identify_tail_risk_events(self, risk_metrics: RiskMetrics, 
                                   anomaly_signals: List[AnomalySignal]) -> List[str]:
-        """Identify potential tail risk events"""
+        """Identify potential tail risk events""""
         events = []
         
         try:
@@ -555,7 +555,7 @@ class AdvancedRiskAnalyzer:
             return ["Tail risk analysis unavailable"]
     
     def _estimate_beta(self, symbol: str, returns: np.ndarray) -> float:
-        """Estimate beta vs market"""
+        """Estimate beta vs market""""
         # Simplified beta estimation
         symbol_betas = {
             'NVDA': 1.4, 'QQQ': 1.1, 'SPY': 1.0, 'AAPL': 1.2, 'MSFT': 0.9
@@ -567,7 +567,7 @@ class AdvancedRiskAnalyzer:
         return max(0.3, min(2.5, base_beta + vol_adjustment))
     
     def _estimate_spy_correlation(self, symbol: str, returns: np.ndarray) -> float:
-        """Estimate correlation with SPY"""
+        """Estimate correlation with SPY""""
         # Simplified correlation estimation
         base_correlations = {
             'NVDA': 0.75, 'QQQ': 0.95, 'SPY': 1.0, 'AAPL': 0.80, 'MSFT': 0.85
@@ -579,7 +579,7 @@ class AdvancedRiskAnalyzer:
         return max(-0.5, min(1.0, base_correlation + noise))
     
     def _calculate_tail_risk_score(self, returns: np.ndarray, skewness: float, kurtosis: float) -> float:
-        """Calculate custom tail risk score"""
+        """Calculate custom tail risk score""""
         try:
             # Base score from VaR
             var_95 = np.percentile(returns, 5)
@@ -599,7 +599,7 @@ class AdvancedRiskAnalyzer:
             return 50.0
     
     def _generate_price_history(self, symbol: str, quote_data: Dict[str, Any], periods: int = 100) -> List[Dict]:
-        """Generate realistic price history for risk analysis"""
+        """Generate realistic price history for risk analysis""""
         try:
             current_price = float(quote_data.get('price', 100))
             change_percent = float(quote_data.get('change_percent', 0))
@@ -634,7 +634,7 @@ class AdvancedRiskAnalyzer:
             return []
     
     def _update_risk_history(self, symbol: str, risk_score: float, risk_level: str):
-        """Update risk analysis history"""
+        """Update risk analysis history""""
         self.risk_history.append({
             'timestamp': datetime.now(),
             'symbol': symbol,
@@ -647,7 +647,7 @@ class AdvancedRiskAnalyzer:
             self.risk_history.pop(0)
     
     def _generate_simulated_risk_metrics(self, symbol: str, quote_data: Dict[str, Any]) -> RiskMetrics:
-        """Generate simulated risk metrics when insufficient data"""
+        """Generate simulated risk metrics when insufficient data""""
         change_percent = float(quote_data.get('change_percent', 0))
         
         # Base metrics on current volatility
@@ -669,7 +669,7 @@ class AdvancedRiskAnalyzer:
         )
     
     def _generate_fallback_position_risk(self) -> PositionRisk:
-        """Generate fallback position risk"""
+        """Generate fallback position risk""""
         return PositionRisk(
             position_size_recommendation=0.05,
             kelly_criterion=0.10,
@@ -678,11 +678,11 @@ class AdvancedRiskAnalyzer:
             probability_of_loss=0.45,
             expected_return=0.08,
             risk_budget_allocation=0.0025,
-            concentration_risk="MODERATE"
+            concentration_risk="MODERATE""
         )
     
     def _generate_fallback_portfolio_risk(self) -> PortfolioRisk:
-        """Generate fallback portfolio risk"""
+        """Generate fallback portfolio risk""""
         return PortfolioRisk(
             portfolio_var=-2.5,
             diversification_ratio=0.8,
@@ -695,7 +695,7 @@ class AdvancedRiskAnalyzer:
         )
     
     def _generate_fallback_risk_analysis(self) -> RiskAnalysis:
-        """Generate fallback risk analysis"""
+        """Generate fallback risk analysis""""
         fallback_metrics = RiskMetrics(
             var_95=-2.0, var_99=-3.5, expected_shortfall=-2.8, maximum_drawdown=-12.0,
             sharpe_ratio=0.8, sortino_ratio=1.0, beta=1.0, correlation_spy=0.7,
@@ -717,32 +717,32 @@ class AdvancedRiskAnalyzer:
 
 # Supporting classes for risk analysis components
 class VolatilityRiskAnalyzer:
-    """Analyze volatility-specific risks"""
+    """Analyze volatility-specific risks""""
     
     def __init__(self):
         logger.info("⚡ Volatility Risk Analyzer initialized")
 
 class DrawdownAnalyzer:
-    """Analyze drawdown patterns and risks"""
+    """Analyze drawdown patterns and risks""""
     
     def __init__(self):
         logger.info("📉 Drawdown Analyzer initialized")
 
 class CorrelationRiskAnalyzer:
-    """Analyze correlation and diversification risks"""
+    """Analyze correlation and diversification risks""""
     
     def __init__(self):
         logger.info("🔗 Correlation Risk Analyzer initialized")
 
 class MLAnomalyDetector:
-    """ML-enhanced anomaly detection"""
+    """ML-enhanced anomaly detection""""
     
     def __init__(self):
         logger.info("🤖 ML Anomaly Detector initialized")
     
     async def detect_anomalies(self, symbol: str, quote_data: Dict[str, Any], 
                               historical_data: List[Dict]) -> List[AnomalySignal]:
-        """Detect market anomalies using ML techniques"""
+        """Detect market anomalies using ML techniques""""
         try:
             anomalies = []
             
@@ -759,7 +759,7 @@ class MLAnomalyDetector:
                     description=f"Extreme price movement: {change_percent:+.1f}%",
                     probability=0.02,  # 2% probability of such moves
                     historical_precedent=True,
-                    recommended_action="Monitor closely, consider reducing position"
+                    recommended_action="Monitor closely, consider reducing position""
                 ))
             
             # Volume anomaly detection
@@ -774,7 +774,7 @@ class MLAnomalyDetector:
                     description=f"Extreme volume: {volume_ratio:.1f}x normal",
                     probability=0.05,
                     historical_precedent=True,
-                    recommended_action="Investigate news catalyst"
+                    recommended_action="Investigate news catalyst""
                 ))
             
             return anomalies
@@ -784,14 +784,14 @@ class MLAnomalyDetector:
             return []
 
 class StressTestEngine:
-    """Perform scenario and stress testing"""
+    """Perform scenario and stress testing""""
     
     def __init__(self):
         logger.info("🧪 Stress Test Engine initialized")
     
     async def run_scenarios(self, symbol: str, quote_data: Dict[str, Any], 
                            risk_metrics: RiskMetrics) -> Dict[str, float]:
-        """Run stress test scenarios"""
+        """Run stress test scenarios""""
         try:
             current_price = float(quote_data.get('price', 100))
             

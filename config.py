@@ -11,7 +11,7 @@ import logging
 # Environment Detection
 
 ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
-DEBUG_MODE = ENVIRONMENT == "development"
+DEBUG_MODE = ENVIRONMENT == "development""
 
 # Alpaca API Configuration
 
@@ -21,7 +21,7 @@ ALPACA_CONFIG = {
 "base_url": "https://paper-api.alpaca.markets" if os.getenv("USE_SANDBOX", "True").lower() == "true" else "https://api.alpaca.markets",
 "data_url": "https://data.alpaca.markets",
 "stream_url": "wss://stream.data.alpaca.markets",
-"use_sandbox": os.getenv("USE_SANDBOX", "True").lower() == "true"
+"use_sandbox": os.getenv("USE_SANDBOX", "True").lower() == "true""
 }
 
 # List of tracked tickers
@@ -185,7 +185,7 @@ SERVER_CONFIG = {
 LOGGING_CONFIG = {
 "level": os.getenv("LOG_LEVEL", "INFO"),
 "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-"file": None if ENVIRONMENT == "production" else "logs/hyper.log"
+"file": None if ENVIRONMENT == "production" else "logs/hyper.log""
 }
 
 # Security Configuration
@@ -236,7 +236,7 @@ MONITORING_CONFIG = {
 }
 
 def validate_config() -> bool:
-"""Validate configuration settings"""
+"""Validate configuration settings""""
 try:
 # Check required Alpaca credentials
 if not ALPACA_CONFIG["api_key"]:
@@ -268,7 +268,7 @@ except Exception as e:
 ```
 
 def get_alpaca_credentials() -> Dict[str, str]:
-"""Get Alpaca API credentials"""
+"""Get Alpaca API credentials""""
 return {
 "api_key": ALPACA_CONFIG["api_key"],
 "secret_key": ALPACA_CONFIG["secret_key"],
@@ -277,26 +277,26 @@ return {
 }
 
 def has_alpaca_credentials() -> bool:
-"""Check if Alpaca credentials are configured"""
+"""Check if Alpaca credentials are configured""""
 return bool(ALPACA_CONFIG["api_key"] and (
 ALPACA_CONFIG["secret_key"] or ALPACA_CONFIG["use_sandbox"]
 ))
 
 def get_data_source_status() -> str:
-"""Get current data source status"""
+"""Get current data source status""""
 if has_alpaca_credentials():
-env_type = "Paper Trading" if ALPACA_CONFIG["use_sandbox"] else "Live Trading"
-return f"Alpaca Markets ({env_type})"
+env_type = "Paper Trading" if ALPACA_CONFIG["use_sandbox"] else "Live Trading""
+return f"Alpaca Markets ({env_type})""
 else:
-return "Simulation Mode"
+return "Simulation Mode""
 
 def is_production() -> bool:
-"""Check if running in production"""
-return ENVIRONMENT == "production"
+"""Check if running in production""""
+return ENVIRONMENT == "production""
 
 def is_development() -> bool:
-"""Check if running in development"""
-return ENVIRONMENT == "development"
+"""Check if running in development""""
+return ENVIRONMENT == "development""
 
 # Initialize logging
 
@@ -311,7 +311,7 @@ filename=LOGGING_CONFIG.get("file")
 
 # Validate configuration on import
 
-if **name** == "**main**":
+if __name__ == "**main**":
 validate_config()
 print(f"🌍 Environment: {ENVIRONMENT}")
 print(f"📊 Data Source: {get_data_source_status()}")

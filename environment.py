@@ -3,9 +3,9 @@
 # ========================================
 
 # FILE: environment.py
-"""
+""""
 Smart environment detection and configuration management
-"""
+""""
 import os
 import platform
 import logging
@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional
 from pathlib import Path
 
 class EnvironmentDetector:
-    """Automatically detect deployment environment and configure accordingly"""
+    """Automatically detect deployment environment and configure accordingly""""
     
     def __init__(self):
         self.environment = self._detect_environment()
@@ -21,7 +21,7 @@ class EnvironmentDetector:
         self._setup_logging()
     
     def _detect_environment(self) -> str:
-        """Automatically detect the deployment environment"""
+        """Automatically detect the deployment environment""""
         
         # Check for explicit environment variable first
         explicit_env = os.getenv("ENVIRONMENT", "").lower()
@@ -32,33 +32,33 @@ class EnvironmentDetector:
         
         # Render.com detection
         if self._is_render():
-            return "production"
+            return "production""
         
         # Heroku detection
         if self._is_heroku():
-            return "production"
+            return "production""
         
         # Railway detection
         if self._is_railway():
-            return "production"
+            return "production""
         
         # Vercel detection
         if self._is_vercel():
-            return "production"
+            return "production""
         
         # Docker detection
         if self._is_docker():
-            return "staging"
+            return "staging""
         
         # GitHub Actions / CI detection
         if self._is_ci():
-            return "testing"
+            return "testing""
         
         # Local development (default)
-        return "development"
+        return "development""
     
     def _is_render(self) -> bool:
-        """Detect Render.com deployment"""
+        """Detect Render.com deployment""""
         return any([
             os.getenv("RENDER"),
             os.getenv("RENDER_SERVICE_ID"),
@@ -67,7 +67,7 @@ class EnvironmentDetector:
         ])
     
     def _is_heroku(self) -> bool:
-        """Detect Heroku deployment"""
+        """Detect Heroku deployment""""
         return any([
             os.getenv("DYNO"),
             os.getenv("HEROKU_APP_NAME"),
@@ -75,7 +75,7 @@ class EnvironmentDetector:
         ])
     
     def _is_railway(self) -> bool:
-        """Detect Railway deployment"""
+        """Detect Railway deployment""""
         return any([
             os.getenv("RAILWAY_ENVIRONMENT"),
             os.getenv("RAILWAY_PROJECT_ID"),
@@ -83,7 +83,7 @@ class EnvironmentDetector:
         ])
     
     def _is_vercel(self) -> bool:
-        """Detect Vercel deployment"""
+        """Detect Vercel deployment""""
         return any([
             os.getenv("VERCEL"),
             os.getenv("VERCEL_ENV"),
@@ -91,7 +91,7 @@ class EnvironmentDetector:
         ])
     
     def _is_docker(self) -> bool:
-        """Detect Docker environment"""
+        """Detect Docker environment""""
         return any([
             os.path.exists("/.dockerenv"),
             os.getenv("DOCKER_CONTAINER"),
@@ -99,7 +99,7 @@ class EnvironmentDetector:
         ])
     
     def _is_ci(self) -> bool:
-        """Detect CI/CD environment"""
+        """Detect CI/CD environment""""
         return any([
             os.getenv("CI"),
             os.getenv("GITHUB_ACTIONS"),
@@ -110,7 +110,7 @@ class EnvironmentDetector:
         ])
     
     def _get_platform_info(self) -> Dict[str, Any]:
-        """Get detailed platform information"""
+        """Get detailed platform information""""
         return {
             "system": platform.system(),
             "platform": platform.platform(),
@@ -128,7 +128,7 @@ class EnvironmentDetector:
         }
     
     def _has_gpu(self) -> bool:
-        """Check if GPU is available"""
+        """Check if GPU is available""""
         try:
             import GPUtil
             return len(GPUtil.getGPUs()) > 0
@@ -136,7 +136,7 @@ class EnvironmentDetector:
             return False
     
     def _get_memory_gb(self) -> float:
-        """Get available memory in GB"""
+        """Get available memory in GB""""
         try:
             import psutil
             return round(psutil.virtual_memory().total / (1024**3), 1)
@@ -144,7 +144,7 @@ class EnvironmentDetector:
             return 0.0
     
     def _setup_logging(self):
-        """Setup logging based on environment"""
+        """Setup logging based on environment""""
         log_level = self.get_log_level()
         logging.basicConfig(
             level=log_level,
@@ -153,7 +153,7 @@ class EnvironmentDetector:
         )
     
     def get_log_level(self) -> int:
-        """Get appropriate log level for environment"""
+        """Get appropriate log level for environment""""
         env_levels = {
             "development": logging.DEBUG,
             "testing": logging.INFO,
@@ -169,24 +169,24 @@ class EnvironmentDetector:
         return env_levels.get(self.environment, logging.INFO)
     
     def get_log_format(self) -> str:
-        """Get appropriate log format for environment"""
+        """Get appropriate log format for environment""""
         if self.environment == "production":
             # Structured logging for production
-            return "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            return "%(asctime)s - %(name)s - %(levelname)s - %(message)s""
         else:
             # Detailed logging for development
-            return "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s"
+            return "%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s""
     
     def is_production(self) -> bool:
-        """Check if running in production"""
-        return self.environment == "production"
+        """Check if running in production""""
+        return self.environment == "production""
     
     def is_development(self) -> bool:
-        """Check if running in development"""
-        return self.environment == "development"
+        """Check if running in development""""
+        return self.environment == "development""
     
     def should_use_demo_mode(self) -> bool:
-        """Determine if demo mode should be used"""
+        """Determine if demo mode should be used""""
         # Force demo mode if no API key available
         if not os.getenv("ALPHA_VANTAGE_API_KEY"):
             return True
@@ -194,13 +194,13 @@ class EnvironmentDetector:
         # Use demo mode in non-production by default
         demo_override = os.getenv("DEMO_MODE", "").lower()
         if demo_override in ["true", "false"]:
-            return demo_override == "true"
+            return demo_override == "true""
         
         # Auto-determine based on environment
         return self.environment in ["development", "testing"]
     
     def get_server_config(self) -> Dict[str, Any]:
-        """Get server configuration based on environment"""
+        """Get server configuration based on environment""""
         base_config = {
             "host": "127.0.0.1" if self.environment == "development" else "0.0.0.0",
             "port": int(os.getenv("PORT", "8000")),
@@ -209,7 +209,7 @@ class EnvironmentDetector:
             "workers": 1,  # WebSocket compatibility
             "access_log": self.environment in ["production", "staging"],
             "proxy_headers": self.environment != "development",
-            "forwarded_allow_ips": "*" if self.environment != "development" else "127.0.0.1"
+            "forwarded_allow_ips": "*" if self.environment != "development" else "127.0.0.1""
         }
         
         # Platform-specific adjustments
@@ -230,18 +230,18 @@ class EnvironmentDetector:
         return base_config
     
     def get_database_config(self) -> Dict[str, Any]:
-        """Get database configuration based on environment"""
+        """Get database configuration based on environment""""
         # Check for managed database URL (Render, Heroku, etc.)
         database_url = os.getenv("DATABASE_URL")
         if database_url:
             return {
                 "type": "postgresql",
                 "url": database_url,
-                "ssl_mode": "require" if self.is_production() else "prefer"
+                "ssl_mode": "require" if self.is_production() else "prefer""
             }
         
         # Default to SQLite
-        db_name = f"hyper_{self.environment}.db"
+        db_name = f"hyper_{self.environment}.db""
         return {
             "type": "sqlite",
             "database": db_name,
@@ -249,7 +249,7 @@ class EnvironmentDetector:
         }
     
     def get_cache_config(self) -> Dict[str, Any]:
-        """Get cache configuration based on environment"""
+        """Get cache configuration based on environment""""
         redis_url = os.getenv("REDIS_URL") or os.getenv("REDISCLOUD_URL")
         
         if redis_url and self.is_production():
@@ -265,7 +265,7 @@ class EnvironmentDetector:
             }
     
     def get_api_rate_limits(self) -> Dict[str, int]:
-        """Get API rate limits based on environment and platform"""
+        """Get API rate limits based on environment and platform""""
         if self.environment == "development":
             return {
                 "requests_per_minute": 1000,
@@ -283,7 +283,7 @@ class EnvironmentDetector:
             }
     
     def get_feature_flags(self) -> Dict[str, bool]:
-        """Get feature flags based on environment and resources"""
+        """Get feature flags based on environment and resources""""
         base_flags = {
             "enable_ml_learning": True,
             "enable_model_testing": True,
@@ -310,7 +310,7 @@ class EnvironmentDetector:
         return base_flags
     
     def print_environment_info(self):
-        """Print comprehensive environment information"""
+        """Print comprehensive environment information""""
         print("=" * 60)
         print("🌍 HYPER TRADING SYSTEM - ENVIRONMENT DETECTION")
         print("=" * 60)
@@ -341,7 +341,7 @@ class EnvironmentDetector:
 env = EnvironmentDetector()
 
 # FILE: .env.development
-"""
+""""
 # Development Environment Configuration
 ENVIRONMENT=development
 DEBUG=true
@@ -376,10 +376,10 @@ ENABLE_PROFILING=true
 CORS_ORIGINS=*
 REQUIRE_HTTPS=false
 RATE_LIMIT_ENABLED=false
-"""
+""""
 
 # FILE: .env.production
-"""
+""""
 # Production Environment Configuration
 ENVIRONMENT=production
 DEBUG=false
@@ -413,10 +413,10 @@ ENABLE_CACHING=true
 ENABLE_DEBUG_ENDPOINTS=false
 ENABLE_HOT_RELOAD=false
 ENABLE_PROFILING=false
-"""
+""""
 
 # FILE: .env.example
-"""
+""""
 # HYPER Trading System Environment Configuration
 # Copy this file to .env and customize for your environment
 
@@ -502,7 +502,7 @@ SLACK_WEBHOOK=your_slack_webhook_url
 # - Only set what you need to override
 # - API keys are the most important settings
 # - The system works great with just ALPHA_VANTAGE_API_KEY
-"""
+""""
 
 # Updated config.py to use environment detection
 import os
@@ -514,7 +514,7 @@ from environment import env
 
 # Environment detection (automatic)
 ENVIRONMENT = env.environment
-DEBUG_MODE = env.environment == "development"
+DEBUG_MODE = env.environment == "development""
 DEMO_MODE = env.should_use_demo_mode()
 
 # Platform detection
@@ -555,7 +555,7 @@ SIGNAL_WEIGHTS = {
 LOGGING_CONFIG = {
     "level": logging.getLevelName(env.get_log_level()),
     "format": env.get_log_format(),
-    "file": None if IS_RENDER else "logs/hyper.log"
+    "file": None if IS_RENDER else "logs/hyper.log""
 }
 
 # Smart security configuration
@@ -566,7 +566,7 @@ SECURITY_CONFIG = {
 }
 
 def validate_config():
-    """Enhanced validation with environment awareness"""
+    """Enhanced validation with environment awareness""""
     env.print_environment_info()
     
     if env.is_production() and not ALPHA_VANTAGE_API_KEY:

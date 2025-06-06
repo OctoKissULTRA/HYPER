@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class VIXSignal:
-    """VIX-based trading signal"""
+    """VIX-based trading signal""""
     vix_level: float
     percentile_rank: float  # 0-100, where this VIX level ranks historically
     fear_greed_score: float  # 0-100, where 0=extreme fear, 100=extreme greed
@@ -29,7 +29,7 @@ class VIXSignal:
 
 @dataclass 
 class VIXAnalysis:
-    """Complete VIX analysis result"""
+    """Complete VIX analysis result""""
     current_signal: VIXSignal
     market_stress_level: str
     volatility_forecast: Dict[str, float]
@@ -40,7 +40,7 @@ class VIXAnalysis:
     regime_analysis: Dict[str, Any]
 
 class AdvancedVIXAnalyzer:
-    """Advanced VIX Fear & Greed Analysis with Market Regime Detection"""
+    """Advanced VIX Fear & Greed Analysis with Market Regime Detection""""
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -80,10 +80,10 @@ class AdvancedVIXAnalyzer:
     
     async def analyze(self, symbol: str, quote_data: Dict[str, Any], 
                      market_data: Optional[Dict] = None) -> VIXAnalysis:
-        """Complete VIX fear/greed analysis"""
+        """Complete VIX fear/greed analysis""""
         try:
             # Check cache first
-            cache_key = f"vix_{time.time() // self.cache_duration}"
+            cache_key = f"vix_{time.time() // self.cache_duration}""
             if cache_key in self.vix_cache:
                 logger.debug("📋 Using cached VIX analysis")
                 return self.vix_cache[cache_key]
@@ -144,7 +144,7 @@ class AdvancedVIXAnalyzer:
     
     async def _get_vix_data(self, symbol: str, quote_data: Dict[str, Any], 
                            market_data: Optional[Dict] = None) -> Dict[str, Any]:
-        """Get VIX data (simulated with realistic market-driven behavior)"""
+        """Get VIX data (simulated with realistic market-driven behavior)""""
         try:
             # Base VIX calculation from market conditions
             current_price = float(quote_data.get('price', 100))
@@ -182,7 +182,7 @@ class AdvancedVIXAnalyzer:
             return {'current_vix': 20.0, 'vix9d': 19.0, 'vix3m': 21.0, 'vix6m': 22.0}
 
     async def _calculate_dynamic_vix(self, symbol: str, change_percent: float, volume: int) -> float:
-        """Calculate dynamic VIX based on market conditions"""
+        """Calculate dynamic VIX based on market conditions""""
         try:
             # Base VIX level (historical average around 18-20)
             base_vix = 19.0
@@ -262,7 +262,7 @@ class AdvancedVIXAnalyzer:
     
     async def _generate_vix_signal(self, vix_data: Dict[str, Any], symbol: str, 
                                   quote_data: Dict[str, Any]) -> VIXSignal:
-        """Generate comprehensive VIX signal"""
+        """Generate comprehensive VIX signal""""
         try:
             current_vix = vix_data.get('current_vix', 20.0)
             
@@ -326,7 +326,7 @@ class AdvancedVIXAnalyzer:
             return self._generate_fallback_vix_signal()
     
     def _calculate_vix_percentile(self, current_vix: float) -> float:
-        """Calculate VIX percentile rank"""
+        """Calculate VIX percentile rank""""
         try:
             # Find the percentile bracket
             for percentile in sorted(self.vix_percentiles.keys()):
@@ -338,7 +338,7 @@ class AdvancedVIXAnalyzer:
             return 50.0
     
     def _calculate_fear_greed_score(self, current_vix: float, percentile_rank: float) -> float:
-        """Calculate fear/greed score (0=extreme fear, 100=extreme greed)"""
+        """Calculate fear/greed score (0=extreme fear, 100=extreme greed)""""
         try:
             # Invert VIX: high VIX = fear (low score), low VIX = greed (high score)
             base_score = 100 - min(100, (current_vix / 50) * 100)
@@ -354,52 +354,52 @@ class AdvancedVIXAnalyzer:
             return 50.0
     
     def _determine_volatility_regime(self, current_vix: float) -> str:
-        """Determine current volatility regime"""
+        """Determine current volatility regime""""
         if current_vix >= self.thresholds['crisis']:
-            return "CRISIS"
+            return "CRISIS""
         elif current_vix >= self.thresholds['extreme_fear']:
-            return "HIGH_VOL"
+            return "HIGH_VOL""
         elif current_vix >= self.thresholds['fear']:
-            return "ELEVATED"
+            return "ELEVATED""
         elif current_vix <= self.thresholds['complacency']:
-            return "LOW_VOL"
+            return "LOW_VOL""
         else:
-            return "NORMAL"
+            return "NORMAL""
     
     def _determine_vix_sentiment(self, current_vix: float) -> str:
-        """Determine VIX-based market sentiment"""
+        """Determine VIX-based market sentiment""""
         if current_vix >= self.thresholds['crisis']:
-            return "EXTREME_FEAR"
+            return "EXTREME_FEAR""
         elif current_vix >= self.thresholds['extreme_fear']:
-            return "FEAR"
+            return "FEAR""
         elif current_vix <= self.thresholds['complacency']:
-            return "EXTREME_COMPLACENCY"
+            return "EXTREME_COMPLACENCY""
         elif current_vix <= self.thresholds['fear'] * 0.8:
-            return "COMPLACENCY"
+            return "COMPLACENCY""
         else:
-            return "NEUTRAL"
+            return "NEUTRAL""
     
     def _generate_contrarian_signal(self, current_vix: float, sentiment: str, regime: str) -> str:
-        """Generate contrarian trading signal based on VIX"""
+        """Generate contrarian trading signal based on VIX""""
         try:
             # VIX contrarian logic: extreme fear = buy, extreme greed = sell
             if sentiment == "EXTREME_FEAR" and current_vix > self.thresholds['extreme_fear']:
-                return "STRONG_BUY"
+                return "STRONG_BUY""
             elif sentiment == "FEAR" and current_vix > self.thresholds['fear']:
-                return "BUY"
+                return "BUY""
             elif sentiment == "EXTREME_COMPLACENCY" and current_vix < self.thresholds['complacency']:
-                return "STRONG_SELL"
+                return "STRONG_SELL""
             elif sentiment == "COMPLACENCY":
-                return "SELL"
+                return "SELL""
             else:
-                return "HOLD"
+                return "HOLD""
                 
         except Exception as e:
             logger.error(f"Contrarian signal generation error: {e}")
-            return "HOLD"
+            return "HOLD""
 
     def _calculate_mean_reversion_probability(self, current_vix: float, percentile_rank: float) -> float:
-        """Calculate probability of VIX mean reversion"""
+        """Calculate probability of VIX mean reversion""""
         try:
             # VIX has strong mean reversion properties
             historical_mean = 19.0
@@ -419,7 +419,7 @@ class AdvancedVIXAnalyzer:
             return 0.5
     
     def _calculate_spike_probability(self, current_vix: float, vix_history: List[Dict]) -> float:
-        """Calculate probability of VIX spike"""
+        """Calculate probability of VIX spike""""
         try:
             # Base spike probability (VIX spikes are relatively rare)
             base_prob = 0.05  # 5% daily probability
@@ -445,10 +445,10 @@ class AdvancedVIXAnalyzer:
             return 0.05
     
     def _determine_vix_trend(self, vix_history: List[Dict], current_vix: float) -> str:
-        """Determine VIX trend direction"""
+        """Determine VIX trend direction""""
         try:
             if len(vix_history) < 5:
-                return "NEUTRAL"
+                return "NEUTRAL""
             
             # Calculate recent trend
             recent_avg = sum(vix_history[-3:]) / 3 if len(vix_history) >= 3 else current_vix
@@ -457,18 +457,18 @@ class AdvancedVIXAnalyzer:
             trend_diff = recent_avg - older_avg
             
             if trend_diff > 1.5:
-                return "UP"
+                return "UP""
             elif trend_diff < -1.5:
-                return "DOWN"
+                return "DOWN""
             else:
-                return "NEUTRAL"
+                return "NEUTRAL""
                 
         except Exception as e:
             logger.error(f"VIX trend determination error: {e}")
-            return "NEUTRAL"
+            return "NEUTRAL""
     
     def _calculate_volatility_risk_premium(self, term_structure: Dict[str, float]) -> float:
-        """Calculate volatility risk premium"""
+        """Calculate volatility risk premium""""
         try:
             # Compare current VIX to longer-term expectations
             current_vix = term_structure.get('VIX', 20)
@@ -483,7 +483,7 @@ class AdvancedVIXAnalyzer:
             return 0.0
     
     def _generate_vix_history(self, current_vix: float, days: int) -> List[float]:
-        """Generate realistic VIX history"""
+        """Generate realistic VIX history""""
         try:
             history = []
             vix = current_vix
@@ -505,7 +505,7 @@ class AdvancedVIXAnalyzer:
             return [current_vix] * days
 
     def _analyze_market_stress(self, vix_signal: VIXSignal, quote_data: Dict[str, Any]) -> str:
-        """Analyze overall market stress level"""
+        """Analyze overall market stress level""""
         try:
             stress_factors = []
             
@@ -530,20 +530,20 @@ class AdvancedVIXAnalyzer:
             
             # Determine overall stress level
             if len(stress_factors) >= 3:
-                return "EXTREME_STRESS"
+                return "EXTREME_STRESS""
             elif len(stress_factors) >= 2:
-                return "HIGH_STRESS"
+                return "HIGH_STRESS""
             elif len(stress_factors) >= 1:
-                return "MODERATE_STRESS"
+                return "MODERATE_STRESS""
             else:
-                return "LOW_STRESS"
+                return "LOW_STRESS""
                 
         except Exception as e:
             logger.error(f"Market stress analysis error: {e}")
-            return "UNKNOWN"
+            return "UNKNOWN""
 
     async def _forecast_volatility(self, vix_data: Dict[str, Any], vix_signal: VIXSignal) -> Dict[str, float]:
-        """Generate volatility forecast"""
+        """Generate volatility forecast""""
         try:
             current_vix = vix_signal.vix_level
             
@@ -572,7 +572,7 @@ class AdvancedVIXAnalyzer:
             return {"1_day": 20.0, "1_week": 19.0, "1_month": 19.0}
 
     def _generate_trading_recommendations(self, vix_signal: VIXSignal, symbol: str) -> List[str]:
-        """Generate VIX-based trading recommendations"""
+        """Generate VIX-based trading recommendations""""
         recommendations = []
         
         try:
@@ -613,7 +613,7 @@ class AdvancedVIXAnalyzer:
             return ["VIX analysis recommendations unavailable"]
 
     def _generate_risk_warnings(self, vix_signal: VIXSignal, market_stress_level: str) -> List[str]:
-        """Generate VIX-based risk warnings"""
+        """Generate VIX-based risk warnings""""
         warnings = []
         
         try:
@@ -650,7 +650,7 @@ class AdvancedVIXAnalyzer:
             return ["VIX risk analysis unavailable"]
 
     def _analyze_historical_context(self, vix_signal: VIXSignal) -> Dict[str, Any]:
-        """Analyze VIX in historical context"""
+        """Analyze VIX in historical context""""
         try:
             return {
                 "percentile_rank": vix_signal.percentile_rank,
@@ -671,7 +671,7 @@ class AdvancedVIXAnalyzer:
             return {"percentile_rank": 50}
 
     async def _analyze_correlations(self, vix_signal: VIXSignal, quote_data: Dict[str, Any]) -> Dict[str, float]:
-        """Analyze VIX correlations with markets"""
+        """Analyze VIX correlations with markets""""
         try:
             # Typical VIX correlations (negative with stocks, positive with bonds)
             return {
@@ -688,7 +688,7 @@ class AdvancedVIXAnalyzer:
             return {"spy_correlation": -0.7}
 
     async def _analyze_volatility_regime(self, vix_signal: VIXSignal) -> Dict[str, Any]:
-        """Analyze volatility regime characteristics"""
+        """Analyze volatility regime characteristics""""
         try:
             return {
                 "current_regime": vix_signal.regime,
@@ -710,7 +710,7 @@ class AdvancedVIXAnalyzer:
             return {"current_regime": "NORMAL"}
 
     def _update_vix_history(self, vix_signal: VIXSignal):
-        """Update VIX analysis history"""
+        """Update VIX analysis history""""
         self.vix_history.append({
             'timestamp': datetime.now(),
             'vix_level': vix_signal.vix_level,
@@ -724,7 +724,7 @@ class AdvancedVIXAnalyzer:
             self.vix_history.pop(0)
 
     def _generate_fallback_vix_signal(self) -> VIXSignal:
-        """Generate fallback VIX signal"""
+        """Generate fallback VIX signal""""
         return VIXSignal(
             vix_level=20.0,
             percentile_rank=50.0,
@@ -737,11 +737,11 @@ class AdvancedVIXAnalyzer:
             spike_probability=0.05,
             trend_direction="NEUTRAL",
             volatility_risk_premium=1.0,
-            options_flow_sentiment="NEUTRAL"
+            options_flow_sentiment="NEUTRAL""
         )
 
     def _generate_fallback_vix_analysis(self) -> VIXAnalysis:
-        """Generate fallback VIX analysis"""
+        """Generate fallback VIX analysis""""
         fallback_signal = self._generate_fallback_vix_signal()
         
         return VIXAnalysis(
@@ -757,13 +757,13 @@ class AdvancedVIXAnalyzer:
 
 # Supporting classes for VIX analysis
 class VIXTermStructureSimulator:
-    """Simulate VIX term structure"""
+    """Simulate VIX term structure""""
     
     def __init__(self):
         logger.info("📊 VIX Term Structure Simulator initialized")
     
     async def get_term_structure(self, current_vix: float) -> Dict[str, float]:
-        """Generate realistic VIX term structure"""
+        """Generate realistic VIX term structure""""
         try:
             # Normal contango: longer terms higher than spot
             vix9d = current_vix * random.uniform(0.9, 1.05)
@@ -776,7 +776,7 @@ class VIXTermStructureSimulator:
                 "VIX1M": round(vix1m, 2),
                 "VIX3M": round(vix3m, 2),
                 "VIX6M": round(vix6m, 2),
-                "structure_type": "contango" if vix3m > current_vix else "backwardation"
+                "structure_type": "contango" if vix3m > current_vix else "backwardation""
             }
             
         except Exception as e:
@@ -784,13 +784,13 @@ class VIXTermStructureSimulator:
             return {"VIX": current_vix, "VIX3M": current_vix * 1.1}
 
 class OptionsFlowAnalyzer:
-    """Analyze options flow for VIX sentiment"""
+    """Analyze options flow for VIX sentiment""""
     
     def __init__(self):
         logger.info("📈 Options Flow Analyzer initialized")
     
     async def analyze_options_flow(self, symbol: str, current_vix: float, quote_data: Dict[str, Any]) -> str:
-        """Analyze options flow sentiment"""
+        """Analyze options flow sentiment""""
         try:
             # Simulate options flow analysis
             change_percent = float(quote_data.get('change_percent', 0))
@@ -802,11 +802,11 @@ class OptionsFlowAnalyzer:
             elif abs(change_percent) > 3:
                 return "VOLATILITY_BUYING"  # Straddle/strangle buying
             else:
-                return "NEUTRAL"
+                return "NEUTRAL""
                 
         except Exception as e:
             logger.error(f"Options flow analysis error: {e}")
-            return "UNKNOWN"
+            return "UNKNOWN""
 
 # Export main classes
 __all__ = ['AdvancedVIXAnalyzer', 'VIXAnalysis', 'VIXSignal']

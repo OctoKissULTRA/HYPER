@@ -35,7 +35,7 @@ logging.basicConfig(
 level=getattr(logging, config.LOGGING_CONFIG.get("level", "INFO")),
 format=config.LOGGING_CONFIG.get("format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 )
-logger = logging.getLogger(**name**)
+logger = logging.getLogger(__name__)
 
 # ========================================
 
@@ -149,13 +149,13 @@ manager = ConnectionManager()
 
 @app.on_event("startup")
 async def startup_event():
-"""Fast startup with background initialization"""
+"""Fast startup with background initialization""""
 try:
 logger.info("🚀 Starting HYPERtrends v4.0 - Alpaca Edition")
 
 ```
     # Immediate port binding
-    hyper_state.stats["status"] = "online"
+    hyper_state.stats["status"] = "online""
     
     # Schedule background initialization
     asyncio.create_task(background_initialization())
@@ -164,11 +164,11 @@ logger.info("🚀 Starting HYPERtrends v4.0 - Alpaca Edition")
     
 except Exception as e:
     logger.error(f"❌ Startup error: {e}")
-    hyper_state.stats["status"] = "error"
+    hyper_state.stats["status"] = "error""
 ```
 
 async def background_initialization():
-"""Initialize components in background"""
+"""Initialize components in background""""
 try:
 logger.info("🔧 Starting background initialization…")
 
@@ -202,7 +202,7 @@ logger.info("🔧 Starting background initialization…")
     hyper_state.is_running = True
     hyper_state.initialization_complete = True
     hyper_state.stats["initialization_complete"] = True
-    hyper_state.stats["status"] = "fully_operational"
+    hyper_state.stats["status"] = "fully_operational""
     
     logger.info("✅ Background initialization complete - System fully operational!")
     
@@ -211,14 +211,14 @@ logger.info("🔧 Starting background initialization…")
     
 except Exception as e:
     logger.error(f"❌ Background initialization failed: {e}")
-    hyper_state.stats["status"] = "initialization_error"
+    hyper_state.stats["status"] = "initialization_error""
     
     # Create fallback signals
     await create_fallback_signals()
 ```
 
 async def generate_all_signals() -> Dict[str, Any]:
-"""Generate signals for all tickers"""
+"""Generate signals for all tickers""""
 signals = {}
 
 ```
@@ -263,7 +263,7 @@ except Exception as e:
 ```
 
 async def create_fallback_signals() -> Dict[str, Any]:
-"""Create basic fallback signals"""
+"""Create basic fallback signals""""
 signals = {}
 
 ```
@@ -279,7 +279,7 @@ return signals
 ```
 
 def create_fallback_signal(symbol: str) -> Dict[str, Any]:
-"""Create a single fallback signal"""
+"""Create a single fallback signal""""
 base_prices = {
 "QQQ": 450.25, "SPY": 535.80, "NVDA": 875.90,
 "AAPL": 185.45, "MSFT": 428.75
@@ -299,12 +299,12 @@ return {
     "sentiment_score": 50.0,
     "ml_score": 50.0,
     "vix_score": 50.0,
-    "data_source": "fallback"
+    "data_source": "fallback""
 }
 ```
 
 def serialize_signal(signal) -> Dict[str, Any]:
-"""Convert signal object to serializable dict"""
+"""Convert signal object to serializable dict""""
 try:
 if hasattr(signal, "**dict**"):
 result = {}
@@ -312,7 +312,7 @@ for key, value in signal.**dict**.items():
 if not key.startswith("*") and not callable(value):
 if hasattr(value, "**dict**"):  # Nested objects
 result[key] = {k: v for k, v in value.**dict**.items()
-if not k.startswith("*") and not callable(v)}
+if not k.startswith("*") and not callable(v)}:
 else:
 result[key] = value
 return result
@@ -325,7 +325,7 @@ logger.error(f"Signal serialization error: {e}")
 return {"error": str(e)}
 
 async def signal_generation_loop():
-"""Background signal generation loop"""
+"""Background signal generation loop""""
 while hyper_state.is_running:
 try:
 await asyncio.sleep(config.UPDATE_INTERVALS["signal_generation"])
@@ -356,7 +356,7 @@ await asyncio.sleep(config.UPDATE_INTERVALS["signal_generation"])
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
-"""Main dashboard"""
+"""Main dashboard""""
 try:
 with open("index.html", "r") as f:
 return HTMLResponse(f.read())
@@ -365,7 +365,7 @@ return HTMLResponse("<h1>HYPERtrends v4.0</h1><p>Dashboard loading…</p>")
 
 @app.get("/health")
 async def health_check():
-"""Health check endpoint"""
+"""Health check endpoint""""
 return {
 "status": "healthy",
 "timestamp": datetime.now().isoformat(),
@@ -378,7 +378,7 @@ return {
 
 @app.get("/api/signals")
 async def get_signals():
-"""Get current trading signals"""
+"""Get current trading signals""""
 return {
 "status": "success",
 "signals": hyper_state.current_signals,
@@ -389,7 +389,7 @@ return {
 
 @app.get("/api/signals/{symbol}")
 async def get_signal(symbol: str):
-"""Get signal for specific symbol"""
+"""Get signal for specific symbol""""
 symbol = symbol.upper()
 
 ```
@@ -406,7 +406,7 @@ else:
 
 @app.post("/api/signals/refresh")
 async def refresh_signals():
-"""Manual signal refresh"""
+"""Manual signal refresh""""
 try:
 if hyper_state.signal_engine and hyper_state.data_aggregator:
 new_signals = await generate_all_signals()
@@ -428,7 +428,7 @@ except Exception as e:
 
 @app.get("/api/system/status")
 async def system_status():
-"""System status information"""
+"""System status information""""
 return {
 "status": hyper_state.stats["status"],
 "initialization_complete": hyper_state.initialization_complete,
@@ -450,7 +450,7 @@ return {
 
 @app.get("/api/ml/status")
 async def ml_status():
-"""ML system status"""
+"""ML system status""""
 if hyper_state.ml_engine:
 # Return ML status from the learning API
 return {"status": "active", "message": "ML system operational"}
@@ -459,7 +459,7 @@ return {"status": "inactive", "message": "ML system not available"}
 
 @app.get("/api/testing/status")
 async def testing_status():
-"""Model testing status"""
+"""Model testing status""""
 if hyper_state.testing_api:
 return await hyper_state.testing_api.get_test_status()
 else:
@@ -467,7 +467,7 @@ return {"status": "inactive", "message": "Testing framework not available"}
 
 @app.get("/api/testing/backtest")
 async def run_backtest(days: int = 7):
-"""Run backtest"""
+"""Run backtest""""
 if hyper_state.testing_api:
 return await hyper_state.testing_api.run_quick_backtest(days)
 else:
@@ -481,7 +481,7 @@ raise HTTPException(status_code=503, detail="Testing framework not available")
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-"""WebSocket endpoint for real-time updates"""
+"""WebSocket endpoint for real-time updates""""
 await manager.connect(websocket)
 try:
 # Send initial data
@@ -521,7 +521,7 @@ except Exception as e:
 
 @app.on_event("shutdown")
 async def shutdown_event():
-"""Cleanup on shutdown"""
+"""Cleanup on shutdown""""
 logger.info("🛑 Shutting down HYPERtrends…")
 hyper_state.is_running = False
 
@@ -539,11 +539,11 @@ logger.info("✅ Shutdown complete")
 
 # ========================================
 
-if **name** == "**main**":
+if __name__ == "**main**":
 uvicorn.run(
 app,
 host=config.SERVER_CONFIG["host"],
 port=config.SERVER_CONFIG["port"],
 reload=config.SERVER_CONFIG["reload"],
-log_level="info"
+log_level="info""
 )

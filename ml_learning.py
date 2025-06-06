@@ -7,7 +7,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 class MLEnhancedSignalEngine:
-    """ML Enhanced Signal Engine - Compatible with Robinhood data"""
+    """ML Enhanced Signal Engine - Compatible with Robinhood data""""
     
     def __init__(self, signal_engine):
         self.signal_engine = signal_engine
@@ -17,7 +17,7 @@ class MLEnhancedSignalEngine:
         logger.info("🧠 ML Enhanced Signal Engine initialized with Robinhood compatibility")
     
     async def enhanced_signal_generation(self, symbol: str) -> Dict[str, Any]:
-        """Generate ML enhanced signal with Robinhood data integration"""
+        """Generate ML enhanced signal with Robinhood data integration""""
         try:
             # Get base signal from your existing signal engine
             base_signal = await self.signal_engine.generate_signal(symbol)
@@ -51,7 +51,7 @@ class MLEnhancedSignalEngine:
             return self._create_fallback_enhanced_signal(symbol, base_signal if 'base_signal' in locals() else None)
     
     def _extract_enhanced_features(self, base_signal) -> Dict[str, Any]:
-        """Extract enhanced features from Robinhood data and existing signal"""
+        """Extract enhanced features from Robinhood data and existing signal""""
         try:
             features = {
                 "technical_features": {},
@@ -115,10 +115,10 @@ class MLEnhancedSignalEngine:
             return {"error": "feature_extraction_failed"}
     
     def _generate_ml_predictions(self, symbol: str, features: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate ML predictions using enhanced features"""
+        """Generate ML predictions using enhanced features""""
         try:
             # Check cache first
-            cache_key = f"{symbol}_{hash(str(features))}"
+            cache_key = f"{symbol}_{hash(str(features))}""
             if cache_key in self.prediction_cache:
                 cache_entry = self.prediction_cache[cache_key]
                 if (datetime.now() - cache_entry['timestamp']).seconds < self.cache_duration:
@@ -169,7 +169,7 @@ class MLEnhancedSignalEngine:
             return self._generate_fallback_predictions()
     
     def _predict_direction(self, symbol: str, features: Dict[str, Any]) -> Dict[str, Any]:
-        """Predict direction using ensemble of models"""
+        """Predict direction using ensemble of models""""
         try:
             # Ensemble voting simulation with enhanced features
             models = ["random_forest", "xgboost", "neural_network", "svm"]
@@ -247,7 +247,7 @@ class MLEnhancedSignalEngine:
             return {"direction": "NEUTRAL", "confidence": 0.5, "agreement": 0.5}
     
     def _predict_confidence(self, symbol: str, features: Dict[str, Any]) -> Dict[str, Any]:
-        """Predict signal confidence accuracy"""
+        """Predict signal confidence accuracy""""
         try:
             # Base confidence from historical performance
             base_accuracy = 0.65  # 65% base accuracy
@@ -296,7 +296,7 @@ class MLEnhancedSignalEngine:
             return {"accuracy": 0.65, "uncertainty": 0.35, "model_confidence": 0.7}
     
     def _predict_volatility(self, symbol: str, features: Dict[str, Any]) -> Dict[str, Any]:
-        """Predict volatility regime"""
+        """Predict volatility regime""""
         try:
             # Base volatility by symbol
             symbol_volatility = {
@@ -304,7 +304,7 @@ class MLEnhancedSignalEngine:
                 "QQQ": "MEDIUM_HIGH", 
                 "SPY": "MEDIUM",
                 "AAPL": "MEDIUM",
-                "MSFT": "MEDIUM_LOW"
+                "MSFT": "MEDIUM_LOW""
             }
             
             base_vol = symbol_volatility.get(symbol, "MEDIUM")
@@ -316,20 +316,20 @@ class MLEnhancedSignalEngine:
             # Market hours effect
             market_hours = robinhood_features.get("market_hours", "UNKNOWN")
             if market_hours in ["PRE_MARKET", "AFTER_HOURS"]:
-                vol_adjustment = "HIGHER"
+                vol_adjustment = "HIGHER""
             else:
-                vol_adjustment = "NORMAL"
+                vol_adjustment = "NORMAL""
             
             # VIX sentiment effect
             sentiment_features = features.get("sentiment_features", {})
             vix_sentiment = sentiment_features.get("vix_sentiment", "NEUTRAL")
             
             if vix_sentiment == "EXTREME_FEAR":
-                predicted_vol = "HIGH"
+                predicted_vol = "HIGH""
             elif vix_sentiment == "FEAR":
-                predicted_vol = "MEDIUM_HIGH"
+                predicted_vol = "MEDIUM_HIGH""
             elif vix_sentiment == "COMPLACENCY":
-                predicted_vol = "LOW"
+                predicted_vol = "LOW""
             else:
                 predicted_vol = base_vol
             
@@ -362,7 +362,7 @@ class MLEnhancedSignalEngine:
             return {"level": "MEDIUM", "range": (1.5, 3.0), "regime_change": 0.2}
     
     def _predict_multiple_horizons(self, symbol: str, features: Dict[str, Any]) -> Dict[str, Any]:
-        """Predict across multiple time horizons"""
+        """Predict across multiple time horizons""""
         try:
             horizons = {}
             
@@ -397,7 +397,7 @@ class MLEnhancedSignalEngine:
             return {}
     
     def _calculate_feature_importance(self, features: Dict[str, Any]) -> Dict[str, float]:
-        """Calculate feature importance for model interpretation"""
+        """Calculate feature importance for model interpretation""""
         try:
             importance = {}
             
@@ -437,7 +437,7 @@ class MLEnhancedSignalEngine:
             return {}
     
     def _calculate_ensemble_confidence(self, base_signal, ml_predictions: Dict[str, Any]) -> float:
-        """Calculate final ensemble confidence"""
+        """Calculate final ensemble confidence""""
         try:
             base_confidence = float(getattr(base_signal, 'confidence', 50))
             
@@ -469,27 +469,27 @@ class MLEnhancedSignalEngine:
             return float(getattr(base_signal, 'confidence', 50))
     
     def _determine_ml_agreement(self, base_signal, ml_predictions: Dict[str, Any]) -> str:
-        """Determine agreement between base signal and ML predictions"""
+        """Determine agreement between base signal and ML predictions""""
         try:
             base_direction = getattr(base_signal, 'direction', 'NEUTRAL')
             ml_direction = ml_predictions.get("direction", {}).get("prediction", "NEUTRAL")
             ml_agreement_score = ml_predictions.get("direction", {}).get("agreement", 0.5)
             
             if base_direction == ml_direction and ml_agreement_score > 0.7:
-                return "STRONG_AGREEMENT"
+                return "STRONG_AGREEMENT""
             elif base_direction == ml_direction:
-                return "AGREEMENT"
+                return "AGREEMENT""
             elif ml_agreement_score < 0.4:
-                return "UNCERTAIN"
+                return "UNCERTAIN""
             else:
-                return "DISAGREEMENT"
+                return "DISAGREEMENT""
                 
         except Exception as e:
             logger.error(f"ML agreement determination error: {e}")
-            return "UNCERTAIN"
+            return "UNCERTAIN""
     
     def _generate_enhanced_reasoning(self, base_signal, ml_predictions: Dict[str, Any], features: Dict[str, Any]) -> List[str]:
-        """Generate enhanced reasoning with Robinhood insights"""
+        """Generate enhanced reasoning with Robinhood insights""""
         try:
             reasoning = []
             
@@ -534,7 +534,7 @@ class MLEnhancedSignalEngine:
             return ["ML analysis completed with basic reasoning"]
     
     def _assess_prediction_quality(self, base_signal, features: Dict[str, Any]) -> str:
-        """Assess overall prediction quality"""
+        """Assess overall prediction quality""""
         try:
             quality_score = 0
             
@@ -564,26 +564,26 @@ class MLEnhancedSignalEngine:
             
             # Determine quality rating
             if quality_score >= 80:
-                return "excellent"
+                return "excellent""
             elif quality_score >= 65:
-                return "good"
+                return "good""
             elif quality_score >= 50:
-                return "fair"
+                return "fair""
             elif quality_score >= 35:
-                return "acceptable"
+                return "acceptable""
             else:
-                return "poor"
+                return "poor""
                 
         except Exception as e:
             logger.error(f"Prediction quality assessment error: {e}")
-            return "unknown"
+            return "unknown""
     
     def _serialize_signal(self, signal) -> Dict[str, Any]:
-        """Safely serialize signal object"""
+        """Safely serialize signal object""""
         try:
             if hasattr(signal, '__dict__'):
                 return {k: v for k, v in signal.__dict__.items() 
-                       if not k.startswith('_') and not callable(v)}
+                       if not k.startswith('_') and not callable(v)}:
             elif isinstance(signal, dict):
                 return signal
             else:
@@ -593,7 +593,7 @@ class MLEnhancedSignalEngine:
             return {"error": str(e)}
     
     def _create_fallback_enhanced_signal(self, symbol: str, base_signal=None) -> Dict[str, Any]:
-        """Create fallback enhanced signal when ML fails"""
+        """Create fallback enhanced signal when ML fails""""
         try:
             fallback_base = base_signal if base_signal else {
                 "symbol": symbol,
@@ -626,7 +626,7 @@ class MLEnhancedSignalEngine:
             }
     
     def _generate_fallback_predictions(self) -> Dict[str, Any]:
-        """Generate fallback ML predictions"""
+        """Generate fallback ML predictions""""
         return {
             "direction": {"prediction": "NEUTRAL", "confidence": 0.5, "agreement": 0.5},
             "confidence": {"predicted_accuracy": 0.6, "uncertainty": 0.4, "model_confidence": 0.5},
@@ -636,7 +636,7 @@ class MLEnhancedSignalEngine:
         }
 
 class LearningAPI:
-    """Learning API for ML operations - Enhanced for Robinhood integration"""
+    """Learning API for ML operations - Enhanced for Robinhood integration""""
     
     def __init__(self):
         self.training_history = []
@@ -649,7 +649,7 @@ class LearningAPI:
         logger.info("📚 Enhanced Learning API initialized")
     
     async def get_ml_status(self) -> Dict[str, Any]:
-        """Get enhanced ML system status"""
+        """Get enhanced ML system status""""
         return {
             "status": "active",
             "models_trained": True,
@@ -671,17 +671,17 @@ class LearningAPI:
                 "robinhood_primary",
                 "enhanced_fallback",
                 "technical_analysis",
-                "sentiment_analysis"
+                "sentiment_analysis""
             ],
             "robinhood_integration": {
                 "enabled": True,
                 "features_available": ["retail_sentiment", "popularity_rank", "market_hours"],
-                "data_quality_improvement": "15-20%"
+                "data_quality_improvement": "15-20%""
             }
         }
     
     async def get_model_performance(self) -> Dict[str, Any]:
-        """Get enhanced model performance metrics"""
+        """Get enhanced model performance metrics""""
         return {
             "direction_accuracy": 0.74,      # Improved with Robinhood data
             "confidence_accuracy": 0.71,     # Improved with better data quality
@@ -695,12 +695,12 @@ class LearningAPI:
                 "accuracy_improvement": "+8%",
                 "confidence_improvement": "+12%", 
                 "data_quality_score": "excellent",
-                "retail_sentiment_value": "high"
+                "retail_sentiment_value": "high""
             }
         }
     
     async def trigger_model_training(self) -> Dict[str, Any]:
-        """Trigger enhanced model training with Robinhood features"""
+        """Trigger enhanced model training with Robinhood features""""
         return {
             "status": "training_started", 
             "estimated_completion": "5 minutes",
@@ -709,24 +709,24 @@ class LearningAPI:
                 "enhanced_random_forest", 
                 "robinhood_sentiment_model",
                 "popularity_momentum_model", 
-                "ensemble_voter"
+                "ensemble_voter""
             ],
             "new_features": [
                 "retail_sentiment_score",
                 "popularity_momentum", 
                 "market_hours_volatility",
-                "data_source_quality"
+                "data_source_quality""
             ],
             "expected_improvements": {
                 "accuracy": "+3-5%",
                 "robinhood_feature_impact": "+2-4%",
-                "overall_confidence": "+5-8%"
+                "overall_confidence": "+5-8%""
             },
             "timestamp": datetime.now().isoformat()
         }
     
     async def provide_outcome_feedback(self, symbol: str, timestamp: str, outcome: Dict) -> Dict[str, Any]:
-        """Provide enhanced feedback for learning with Robinhood context"""
+        """Provide enhanced feedback for learning with Robinhood context""""
         return {
             "status": "feedback_recorded", 
             "symbol": symbol,
@@ -742,16 +742,16 @@ class LearningAPI:
             "model_adjustments": [
                 "retail_sentiment_weight_updated",
                 "popularity_factor_calibrated", 
-                "data_quality_scoring_improved"
+                "data_quality_scoring_improved""
             ]
         }
     
     async def cleanup(self):
-        """Cleanup enhanced ML resources"""
+        """Cleanup enhanced ML resources""""
         logger.info("🧹 Enhanced ML Learning cleanup completed")
 
 def integrate_ml_learning(signal_engine, model_tester=None):
-    """Integrate enhanced ML learning with signal engine and Robinhood data"""
+    """Integrate enhanced ML learning with signal engine and Robinhood data""""
     try:
         ml_engine = MLEnhancedSignalEngine(signal_engine)
         learning_api = LearningAPI()
@@ -770,12 +770,12 @@ def integrate_ml_learning(signal_engine, model_tester=None):
 
 # Additional utility functions for enhanced ML operations
 class EnhancedMLUtilities:
-    """Enhanced utility functions for ML operations with Robinhood integration"""
+    """Enhanced utility functions for ML operations with Robinhood integration""""
     
     @staticmethod
     def calculate_enhanced_prediction_confidence(base_confidence: float, ml_confidence: float, 
                                                robinhood_quality: str = "unknown") -> float:
-        """Calculate enhanced prediction confidence with Robinhood data quality factor"""
+        """Calculate enhanced prediction confidence with Robinhood data quality factor""""
         try:
             # Quality multipliers for Robinhood data
             quality_multipliers = {
@@ -797,7 +797,7 @@ class EnhancedMLUtilities:
     
     @staticmethod
     def generate_enhanced_ml_reasoning(base_signal, ml_prediction: Dict, robinhood_features: Dict = None) -> List[str]:
-        """Generate enhanced ML reasoning with Robinhood insights"""
+        """Generate enhanced ML reasoning with Robinhood insights""""
         try:
             reasoning = []
             
@@ -843,7 +843,7 @@ class EnhancedMLUtilities:
             return ["Enhanced ML analysis completed"]
 
 class RobinhoodMLFeatureExtractor:
-    """Feature extraction specifically for Robinhood data"""
+    """Feature extraction specifically for Robinhood data""""
     
     def __init__(self):
         self.feature_names = [
@@ -852,11 +852,11 @@ class RobinhoodMLFeatureExtractor:
             'sentiment_score', 'momentum_score', 'market_hour',
             # Enhanced Robinhood features
             'retail_sentiment_score', 'popularity_momentum', 'market_hours_volatility',
-            'data_freshness_score', 'retail_contrarian_signal'
+            'data_freshness_score', 'retail_contrarian_signal'"
         ]
     
     def extract_enhanced_features(self, signal_data: Dict, robinhood_data: Dict = None) -> Dict[str, float]:
-        """Extract enhanced features including Robinhood-specific ones"""
+        """Extract enhanced features including Robinhood-specific ones""""
         try:
             features = {}
             
@@ -938,7 +938,7 @@ __all__ = [
     'MLEnhancedSignalEngine', 
     'LearningAPI', 
     'EnhancedMLUtilities',
-    'RobinhoodMLFeatureExtractor'
+    'RobinhoodMLFeatureExtractor'"
 ]
 
 logger.info("🧠 Enhanced ML Learning module loaded successfully")

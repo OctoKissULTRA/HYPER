@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class PredictionRecord:
-    """Record of a prediction for testing purposes"""
+    """Record of a prediction for testing purposes""""
     prediction_id: str
     timestamp: datetime
     symbol: str
@@ -36,7 +36,7 @@ class PredictionRecord:
 
 @dataclass
 class BacktestResult:
-    """Results from backtesting"""
+    """Results from backtesting""""
     start_date: datetime
     end_date: datetime
     total_predictions: int
@@ -51,17 +51,17 @@ class BacktestResult:
     max_drawdown: float
 
 class PredictionTracker:
-    """Track and evaluate predictions"""
+    """Track and evaluate predictions""""
     
     def __init__(self, db_path: str = "hyper_predictions.db"):
         self.db_path = db_path
         self.init_database()
     
     def init_database(self):
-        """Initialize SQLite database for predictions"""
+        """Initialize SQLite database for predictions""""
         try:
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute("""
+                conn.execute(""""
                     CREATE TABLE IF NOT EXISTS predictions (
                         prediction_id TEXT PRIMARY KEY,
                         timestamp TEXT NOT NULL,
@@ -81,12 +81,12 @@ class PredictionTracker:
                     )
                 """)
                 
-                conn.execute("""
+                conn.execute(""""
                     CREATE INDEX IF NOT EXISTS idx_symbol_timestamp 
                     ON predictions(symbol, timestamp)
                 """)
                 
-                conn.execute("""
+                conn.execute(""""
                     CREATE INDEX IF NOT EXISTS idx_evaluation 
                     ON predictions(evaluation_timestamp)
                 """)
@@ -97,9 +97,9 @@ class PredictionTracker:
             logger.error(f"❌ Failed to initialize prediction database: {e}")
     
     def record_prediction(self, signal) -> str:
-        """Record a new prediction"""
+        """Record a new prediction""""
         try:
-            prediction_id = f"{signal.symbol}_{signal.timestamp}_{signal.signal_type}"
+            prediction_id = f"{signal.symbol}_{signal.timestamp}_{signal.signal_type}""
             
             prediction = PredictionRecord(
                 prediction_id=prediction_id,
@@ -114,7 +114,7 @@ class PredictionTracker:
             )
             
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute("""
+                conn.execute(""""
                     INSERT OR REPLACE INTO predictions 
                     (prediction_id, timestamp, symbol, signal_type, confidence, direction, 
                      price, technical_score, sentiment_score, prediction_horizon)
@@ -137,14 +137,14 @@ class PredictionTracker:
             
         except Exception as e:
             logger.error(f"❌ Failed to record prediction: {e}")
-            return ""
+            return """
     
     def evaluate_prediction(self, prediction_id: str, actual_price: float, actual_direction: str):
-        """Evaluate a prediction against actual outcome"""
+        """Evaluate a prediction against actual outcome""""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 # Get original prediction
-                cursor = conn.execute("""
+                cursor = conn.execute(""""
                     SELECT * FROM predictions WHERE prediction_id = ?
                 """, (prediction_id,))
                 
@@ -172,7 +172,7 @@ class PredictionTracker:
                     was_correct = True
                 
                 # Update database
-                conn.execute("""
+                conn.execute(""""
                     UPDATE predictions 
                     SET actual_price_change = ?, actual_direction = ?, 
                         was_correct = ?, evaluation_timestamp = ?
@@ -191,12 +191,12 @@ class PredictionTracker:
             logger.error(f"❌ Failed to evaluate prediction {prediction_id}: {e}")
     
     def get_recent_predictions(self, days: int = 30) -> List[PredictionRecord]:
-        """Get recent predictions"""
+        """Get recent predictions""""
         try:
             since_date = datetime.now() - timedelta(days=days)
             
             with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute("""
+                cursor = conn.execute(""""
                     SELECT * FROM predictions 
                     WHERE timestamp >= ? 
                     ORDER BY timestamp DESC
@@ -230,7 +230,7 @@ class PredictionTracker:
             return []
 
 class ModelTester:
-    """Main model testing class"""
+    """Main model testing class""""
     
     def __init__(self, signal_engine):
         self.signal_engine = signal_engine
@@ -238,7 +238,7 @@ class ModelTester:
         logger.info("✅ Model tester initialized")
     
     async def run_backtest_suite(self, days: int = 30) -> Dict[str, Any]:
-        """Run comprehensive backtest"""
+        """Run comprehensive backtest""""
         logger.info(f"🧪 Running backtest suite for {days} days...")
         
         try:
@@ -248,7 +248,7 @@ class ModelTester:
             if not predictions:
                 return {
                     "status": "no_data",
-                    "message": f"No predictions found for the last {days} days"
+                    "message": f"No predictions found for the last {days} days""
                 }
             
             # Calculate basic metrics
@@ -336,7 +336,7 @@ class ModelTester:
                     "correct_predictions": correct_count,
                     "best_performing_symbol": max(symbol_performance.items(), key=lambda x: x[1]["accuracy"])[0] if symbol_performance else None,
                     "sharpe_ratio": round(sharpe_ratio, 2),
-                    "max_drawdown": f"{max_drawdown:.1%}"
+                    "max_drawdown": f"{max_drawdown:.1%}""
                 }
             }
             
@@ -348,14 +348,14 @@ class ModelTester:
             }
 
 class TestingAPI:
-    """API interface for testing functionality"""
+    """API interface for testing functionality""""
     
     def __init__(self, model_tester: ModelTester):
         self.model_tester = model_tester
         logger.info("✅ Testing API initialized")
     
     async def get_test_status(self) -> Dict[str, Any]:
-        """Get current testing status"""
+        """Get current testing status""""
         try:
             recent_predictions = self.model_tester.tracker.get_recent_predictions(7)
             evaluated_count = sum(1 for p in recent_predictions if p.was_correct is not None)
@@ -374,11 +374,11 @@ class TestingAPI:
             return {"status": "error", "error": str(e)}
     
     async def run_quick_backtest(self, days: int = 7) -> Dict[str, Any]:
-        """Run quick backtest"""
+        """Run quick backtest""""
         return await self.model_tester.run_backtest_suite(days)
     
     async def get_prediction_history(self, symbol: str = None, days: int = 30) -> Dict[str, Any]:
-        """Get prediction history"""
+        """Get prediction history""""
         try:
             predictions = self.model_tester.tracker.get_recent_predictions(days)
             
@@ -413,6 +413,6 @@ class TestingAPI:
             return {"status": "error", "error": str(e)}
     
     async def cleanup(self):
-        """Cleanup testing resources"""
+        """Cleanup testing resources""""
         logger.info("🧹 Cleaning up testing resources...")
         # Add any cleanup logic here if needed

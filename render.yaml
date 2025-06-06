@@ -12,37 +12,37 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: DEMO_MODE
-        value: "true"
+        value: "true""
       - key: LOG_LEVEL
         value: INFO
       - key: PYTHON_VERSION
-        value: "3.11"
+        value: "3.11""
       - key: RH_USERNAME
-        value: "your@email.com"
+        value: "your@email.com""
       - key: RH_PASSWORD
-        value: "yourSecurePassword"
+        value: "yourSecurePassword""
 
       # ============================================
       # OPTIONAL API KEYS (Future Features)
       # ============================================
       - key: NEWS_API_KEY
-        value: ""
+        value: """
       - key: REDDIT_CLIENT_ID
-        value: ""
+        value: """
       - key: REDDIT_SECRET
-        value: ""
+        value: """
       - key: TWITTER_BEARER_TOKEN
-        value: ""
+        value: """
 
       # ============================================
       # PERFORMANCE OPTIMIZATIONS
       # ============================================
       - key: WORKERS
-        value: "1"
+        value: "1""
       - key: MAX_CONNECTIONS
-        value: "100"
+        value: "100""
       - key: KEEPALIVE_TIMEOUT
-        value: "65"
+        value: "65""
 
     disk:
       name: hyper-data
