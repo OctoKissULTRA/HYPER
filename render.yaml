@@ -6,58 +6,58 @@ services:
   plan: starter
   region: oregon
   buildCommand: pip install -r requirements.txt
-  startCommand: gunicorn main:app –bind 0.0.0.0:$PORT –worker-class uvicorn.workers.UvicornWorker –workers 1 –timeout 120 –keep-alive 65
+  startCommand: gunicorn main:app --bind 0.0.0.0:$PORT --worker-class uvicorn.workers.UvicornWorker --workers 1 --timeout 120 --keep-alive 65
   healthCheckPath: /health
   autoDeploy: true
   envVars:
-  
+
   # Core Configuration
   - key: ENVIRONMENT
-    value: production
+    value: "production"
   - key: DEMO_MODE
-    value: “true”
+    value: "true"
   - key: LOG_LEVEL
-    value: INFO
+    value: "INFO"
   - key: PYTHON_VERSION
-    value: “3.11”
-  
+    value: "3.11"
+
   # Port Configuration (Critical for Render)
   - key: PORT
-    value: “10000”
+    value: "10000"
   - key: HOST
-    value: “0.0.0.0”
-  
+    value: "0.0.0.0"
+
   # Alpaca API Configuration
   - key: APCA_API_KEY_ID
-    value: “PK2AML2QK9VUI5J1G1BC”
+    value: "PK2AML2QK9VUI5J1G1BC"
   - key: APCA_API_SECRET_KEY
-    value: “”
+    value: ""
   - key: USE_SANDBOX
-    value: “true”
-  
+    value: "true"
+
   # Performance Settings
   - key: WORKERS
-    value: “1”
+    value: "1"
   - key: MAX_CONNECTIONS
-    value: “100”
+    value: "100"
   - key: KEEPALIVE_TIMEOUT
-    value: “65”
-  
+    value: "65"
+
   # Security Settings
   - key: CORS_ORIGINS
-    value: “*”
-  
+    value: "*"
+
   # Optional API Keys for Future Features
   - key: NEWS_API_KEY
-    value: “”
+    value: ""
   - key: REDDIT_CLIENT_ID
-    value: “”
+    value: ""
   - key: REDDIT_SECRET
-    value: “”
+    value: ""
   - key: TWITTER_BEARER_TOKEN
-    value: “”
-  
+    value: ""
+
   disk:
-  name: hyper-data
-  mountPath: /app/data
-  sizeGB: 1
+    name: hyper-data
+    mountPath: /app/data
+    sizeGB: 1
