@@ -39,3 +39,13 @@ SECURITY_CONFIG = {
     "rate_limit_enabled": True,
     "max_requests_per_minute": 60,
 }
+
+def get_data_source_status():
+    """
+    Returns a human-readable string describing current data source status.
+    """
+    if has_alpaca_credentials():
+        mode = ALPACA_CONFIG.get("trading_mode", "paper")
+        return f"Alpaca Markets ({mode.capitalize()} Mode)"
+    else:
+        return "Simulation Mode"
