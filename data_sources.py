@@ -10,15 +10,21 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 import numpy as np
 
-# Alpaca API imports
+# Alpaca API imports - Updated for alpaca-py 0.40.1+
 try:
     from alpaca.data.historical import StockHistoricalDataClient
     from alpaca.data.live import StockDataStream
-    from alpaca.data.requests import StockBarsRequest, StockLatestQuoteRequest, StockTradesRequest
-    from alpaca.data.timeframe import TimeFrame
+    from alpaca.data.requests import (
+        StockBarsRequest, 
+        StockLatestQuoteRequest, 
+        StockTradesRequest,
+        StockLatestTradeRequest
+    )
+    from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
     from alpaca.trading.client import TradingClient
     from alpaca.trading.requests import GetAssetsRequest
-    from alpaca.trading.enums import AssetClass
+    from alpaca.trading.enums import AssetClass, AssetStatus
+    from alpaca.common.exceptions import APIError
     ALPACA_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"Alpaca SDK not available: {e}")
@@ -29,7 +35,7 @@ import config
 logger = logging.getLogger(__name__)
 
 class AlpacaDataClient:
-    """Production Alpaca Markets data client with advanced features"""
+    """Production Alpaca Markets data client with advanced features for v0.40.1+"""
     
     def __init__(self):
         self.authenticated = False
@@ -44,52 +50,51 @@ class AlpacaDataClient:
         self.error_count = 0
         self.fallback_simulator = EnhancedMarketSimulator()
         
-        logger.info("Alpaca data client initialized")
+        logger.info("🚀 Alpaca data client initialized for alpaca-py v0.40.1+")
 
     async def initialize(self) -> bool:
-        """Initialize Alpaca clients"""
+        """Initialize Alpaca clients with improved error handling"""
         try:
             if not ALPACA_AVAILABLE:
-                logger.warning("Alpaca SDK not available - using simulation")
+                logger.warning("⚠️ Alpaca SDK not available - using enhanced simulation")
                 return False
             
             credentials = config.get_alpaca_credentials()
             
             if not credentials["api_key"]:
-                logger.warning("No Alpaca API key - using simulation")
+                logger.warning("⚠️ No Alpaca API key - using enhanced simulation")
                 return False
             
-            # Initialize historical data client
+            # Initialize historical data client (no auth required for market data)
             self.historical_client = StockHistoricalDataClient(
                 api_key=credentials["api_key"],
-                secret_key=credentials["secret_key"],
-                url_override=credentials.get("data_url")
+                secret_key=credentials.get("secret_key", "")
             )
             
-            # Initialize trading client for account info
-            if credentials["secret_key"]:
+            # Initialize trading client for account info (only if secret key available)
+            if credentials.get("secret_key"):
                 self.trading_client = TradingClient(
                     api_key=credentials["api_key"],
                     secret_key=credentials["secret_key"],
-                    url_override=credentials.get("base_url")
+                    paper=config.ALPACA_CONFIG.get("use_sandbox", True)
                 )
             
             # Test connection
             await self._test_connection()
             
             self.authenticated = True
-            logger.info("Alpaca clients initialized successfully")
-            logger.info(f"Data source: {config.get_data_source_status()}")
+            logger.info("✅ Alpaca clients initialized successfully")
+            logger.info(f"📊 Data source: {config.get_data_source_status()}")
             
             return True
             
         except Exception as e:
-            logger.error(f"Alpaca initialization failed: {e}")
+            logger.error(f"❌ Alpaca initialization failed: {e}")
             self.authenticated = False
             return False
 
     async def _test_connection(self):
-        """Test Alpaca connection"""
+        """Test Alpaca connection with improved error handling"""
         try:
             # Test with a simple quote request
             test_request = StockLatestQuoteRequest(symbol_or_symbols=["AAPL"])
@@ -100,18 +105,21 @@ class AlpacaDataClient:
                 test_request
             )
             
-            if response and "AAPL" in response:
-                logger.info("Alpaca connection test successful")
+            if response and len(response) > 0:
+                logger.info("✅ Alpaca connection test successful")
                 return True
             else:
-                raise Exception("Invalid response from Alpaca API")
+                raise Exception("Empty response from Alpaca API")
                 
+        except APIError as e:
+            logger.error(f"❌ Alpaca API Error: {e}")
+            raise
         except Exception as e:
-            logger.error(f"Alpaca connection test failed: {e}")
+            logger.error(f"❌ Alpaca connection test failed: {e}")
             raise
 
     async def get_real_time_quote(self, symbol: str) -> Dict[str, Any]:
-        """Get real-time quote from Alpaca"""
+        """Get real-time quote from Alpaca with enhanced error handling"""
         try:
             # Check cache first
             cache_key = f"quote_{symbol}_{time.time() // self.cache_duration}"
@@ -126,48 +134,72 @@ class AlpacaDataClient:
             # Get latest quote
             quote_request = StockLatestQuoteRequest(symbol_or_symbols=[symbol])
             
-            response = await asyncio.to_thread(
-                self.historical_client.get_stock_latest_quote,
-                quote_request
-            )
-            
-            if not response or symbol not in response:
-                logger.warning(f"No quote data for {symbol} - using simulation")
+            try:
+                quote_response = await asyncio.to_thread(
+                    self.historical_client.get_stock_latest_quote,
+                    quote_request
+                )
+            except APIError as e:
+                logger.warning(f"⚠️ Alpaca quote API error for {symbol}: {e}")
                 return await self._get_simulated_quote(symbol)
             
-            quote = response[symbol]
+            if not quote_response or symbol not in quote_response:
+                logger.warning(f"⚠️ No quote data for {symbol} - using simulation")
+                return await self._get_simulated_quote(symbol)
+            
+            quote = quote_response[symbol]
             
             # Get latest bars for additional data
             bars_request = StockBarsRequest(
                 symbol_or_symbols=[symbol],
                 timeframe=TimeFrame.Minute,
-                limit=1
+                limit=2,  # Get last 2 bars for change calculation
+                asof=None,
+                feed=None
             )
             
-            bars_response = await asyncio.to_thread(
-                self.historical_client.get_stock_bars,
-                bars_request
-            )
+            try:
+                bars_response = await asyncio.to_thread(
+                    self.historical_client.get_stock_bars,
+                    bars_request
+                )
+            except APIError as e:
+                logger.warning(f"⚠️ Alpaca bars API error for {symbol}: {e}")
+                bars_response = None
             
+            # Process bar data
             latest_bar = None
+            previous_bar = None
             if bars_response and symbol in bars_response:
                 bars = list(bars_response[symbol])
-                if bars:
+                if len(bars) >= 1:
                     latest_bar = bars[-1]
+                if len(bars) >= 2:
+                    previous_bar = bars[-2]
             
             # Build comprehensive quote data
-            current_price = float(quote.bid_price + quote.ask_price) / 2 if quote.bid_price and quote.ask_price else None
+            if hasattr(quote, 'ask_price') and hasattr(quote, 'bid_price'):
+                current_price = float(quote.ask_price + quote.bid_price) / 2 if quote.bid_price and quote.ask_price else None
+            else:
+                current_price = None
             
             if latest_bar:
                 current_price = float(latest_bar.close)
-                previous_close = float(latest_bar.open)  # Simplified
+                previous_close = float(previous_bar.close) if previous_bar else float(latest_bar.open)
                 volume = int(latest_bar.volume)
                 high = float(latest_bar.high)
                 low = float(latest_bar.low)
                 open_price = float(latest_bar.open)
             else:
-                # Use quote data
-                current_price = current_price or float(quote.ask_price or quote.bid_price or 100)
+                # Use quote data or fallback
+                if current_price is None:
+                    if hasattr(quote, 'ask_price') and quote.ask_price:
+                        current_price = float(quote.ask_price)
+                    elif hasattr(quote, 'bid_price') and quote.bid_price:
+                        current_price = float(quote.bid_price)
+                    else:
+                        current_price = 100.0  # Fallback
+                
                 previous_close = current_price * random.uniform(0.99, 1.01)
                 volume = random.randint(1000000, 50000000)
                 high = current_price * random.uniform(1.0, 1.02)
@@ -189,10 +221,10 @@ class AlpacaDataClient:
                 'change': change,
                 'change_percent': f"{change_percent:.2f}",
                 'volume': volume,
-                'bid': float(quote.bid_price) if quote.bid_price else current_price * 0.999,
-                'ask': float(quote.ask_price) if quote.ask_price else current_price * 1.001,
-                'bid_size': int(quote.bid_size) if quote.bid_size else 100,
-                'ask_size': int(quote.ask_size) if quote.ask_size else 100,
+                'bid': float(quote.bid_price) if hasattr(quote, 'bid_price') and quote.bid_price else current_price * 0.999,
+                'ask': float(quote.ask_price) if hasattr(quote, 'ask_price') and quote.ask_price else current_price * 1.001,
+                'bid_size': int(quote.bid_size) if hasattr(quote, 'bid_size') and quote.bid_size else 100,
+                'ask_size': int(quote.ask_size) if hasattr(quote, 'ask_size') and quote.ask_size else 100,
                 'timestamp': datetime.now().isoformat(),
                 'data_source': 'alpaca_live',
                 'latest_trading_day': datetime.now().strftime('%Y-%m-%d'),
@@ -202,7 +234,11 @@ class AlpacaDataClient:
                     'data_quality': 'excellent',
                     'request_count': self.request_count,
                     'authenticated': True,
-                    'spread_bps': self._calculate_spread_bps(quote.bid_price, quote.ask_price) if quote.bid_price and quote.ask_price else 10
+                    'spread_bps': self._calculate_spread_bps(
+                        float(quote.bid_price) if hasattr(quote, 'bid_price') and quote.bid_price else None,
+                        float(quote.ask_price) if hasattr(quote, 'ask_price') and quote.ask_price else None
+                    ),
+                    'alpaca_version': '0.40.1+'
                 }
             }
             
@@ -210,49 +246,58 @@ class AlpacaDataClient:
             self.cache[cache_key] = result
             self.request_count += 1
             
-            logger.debug(f"Alpaca quote for {symbol}: ${result['price']:.2f} ({result['change_percent']}%)")
+            logger.debug(f"📈 Alpaca quote for {symbol}: ${result['price']:.2f} ({result['change_percent']}%)")
             return result
             
         except Exception as e:
-            logger.error(f"Alpaca quote error for {symbol}: {e}")
+            logger.error(f"❌ Alpaca quote error for {symbol}: {e}")
             self.error_count += 1
             return await self._get_simulated_quote(symbol)
 
     async def get_historical_bars(self, symbol: str, timeframe: str = "1Day", 
                                  limit: int = 100) -> List[Dict[str, Any]]:
-        """Get historical bar data from Alpaca"""
+        """Get historical bar data from Alpaca with enhanced compatibility"""
         try:
             if not self.authenticated:
                 return self._generate_historical_simulation(symbol, limit)
             
             await self._rate_limit_wait()
             
-            # Convert timeframe
-            tf_map = {
+            # Convert timeframe to new TimeFrame format
+            timeframe_map = {
                 "1Min": TimeFrame.Minute,
-                "5Min": TimeFrame(5, "Min"),
-                "15Min": TimeFrame(15, "Min"),
+                "5Min": TimeFrame(5, TimeFrameUnit.Minute),
+                "15Min": TimeFrame(15, TimeFrameUnit.Minute),
                 "1Hour": TimeFrame.Hour,
-                "1Day": TimeFrame.Day
+                "1Day": TimeFrame.Day,
+                "1Week": TimeFrame.Week,
+                "1Month": TimeFrame.Month
             }
             
-            alpaca_timeframe = tf_map.get(timeframe, TimeFrame.Day)
+            alpaca_timeframe = timeframe_map.get(timeframe, TimeFrame.Day)
             
-            # Create request
+            # Create request with enhanced parameters
             bars_request = StockBarsRequest(
                 symbol_or_symbols=[symbol],
                 timeframe=alpaca_timeframe,
                 limit=limit,
-                adjustment='all'  # Include all adjustments
+                adjustment='all',  # Include all adjustments
+                asof=None,
+                feed=None,
+                sort='asc'
             )
             
-            response = await asyncio.to_thread(
-                self.historical_client.get_stock_bars,
-                bars_request
-            )
+            try:
+                response = await asyncio.to_thread(
+                    self.historical_client.get_stock_bars,
+                    bars_request
+                )
+            except APIError as e:
+                logger.warning(f"⚠️ Alpaca historical API error for {symbol}: {e}")
+                return self._generate_historical_simulation(symbol, limit)
             
             if not response or symbol not in response:
-                logger.warning(f"No historical data for {symbol} - using simulation")
+                logger.warning(f"⚠️ No historical data for {symbol} - using simulation")
                 return self._generate_historical_simulation(symbol, limit)
             
             bars = list(response[symbol])
@@ -273,36 +318,86 @@ class AlpacaDataClient:
                     'timeframe': timeframe
                 })
             
-            logger.debug(f"Retrieved {len(result)} bars for {symbol}")
+            logger.debug(f"📊 Retrieved {len(result)} bars for {symbol}")
             return result
             
         except Exception as e:
-            logger.error(f"Historical data error for {symbol}: {e}")
+            logger.error(f"❌ Historical data error for {symbol}: {e}")
             return self._generate_historical_simulation(symbol, limit)
 
     async def get_market_status(self) -> Dict[str, Any]:
-        """Get market status from Alpaca"""
+        """Get market status from Alpaca with fallback"""
         try:
             if not self.trading_client:
                 return self._get_simulated_market_status()
             
-            clock = await asyncio.to_thread(self.trading_client.get_clock)
-            
-            return {
-                'is_open': clock.is_open,
-                'next_open': clock.next_open.isoformat() if clock.next_open else None,
-                'next_close': clock.next_close.isoformat() if clock.next_close else None,
-                'timestamp': datetime.now().isoformat(),
-                'timezone': 'America/New_York',
-                'session_type': 'regular' if clock.is_open else 'closed'
-            }
+            try:
+                clock = await asyncio.to_thread(self.trading_client.get_clock)
+                
+                return {
+                    'is_open': clock.is_open,
+                    'next_open': clock.next_open.isoformat() if clock.next_open else None,
+                    'next_close': clock.next_close.isoformat() if clock.next_close else None,
+                    'timestamp': datetime.now().isoformat(),
+                    'timezone': 'America/New_York',
+                    'session_type': 'regular' if clock.is_open else 'closed',
+                    'data_source': 'alpaca'
+                }
+            except APIError as e:
+                logger.warning(f"⚠️ Alpaca market status API error: {e}")
+                return self._get_simulated_market_status()
             
         except Exception as e:
-            logger.error(f"Market status error: {e}")
+            logger.error(f"❌ Market status error: {e}")
             return self._get_simulated_market_status()
 
+    async def get_latest_trades(self, symbol: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get latest trades for a symbol"""
+        try:
+            if not self.authenticated:
+                return []
+            
+            await self._rate_limit_wait()
+            
+            trades_request = StockTradesRequest(
+                symbol_or_symbols=[symbol],
+                limit=limit,
+                sort='desc'
+            )
+            
+            try:
+                response = await asyncio.to_thread(
+                    self.historical_client.get_stock_trades,
+                    trades_request
+                )
+            except APIError as e:
+                logger.warning(f"⚠️ Alpaca trades API error for {symbol}: {e}")
+                return []
+            
+            if not response or symbol not in response:
+                return []
+            
+            trades = list(response[symbol])
+            result = []
+            
+            for trade in trades:
+                result.append({
+                    'timestamp': trade.timestamp.isoformat(),
+                    'price': float(trade.price),
+                    'size': int(trade.size),
+                    'conditions': getattr(trade, 'conditions', []),
+                    'exchange': getattr(trade, 'exchange', 'UNKNOWN'),
+                    'symbol': symbol
+                })
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"❌ Latest trades error for {symbol}: {e}")
+            return []
+
     async def _get_simulated_quote(self, symbol: str) -> Dict[str, Any]:
-        """Get simulated quote data"""
+        """Get simulated quote data with enhanced realism"""
         return self.fallback_simulator.generate_realistic_quote(symbol)
 
     def _generate_historical_simulation(self, symbol: str, periods: int) -> List[Dict[str, Any]]:
@@ -323,11 +418,12 @@ class AlpacaDataClient:
             'next_close': (now + timedelta(hours=8)).isoformat(),
             'timestamp': now.isoformat(),
             'timezone': 'America/New_York',
-            'session_type': 'regular' if is_open else 'closed'
+            'session_type': 'regular' if is_open else 'closed',
+            'data_source': 'simulation'
         }
 
     async def _rate_limit_wait(self):
-        """Implement rate limiting"""
+        """Implement enhanced rate limiting"""
         current_time = time.time()
         time_since_last = current_time - self.last_request_time
         
@@ -354,7 +450,7 @@ class AlpacaDataClient:
         else:
             return 'CLOSED'
 
-    def _calculate_spread_bps(self, bid: float, ask: float) -> float:
+    def _calculate_spread_bps(self, bid: Optional[float], ask: Optional[float]) -> float:
         """Calculate bid-ask spread in basis points"""
         if not bid or not ask or bid <= 0 or ask <= 0:
             return 10.0  # Default spread
@@ -373,7 +469,7 @@ class AlpacaDataClient:
             except:
                 pass
         
-        logger.info("Alpaca client cleanup completed")
+        logger.info("🧹 Alpaca client cleanup completed")
 
 class EnhancedMarketSimulator:
     """Enhanced market simulation for fallback scenarios"""
@@ -388,7 +484,7 @@ class EnhancedMarketSimulator:
         
         # Initialize base prices and trends
         self._initialize_market_state()
-        logger.info("Enhanced Market Simulator initialized")
+        logger.info("🎮 Enhanced Market Simulator initialized")
 
     def _initialize_market_state(self):
         """Initialize market state with realistic starting conditions"""
@@ -488,7 +584,8 @@ class EnhancedMarketSimulator:
                 'data_freshness': 'simulated_real_time',
                 'session_time': round(time.time() - self.session_start, 0),
                 'price_history_length': len(self.price_history[symbol]),
-                'spread_bps': round((ask - bid) / new_price * 10000, 1)
+                'spread_bps': round((ask - bid) / new_price * 10000, 1),
+                'simulation_version': 'enhanced_v2'
             }
         }
 
@@ -510,7 +607,7 @@ class EnhancedMarketSimulator:
         for i in range(periods):
             # Generate price movement
             random_change = np.random.normal(0, daily_vol)
-            mean_reversion = -0.05 * random_change
+            mean_reversion = (19.0 - price/price * 19.0) * 0.1  # Simplified mean reversion
             
             price_change = random_change + mean_reversion
             price = price * (1 + price_change)
@@ -551,7 +648,7 @@ class EnhancedMarketSimulator:
             
             self.market_regime = random.choices(regimes, weights=weights)[0]
             self.last_regime_change = time.time()
-            logger.debug(f"Market regime changed to: {self.market_regime}")
+            logger.debug(f"📊 Market regime changed to: {self.market_regime}")
 
     def _calculate_time_based_factors(self):
         """Calculate volatility and volume factors based on time"""
@@ -645,7 +742,7 @@ class GoogleTrendsClient:
     def __init__(self):
         self.trend_history = {}
         self.session_start = time.time()
-        logger.info("Google Trends client initialized")
+        logger.info("📈 Google Trends client initialized")
 
     async def get_trends_data(self, keywords: List[str]) -> Dict[str, Any]:
         """Get dynamic trends data"""
@@ -719,7 +816,7 @@ class GoogleTrendsClient:
             return 'BEARISH'
 
 class HYPERDataAggregator:
-    """Main data aggregator with Alpaca integration"""
+    """Main data aggregator with Alpaca integration - Updated for v0.40.1+"""
     
     def __init__(self):
         self.alpaca_client = AlpacaDataClient()
@@ -738,11 +835,11 @@ class HYPERDataAggregator:
             'live_data_percentage': 0.0
         }
         
-        logger.info("HYPER Data Aggregator initialized with Alpaca integration")
+        logger.info("🚀 HYPER Data Aggregator initialized with Alpaca v0.40.1+ integration")
 
     async def initialize(self) -> bool:
         """Initialize data aggregator"""
-        logger.info("Initializing HYPER Data Aggregator...")
+        logger.info("⚡ Initializing HYPER Data Aggregator...")
         
         try:
             # Initialize Alpaca client
@@ -751,11 +848,11 @@ class HYPERDataAggregator:
             self.system_health = "ALPACA_LIVE" if self.alpaca_live else "SIMULATION_READY"
             self.api_test_performed = True
             
-            logger.info(f"Data aggregator initialized - Status: {self.system_health}")
+            logger.info(f"✅ Data aggregator initialized - Status: {self.system_health}")
             return True
             
         except Exception as e:
-            logger.error(f"Data aggregator initialization failed: {e}")
+            logger.error(f"❌ Data aggregator initialization failed: {e}")
             self.system_health = "ERROR"
             return False
 
@@ -804,11 +901,11 @@ class HYPERDataAggregator:
                 }
             }
             
-            logger.debug(f"Data for {symbol} completed in {processing_time:.2f}s")
+            logger.debug(f"📊 Data for {symbol} completed in {processing_time:.2f}s")
             return result
             
         except Exception as e:
-            logger.error(f"Error getting data for {symbol}: {e}")
+            logger.error(f"❌ Error getting data for {symbol}: {e}")
             self.performance_metrics['error_requests'] += 1
             return self._generate_fallback_data(symbol)
 
@@ -895,18 +992,19 @@ class HYPERDataAggregator:
             'performance_metrics': self.performance_metrics,
             'last_health_check': datetime.now().isoformat(),
             'credentials_configured': config.has_alpaca_credentials(),
-            'data_source': config.get_data_source_status()
+            'data_source': config.get_data_source_status(),
+            'alpaca_version': '0.40.1+'
         }
 
     async def cleanup(self):
         """Cleanup resources"""
         await self.alpaca_client.cleanup()
-        logger.info("HYPER data aggregator cleanup completed")
+        logger.info("🧹 HYPER data aggregator cleanup completed")
 
 # Export main classes
 __all__ = ['HYPERDataAggregator', 'AlpacaDataClient', 'EnhancedMarketSimulator']
 
-logger.info("Alpaca-integrated data sources loaded successfully!")
-logger.info("Primary: Alpaca Markets API with live data")
-logger.info("Fallback: Enhanced market simulation")
-logger.info("Production-ready with comprehensive error handling")
+logger.info("🚀 Alpaca-integrated data sources loaded successfully!")
+logger.info("📊 Primary: Alpaca Markets API v0.40.1+ with live data")
+logger.info("🎮 Fallback: Enhanced market simulation")
+logger.info("✅ Production-ready with comprehensive error handling")
