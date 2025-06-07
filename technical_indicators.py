@@ -1244,4 +1244,5 @@ class AdvancedTechnicalAnalyzer:
                 key_levels={'current_price': float(quote_data.get('price', 100))},
                 pattern_analysis={"error": "analysis_failed"},
                 momentum_analysis={"error": "analysis_failed"},
-                volume_analysis={"error": "analysis_failed"}
+                volume_analysis={"error": "analysis_failed"},
+            )
