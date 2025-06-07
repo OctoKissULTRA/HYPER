@@ -512,7 +512,7 @@ class AdvancedTechnicalAnalyzer:
         
         # Determine direction and confidence
         if overall_score > 65:
-            direction = "UP""
+            direction = "UP"
             confidence = min(1.0, (overall_score - 50) / 50)
         elif overall_score < 35:
             direction = "DOWN""
