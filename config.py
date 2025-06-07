@@ -29,3 +29,10 @@ def is_development():
 
 def is_production():
     return ENVIRONMENT == "production"
+
+SECURITY_CONFIG = {
+    "cors_origins": os.getenv("CORS_ORIGINS", "*").split(","),
+    "require_https": ENVIRONMENT == "production",
+    "rate_limit_enabled": True,
+    "max_requests_per_minute": 60,
+}
