@@ -1245,4 +1245,3 @@ class AdvancedTechnicalAnalyzer:
                 pattern_analysis={"error": "analysis_failed"},
                 momentum_analysis={"error": "analysis_failed"},
                 volume_analysis={"error": "analysis_failed"}
-            )
