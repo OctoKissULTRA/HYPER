@@ -400,6 +400,52 @@ async def run_backtest(days: int = 7):
     else:
         raise HTTPException(status_code=503, detail="Testing framework not available")
 
+from fastapi import Query
+import dateutil.parser
+
+@app.get("/api/historical/{symbol}")
+async def get_historical_data(
+    symbol: str,
+    timeframe: str = Query("1Day", description="Bar size (e.g. 1Min, 5Min, 15Min, 1Day)"),
+    start: Optional[str] = Query(None, description="Start datetime (ISO 8601, e.g. 2024-01-01T00:00:00Z)"),
+    end: Optional[str] = Query(None, description="End datetime (ISO 8601, e.g. 2024-01-31T23:59:00Z)"),
+    limit: int = Query(100, description="Maximum bars (default 100)")
+):
+    """
+    Returns historical OHLCV bars for a symbol using Alpaca (or fallback).
+    """
+    try:
+        start_dt = dateutil.parser.isoparse(start) if start else None
+        end_dt = dateutil.parser.isoparse(end) if end else None
+
+        if not hyper_state.data_aggregator:
+            return {"status": "error", "message": "Data aggregator unavailable"}
+
+        # Format as ISO8601 strings for Alpaca API
+        start_iso = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ") if start_dt else None
+        end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ") if end_dt else None
+
+        bars = await hyper_state.data_aggregator.get_historical_data_api(
+            symbol.upper(),
+            timeframe=timeframe,
+            start=start_iso,
+            end=end_iso,
+            limit=limit
+        )
+        return {
+            "status": "success",
+            "symbol": symbol.upper(),
+            "bars": bars,
+            "count": len(bars)
+        }
+    except Exception as e:
+        logger.error(f"Error in get_historical_data: {e}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "bars": []
+        }
+
 # ========================================
 # WEBSOCKET ENDPOINT
 # ========================================
