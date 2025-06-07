@@ -13,8 +13,8 @@ DEBUG_MODE = ENVIRONMENT == "development"
 # Alpaca API Configuration
 TRADING_MODE = os.getenv("TRADING_MODE", "paper").lower()  # 'paper' or 'live'
 ALPACA_CONFIG = {
-    "api_key": os.getenv("APCA_API_KEY_ID", ""),
-    "secret_key": os.getenv("APCA_API_SECRET_KEY", ""),
+    "api_key": os.getenv("PK2AML2QK9VUI5J1G1BC", ""),
+    "secret_key": os.getenv("3IDsz3oeGliJeBG9h35V8OAAcjDH6hqMLoJDXpif", ""),
     "base_url": "https://api.alpaca.markets/v2" if TRADING_MODE == "live" else "https://paper-api.alpaca.markets/v2",
     "data_url": "https://data.alpaca.markets/v2",
     "stream_url": "wss://stream.data.alpaca.markets/v2/sip",
