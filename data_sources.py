@@ -1,6 +1,7 @@
 import logging
 import time
 import random
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, List
 import requests
 
@@ -15,13 +16,15 @@ class AlpacaDataClient:
         self.base_url = config["base_url"]
         self.data_url = config["data_url"]
         self.session = requests.Session()
-        self.session.headers.update({
+        self.headers = {
             "APCA-API-KEY-ID": self.api_key,
             "APCA-API-SECRET-KEY": self.secret_key,
-        })
+        }
+        self.session.headers.update(self.headers)
         logger.info(f"Initialized AlpacaDataClient with endpoint: {self.base_url}")
 
     def get_latest_bar(self, symbol: str) -> Optional[Dict[str, Any]]:
+        # Try to get the most recent 1Min bar first (works if market is open)
         endpoint = f"{self.data_url}/stocks/{symbol}/bars?timeframe=1Min&limit=1"
         response = self.session.get(endpoint)
         if response.status_code == 200:
@@ -29,9 +32,15 @@ class AlpacaDataClient:
             if bars:
                 return bars[0]
             else:
-                logger.warning(f"No bars found for {symbol}")
+                logger.warning(f"No bars found for {symbol} (latest bar attempt)")
         else:
             logger.error(f"Failed to fetch bars for {symbol}: {response.text}")
+
+        # If that fails, fallback to historical
+        bars = self.get_historical_bars_fallback(symbol, timeframe="1Min", limit=1)
+        if bars:
+            return bars[-1]
+        logger.warning(f"No latest or historical bars for {symbol}")
         return None
 
     def get_historical_bars(self, symbol: str, timeframe: str = "1Min", limit: int = 100) -> List[Dict[str, Any]]:
@@ -43,6 +52,34 @@ class AlpacaDataClient:
             logger.error(f"Failed to fetch historical bars for {symbol}: {response.text}")
         return []
 
+    def get_historical_bars_fallback(
+        self,
+        symbol: str,
+        timeframe: str = "1Min",
+        limit: int = 390,  # up to 1 trading day of minute bars
+        days: int = 365    # up to 1 year
+    ) -> List[Dict[str, Any]]:
+        """
+        Try to get up to `days` of historical bars for `symbol`.
+        Returns a list of bars (can be empty).
+        """
+        now = datetime.utcnow()
+        start_date = now - timedelta(days=days)
+        params = {
+            "timeframe": timeframe,
+            "limit": limit,
+            "start": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "end": now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        }
+        endpoint = f"{self.data_url}/stocks/{symbol}/bars"
+        resp = self.session.get(endpoint, headers=self.headers, params=params)
+        if resp.status_code == 200:
+            bars = resp.json().get("bars", [])
+            if bars:
+                return bars
+        logger.warning(f"No historical bars for {symbol} using Alpaca fallback!")
+        return []
+
     def get_latest_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
         endpoint = f"{self.data_url}/stocks/{symbol}/quotes/latest"
         response = self.session.get(endpoint)
@@ -52,8 +89,17 @@ class AlpacaDataClient:
             logger.error(f"Failed to fetch quote for {symbol}: {response.text}")
         return None
 
+    def get_latest_price(self, symbol: str) -> Optional[float]:
+        """
+        Return the most recent close from historical bars.
+        """
+        bars = self.get_historical_bars_fallback(symbol, timeframe="1Min", limit=1)
+        if bars:
+            return bars[-1].get("c")
+        return None
+
 class HYPERDataAggregator:
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any] = ALPACA_CONFIG):
         self.client = AlpacaDataClient(config)
         self.tickers = TICKERS
 
@@ -69,7 +115,12 @@ class HYPERDataAggregator:
         return data
 
     def get_historical_data(self, symbol: str, timeframe: str = "1Min", limit: int = 100) -> List[Dict[str, Any]]:
-        return self.client.get_historical_bars(symbol, timeframe, limit)
+        bars = self.client.get_historical_bars_fallback(symbol, timeframe=timeframe, limit=limit)
+        if bars:
+            return bars
+        # Fallback to simulation only if nothing found
+        logger.warning(f"No historical bars for {symbol}, falling back to simulation")
+        return MockMarketSimulator([symbol]).get_historical_data(symbol, timeframe, limit)
 
 class MockMarketSimulator:
     def __init__(self, tickers: List[str]):
