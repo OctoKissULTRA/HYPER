@@ -515,10 +515,10 @@ class AdvancedTechnicalAnalyzer:
             direction = "UP"
             confidence = min(1.0, (overall_score - 50) / 50)
         elif overall_score < 35:
-            direction = "DOWN""
+            direction = "DOWN"
             confidence = min(1.0, (50 - overall_score) / 50)
         else:
-            direction = "NEUTRAL""
+            direction = "NEUTRAL"
             confidence = 1.0 - (abs(overall_score - 50) / 15)
         
         return round(overall_score, 1), direction, round(confidence, 3)
@@ -916,11 +916,11 @@ class AdvancedTechnicalAnalyzer:
         low_troughs = []
         
         for i in range(2, len(recent_highs)-2):
-            if (recent_highs[i] > recent_highs[i-1] and recent_highs[i] > recent_highs[i-2] and:
+            if (recent_highs[i] > recent_highs[i-1] and recent_highs[i] > recent_highs[i-2] and
                 recent_highs[i] > recent_highs[i+1] and recent_highs[i] > recent_highs[i+2]):
                 high_peaks.append((i, recent_highs[i]))
             
-            if (recent_lows[i] < recent_lows[i-1] and recent_lows[i] < recent_lows[i-2] and:
+            if (recent_lows[i] < recent_lows[i-1] and recent_lows[i] < recent_lows[i-2] and
                 recent_lows[i] < recent_lows[i+1] and recent_lows[i] < recent_lows[i+2]):
                 low_troughs.append((i, recent_lows[i]))
         
@@ -1035,7 +1035,7 @@ class AdvancedTechnicalAnalyzer:
         # Find three peaks for head and shoulders
         peaks = []
         for i in range(2, len(recent_highs)-2):
-            if (recent_highs[i] > recent_highs[i-1] and recent_highs[i] > recent_highs[i-2] and:
+            if (recent_highs[i] > recent_highs[i-1] and recent_highs[i] > recent_highs[i-2] and
                 recent_highs[i] > recent_highs[i+1] and recent_highs[i] > recent_highs[i+2]):
                 peaks.append((i, recent_highs[i]))
         
@@ -1060,7 +1060,7 @@ class AdvancedTechnicalAnalyzer:
         # Check for inverse head and shoulders
         troughs = []
         for i in range(2, len(recent_lows)-2):
-            if (recent_lows[i] < recent_lows[i-1] and recent_lows[i] < recent_lows[i-2] and:
+            if (recent_lows[i] < recent_lows[i-1] and recent_lows[i] < recent_lows[i-2] and
                 recent_lows[i] < recent_lows[i+1] and recent_lows[i] < recent_lows[i+2]):
                 troughs.append((i, recent_lows[i]))
         
@@ -1105,13 +1105,13 @@ class AdvancedTechnicalAnalyzer:
                 acceleration = 0
             
             # Momentum quality assessment
-            momentum_strength = "WEAK""
+            momentum_strength = "WEAK"
             if abs(price_momentum_5) > 3 and volume_ratio > 1.5:
-                momentum_strength = "VERY_STRONG""
+                momentum_strength = "VERY_STRONG"
             elif abs(price_momentum_5) > 2 and volume_ratio > 1.2:
-                momentum_strength = "STRONG""
+                momentum_strength = "STRONG"
             elif abs(price_momentum_5) > 1:
-                momentum_strength = "MODERATE""
+                momentum_strength = "MODERATE"
             
             return {
                 "momentum_5d": round(price_momentum_5, 2),
@@ -1119,7 +1119,7 @@ class AdvancedTechnicalAnalyzer:
                 "volume_ratio": round(volume_ratio, 2),
                 "acceleration": round(acceleration, 4),
                 "momentum_strength": momentum_strength,
-                "sustainability": "HIGH" if volume_ratio > 1.5 else "MEDIUM" if volume_ratio > 1.0 else "LOW""
+                "sustainability": "HIGH" if volume_ratio > 1.5 else "MEDIUM" if volume_ratio > 1.0 else "LOW"
             }
             
         except Exception as e:
@@ -1145,12 +1145,12 @@ class AdvancedTechnicalAnalyzer:
             
             # Recent volume trend
             recent_volumes = volumes[-10:] if len(volumes) > 10 else volumes
-            volume_trend = "INCREASING" if recent_volumes[-1] > np.mean(recent_volumes[:-1]) else "DECREASING""
+            volume_trend = "INCREASING" if recent_volumes[-1] > np.mean(recent_volumes[:-1]) else "DECREASING"
             
             # Volume quality
             avg_volume = np.mean(volumes)
             current_volume = volumes[-1]
-            volume_quality = "HIGH" if current_volume > avg_volume * 1.5 else "NORMAL" if current_volume > avg_volume * 0.8 else "LOW""
+            volume_quality = "HIGH" if current_volume > avg_volume * 1.5 else "NORMAL" if current_volume > avg_volume * 0.8 else "LOW"
             
             return {
                 "vwap": round(vwap, 2),
@@ -1158,7 +1158,7 @@ class AdvancedTechnicalAnalyzer:
                 "volume_balance": round(volume_balance, 3),
                 "volume_trend": volume_trend,
                 "volume_quality": volume_quality,
-                "buying_pressure": "HIGH" if volume_balance > 0.6 else "LOW" if volume_balance < 0.4 else "NEUTRAL""
+                "buying_pressure": "HIGH" if volume_balance > 0.6 else "LOW" if volume_balance < 0.4 else "NEUTRAL"
             }
             
         except Exception as e:
@@ -1189,7 +1189,7 @@ class AdvancedTechnicalAnalyzer:
             ))
             
             # Basic trend analysis
-            trend_direction = "UP" if change_percent > 1 else "DOWN" if change_percent < -1 else "NEUTRAL""
+            trend_direction = "UP" if change_percent > 1 else "DOWN" if change_percent < -1 else "NEUTRAL"
             signals.append(TechnicalSignal(
                 indicator_name="Trend_Basic",
                 value=change_percent,
@@ -1201,7 +1201,7 @@ class AdvancedTechnicalAnalyzer:
             # Volume analysis if available
             volume = quote_data.get('volume', 0)
             if volume > 0:
-                # Estimate volume relative to "normal""
+                # Estimate volume relative to "normal"
                 estimated_avg_volume = 25000000  # Rough average
                 volume_ratio = volume / estimated_avg_volume
                 
@@ -1245,4 +1245,3 @@ class AdvancedTechnicalAnalyzer:
                 pattern_analysis={"error": "analysis_failed"},
                 momentum_analysis={"error": "analysis_failed"},
                 volume_analysis={"error": "analysis_failed"}
-            )
