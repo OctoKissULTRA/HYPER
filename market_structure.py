@@ -84,7 +84,7 @@ class AdvancedMarketStructureAnalyzer:
         self.sectors = [
             'Technology', 'Healthcare', 'Financials', 'Consumer Discretionary',
             'Communication Services', 'Industrials', 'Consumer Staples',
-            'Energy', 'Utilities', 'Real Estate', 'Materials'"
+            'Energy', 'Utilities', 'Real Estate', 'Materials'
         ]
         
         # Component analyzers
@@ -101,7 +101,7 @@ class AdvancedMarketStructureAnalyzer:
         """Complete market structure analysis"""
         try:
             # Check cache first
-            cache_key = f"structure_{time.time() // self.cache_duration}""
+            cache_key = f"structure_{time.time() // self.cache_duration}"
             if cache_key in self.structure_cache:
                 logger.debug("📋 Using cached market structure analysis")
                 return self.structure_cache[cache_key]
@@ -230,15 +230,15 @@ class AdvancedMarketStructureAnalyzer:
             if leading_sectors:
                 top_sector = leading_sectors[0]['sector']
                 if top_sector in ['Technology', 'Communication Services', 'Consumer Discretionary']:
-                    leadership_theme = "GROWTH_LEADERSHIP""
+                    leadership_theme = "GROWTH_LEADERSHIP"
                 elif top_sector in ['Financials', 'Energy', 'Materials', 'Industrials']:
-                    leadership_theme = "VALUE_LEADERSHIP""
+                    leadership_theme = "VALUE_LEADERSHIP"
                 elif top_sector in ['Utilities', 'Consumer Staples', 'Real Estate']:
-                    leadership_theme = "DEFENSIVE_LEADERSHIP""
+                    leadership_theme = "DEFENSIVE_LEADERSHIP"
                 else:
-                    leadership_theme = "MIXED_LEADERSHIP""
+                    leadership_theme = "MIXED_LEADERSHIP"
             else:
-                leadership_theme = "NO_CLEAR_LEADERSHIP""
+                leadership_theme = "NO_CLEAR_LEADERSHIP"
             
             return {
                 'leading_sectors': leading_sectors,
@@ -246,7 +246,7 @@ class AdvancedMarketStructureAnalyzer:
                 'leadership_theme': leadership_theme,
                 'leadership_concentrated': leadership_concentrated,
                 'leadership_rotation': leadership_rotation,
-                'leadership_quality': "STRONG" if len(leading_sectors) >= 2 and not leadership_rotation else "WEAK""
+                'leadership_quality': "STRONG" if len(leading_sectors) >= 2 and not leadership_rotation else "WEAK"
             }
             
         except Exception as e:
@@ -303,7 +303,7 @@ class AdvancedMarketStructureAnalyzer:
             
         except Exception as e:
             logger.error(f"Market regime determination error: {e}")
-            return "UNCERTAINTY""
+            return "UNCERTAINTY"
     
     def _identify_rotation_theme(self, sector_rotation: Dict[str, SectorData]) -> str:
         """Identify current sector rotation theme"""
@@ -329,23 +329,23 @@ class AdvancedMarketStructureAnalyzer:
             
             # Determine rotation theme
             if growth_in_top >= 2:
-                return "GROWTH_MOMENTUM""
+                return "GROWTH_MOMENTUM"
             elif value_in_top >= 2:
-                return "VALUE_ROTATION""
+                return "VALUE_ROTATION"
             elif defensive_in_top >= 2:
-                return "DEFENSIVE_ROTATION""
+                return "DEFENSIVE_ROTATION"
             elif cyclical_in_top >= 2:
-                return "CYCLICAL_ROTATION""
+                return "CYCLICAL_ROTATION"
             elif 'Technology' in top_3 and 'Financials' in bottom_3:
-                return "TECH_TO_VALUE""
+                return "TECH_TO_VALUE"
             elif 'Financials' in top_3 and 'Technology' in bottom_3:
-                return "VALUE_TO_TECH""
+                return "VALUE_TO_TECH"
             else:
-                return "MIXED_ROTATION""
+                return "MIXED_ROTATION"
                 
         except Exception as e:
             logger.error(f"Rotation theme identification error: {e}")
-            return "UNCLEAR_ROTATION""
+            return "UNCLEAR_ROTATION"
     
     def _calculate_structure_score(self, breadth_signal: BreadthSignal,
                                   sector_rotation: Dict[str, SectorData],
@@ -441,17 +441,17 @@ class AdvancedMarketStructureAnalyzer:
             weak_count = sum(1 for f in weak_factors if f in quality_factors)
             
             if strong_count >= 2 and weak_count == 0:
-                return "STRONG""
+                return "STRONG"
             elif strong_count >= 1 and weak_count <= 1:
-                return "MODERATE""
+                return "MODERATE"
             elif weak_count >= 2:
-                return "DETERIORATING""
+                return "DETERIORATING"
             else:
-                return "WEAK""
+                return "WEAK"
                 
         except Exception as e:
             logger.error(f"Momentum quality assessment error: {e}")
-            return "UNKNOWN""
+            return "UNKNOWN"
     
     def _perform_risk_assessment(self, breadth_signal: BreadthSignal,
                                 sector_rotation: Dict[str, SectorData],
@@ -459,45 +459,45 @@ class AdvancedMarketStructureAnalyzer:
         """Perform market structure risk assessment"""
         try:
             risk_factors = []
-            risk_level = "LOW""
+            risk_level = "LOW"
             
             # Breadth risks
             if breadth_signal.breadth_divergence:
                 risk_factors.append("Market breadth diverging from price")
-                risk_level = "MEDIUM""
+                risk_level = "MEDIUM"
             
             if breadth_signal.market_participation == "NARROW":
                 risk_factors.append("Narrow market participation")
-                risk_level = "MEDIUM""
+                risk_level = "MEDIUM"
             
             # Sector concentration risks
             top_sector_performance = max(s.relative_strength for s in sector_rotation.values())
             if top_sector_performance > 15:  # >15% outperformance
                 risk_factors.append("Excessive sector concentration")
-                risk_level = "MEDIUM""
+                risk_level = "MEDIUM"
             
             # Rotation risks
             defensive_outperformance = any(s.relative_strength > 5 for s in sector_rotation.values() 
-                                         if s.sector in ['Utilities', 'Consumer Staples']):
+                                         if s.sector in ['Utilities', 'Consumer Staples'])
             if defensive_outperformance and market_regime != "RISK_OFF":
                 risk_factors.append("Defensive sectors outperforming in risk-on environment")
-                risk_level = "MEDIUM""
+                risk_level = "MEDIUM"
             
             # Momentum deterioration
             negative_momentum_sectors = sum(1 for s in sector_rotation.values() if s.momentum_score < 40)
             if negative_momentum_sectors >= len(sector_rotation) * 0.6:  # >60% weak momentum
                 risk_factors.append("Broad momentum deterioration")
-                risk_level = "HIGH""
+                risk_level = "HIGH"
             
             # Set risk level based on factors
             if len(risk_factors) >= 3:
-                risk_level = "HIGH""
+                risk_level = "HIGH"
             elif len(risk_factors) >= 2:
-                risk_level = "MEDIUM""
+                risk_level = "MEDIUM"
             elif len(risk_factors) >= 1:
-                risk_level = "LOW""
+                risk_level = "LOW"
             else:
-                risk_level = "MINIMAL""
+                risk_level = "MINIMAL"
             
             return {
                 'risk_level': risk_level,
@@ -533,17 +533,17 @@ class AdvancedMarketStructureAnalyzer:
             
             # Determine health level
             if health_score >= 80:
-                return "HEALTHY""
+                return "HEALTHY"
             elif health_score >= 60:
-                return "CAUTION""
+                return "CAUTION"
             elif health_score >= 40:
-                return "UNHEALTHY""
+                return "UNHEALTHY"
             else:
-                return "DETERIORATING""
+                return "DETERIORATING"
                 
         except Exception as e:
             logger.error(f"Market health analysis error: {e}")
-            return "UNKNOWN""
+            return "UNKNOWN"
     
     def _assess_participation_quality(self, breadth_signal: BreadthSignal,
                                      sector_rotation: Dict[str, SectorData]) -> str:
@@ -557,19 +557,19 @@ class AdvancedMarketStructureAnalyzer:
             ad_ratio = breadth_signal.advance_decline_ratio
             
             if participation_rate > 0.7 and ad_ratio > 1.3:
-                return "EXCELLENT_BROAD_PARTICIPATION""
+                return "EXCELLENT_BROAD_PARTICIPATION"
             elif participation_rate > 0.6 and ad_ratio > 1.1:
-                return "GOOD_PARTICIPATION""
+                return "GOOD_PARTICIPATION"
             elif participation_rate > 0.4 and ad_ratio > 0.9:
-                return "MODERATE_PARTICIPATION""
+                return "MODERATE_PARTICIPATION"
             elif participation_rate < 0.3 or ad_ratio < 0.7:
-                return "POOR_NARROW_PARTICIPATION""
+                return "POOR_NARROW_PARTICIPATION"
             else:
-                return "MIXED_PARTICIPATION""
+                return "MIXED_PARTICIPATION"
                 
         except Exception as e:
             logger.error(f"Participation quality assessment error: {e}")
-            return "UNKNOWN""
+            return "UNKNOWN"
     
     def _identify_rotation_opportunities(self, sector_rotation: Dict[str, SectorData],
                                         rotation_theme: str) -> List[str]:
@@ -603,7 +603,7 @@ class AdvancedMarketStructureAnalyzer:
             
             # Contrarian opportunities
             underperforming_sectors = [s for s, d in sorted_sectors[-3:] 
-                                     if d.momentum_score < 30 and d.relative_strength < -5]:
+                                     if d.momentum_score < 30 and d.relative_strength < -5]
             for sector_name, _ in underperforming_sectors:
                 opportunities.append(f"🔄 Contrarian opportunity: {sector_name} oversold")
             
@@ -742,9 +742,9 @@ class AdvancedMarketStructureAnalyzer:
             
             # Rotation durability
             if market_signal.rotation_theme in ["GROWTH_MOMENTUM", "VALUE_ROTATION"]:
-                trends['rotation_durability'] = "STRONG" if market_signal.structure_score > 70 else "WEAK""
+                trends['rotation_durability'] = "STRONG" if market_signal.structure_score > 70 else "WEAK"
             else:
-                trends['rotation_durability'] = "UNCERTAIN""
+                trends['rotation_durability'] = "UNCERTAIN"
             
             # Leadership sustainability
             leadership_quality = market_signal.leadership_analysis.get('leadership_quality', 'UNKNOWN')
@@ -752,15 +752,15 @@ class AdvancedMarketStructureAnalyzer:
             
             # Regime stability
             if market_signal.structure_score > 75:
-                trends['regime_stability'] = "STABLE""
+                trends['regime_stability'] = "STABLE"
             elif market_signal.structure_score < 45:
-                trends['regime_stability'] = "UNSTABLE""
+                trends['regime_stability'] = "UNSTABLE"
             else:
-                trends['regime_stability'] = "TRANSITIONAL""
+                trends['regime_stability'] = "TRANSITIONAL"
             
             # Institutional engagement
             inst_sentiment = market_signal.institutional_flow.get('sentiment', 'NEUTRAL')
-            trends['institutional_engagement'] = "HIGH" if inst_sentiment == "BULLISH" else "LOW" if inst_sentiment == "BEARISH" else "MODERATE""
+            trends['institutional_engagement'] = "HIGH" if inst_sentiment == "BULLISH" else "LOW" if inst_sentiment == "BEARISH" else "MODERATE"
             
             return trends
             
@@ -810,7 +810,7 @@ class AdvancedMarketStructureAnalyzer:
                 rotation_signal="NEUTRAL",
                 leadership_rank=6,
                 volume_ratio=1.0,
-                institutional_activity="NEUTRAL""
+                institutional_activity="NEUTRAL"
             )
         
         fallback_signal = MarketStructureSignal(
@@ -880,11 +880,11 @@ class BreadthAnalyzer:
             
             # Market participation assessment
             if advancing_ratio > 0.7:
-                participation = "BROAD""
+                participation = "BROAD"
             elif advancing_ratio < 0.4:
-                participation = "NARROW""
+                participation = "NARROW"
             else:
-                participation = "MIXED""
+                participation = "MIXED"
             
             # Strength score
             strength_score = advancing_ratio * 100
@@ -1019,11 +1019,11 @@ class SectorRotationAnalyzer:
             
             # Rotation signal
             if relative_strength > 2 and momentum_score > 60:
-                rotation_signal = "INFLOW""
+                rotation_signal = "INFLOW"
             elif relative_strength < -2 and momentum_score < 40:
-                rotation_signal = "OUTFLOW""
+                rotation_signal = "OUTFLOW"
             else:
-                rotation_signal = "NEUTRAL""
+                rotation_signal = "NEUTRAL"
             
             # Volume ratio (institutional activity proxy)
             volume_ratio = random.uniform(0.8, 1.5)
@@ -1032,11 +1032,11 @@ class SectorRotationAnalyzer:
             
             # Institutional activity
             if volume_ratio > 1.3 and abs(relative_strength) > 1:
-                institutional_activity = "HIGH""
+                institutional_activity = "HIGH"
             elif volume_ratio < 0.9:
-                institutional_activity = "LOW""
+                institutional_activity = "LOW"
             else:
-                institutional_activity = "MODERATE""
+                institutional_activity = "MODERATE"
             
             return {
                 '1d': round(performance_1d, 2),
@@ -1054,7 +1054,7 @@ class SectorRotationAnalyzer:
             return {
                 '1d': 0.0, '5d': 0.0, '1m': 0.0, 'relative_strength': 0.0,
                 'momentum_score': 50.0, 'rotation_signal': 'NEUTRAL',
-                'volume_ratio': 1.0, 'institutional_activity': 'MODERATE'"
+                'volume_ratio': 1.0, 'institutional_activity': 'MODERATE'
             }
 
 class InstitutionalFlowAnalyzer:
@@ -1074,26 +1074,26 @@ class InstitutionalFlowAnalyzer:
             avg_volume = 25000000  # Rough average
             volume_ratio = volume / avg_volume if avg_volume > 0 else 1.0
             
-            institutional_sentiment = "NEUTRAL""
-            flow_strength = "MODERATE""
+            institutional_sentiment = "NEUTRAL"
+            flow_strength = "MODERATE"
             
             if volume_ratio > 1.5:
                 if abs(change_percent) < 1:  # High volume, small move
                     if change_percent > 0:
-                        institutional_sentiment = "ACCUMULATING""
-                        flow_strength = "STRONG""
+                        institutional_sentiment = "ACCUMULATING"
+                        flow_strength = "STRONG"
                     else:
-                        institutional_sentiment = "DISTRIBUTING""
-                        flow_strength = "STRONG""
+                        institutional_sentiment = "DISTRIBUTING"
+                        flow_strength = "STRONG"
                 elif abs(change_percent) > 2:  # High volume, big move
-                    institutional_sentiment = "MOMENTUM" if change_percent > 0 else "SELLING""
-                    flow_strength = "VERY_STRONG""
+                    institutional_sentiment = "MOMENTUM" if change_percent > 0 else "SELLING"
+                    flow_strength = "VERY_STRONG"
             
             # Aggregate sector institutional activity
             high_inst_activity_sectors = sum(1 for s in sector_rotation.values() 
-                                           if s.institutional_activity == "HIGH"):
+                                           if s.institutional_activity == "HIGH")
             
-            sector_flow_bias = "BULLISH" if high_inst_activity_sectors >= 4 else "BEARISH" if high_inst_activity_sectors <= 2 else "NEUTRAL""
+            sector_flow_bias = "BULLISH" if high_inst_activity_sectors >= 4 else "BEARISH" if high_inst_activity_sectors <= 2 else "NEUTRAL"
             
             # Dark pool activity (simulated)
             dark_pool_ratio = random.uniform(0.25, 0.45)  # 25-45% of volume
@@ -1105,7 +1105,7 @@ class InstitutionalFlowAnalyzer:
                 'sector_bias': sector_flow_bias,
                 'dark_pool_ratio': round(dark_pool_ratio, 3),
                 'active_sectors': high_inst_activity_sectors,
-                'flow_direction': "INFLOW" if institutional_sentiment in ["ACCUMULATING", "MOMENTUM"] else "OUTFLOW" if institutional_sentiment in ["DISTRIBUTING", "SELLING"] else "NEUTRAL""
+                'flow_direction': "INFLOW" if institutional_sentiment in ["ACCUMULATING", "MOMENTUM"] else "OUTFLOW" if institutional_sentiment in ["DISTRIBUTING", "SELLING"] else "NEUTRAL"
             }
             
         except Exception as e:
@@ -1192,22 +1192,22 @@ class MarketMicrostructureAnalyzer:
     
     def _assess_price_discovery(self, change_percent: float, volume: int, spread_bps: float) -> str:
         """Assess price discovery quality"""
-        volume_quality = "GOOD" if volume > 15000000 else "MODERATE" if volume > 5000000 else "POOR""
-        spread_quality = "GOOD" if spread_bps < 3 else "MODERATE" if spread_bps < 6 else "POOR""
-        movement_quality = "GOOD" if abs(change_percent) < 3 else "MODERATE" if abs(change_percent) < 6 else "POOR""
+        volume_quality = "GOOD" if volume > 15000000 else "MODERATE" if volume > 5000000 else "POOR"
+        spread_quality = "GOOD" if spread_bps < 3 else "MODERATE" if spread_bps < 6 else "POOR"
+        movement_quality = "GOOD" if abs(change_percent) < 3 else "MODERATE" if abs(change_percent) < 6 else "POOR"
         
         quality_scores = [volume_quality, spread_quality, movement_quality]
         good_count = quality_scores.count("GOOD")
         poor_count = quality_scores.count("POOR")
         
         if good_count >= 2 and poor_count == 0:
-            return "EXCELLENT""
+            return "EXCELLENT"
         elif good_count >= 1 and poor_count <= 1:
-            return "GOOD""
+            return "GOOD"
         elif poor_count <= 1:
-            return "MODERATE""
+            return "MODERATE"
         else:
-            return "POOR""
+            return "POOR"
     
     def _assess_microstructure_health(self, spread_bps: float, liquidity_score: float, price_discovery: str) -> str:
         """Assess overall microstructure health"""
@@ -1231,19 +1231,19 @@ class MarketMicrostructureAnalyzer:
         health_score += discovery_scores.get(price_discovery, 0)
         
         if health_score >= 80:
-            return "EXCELLENT""
+            return "EXCELLENT"
         elif health_score >= 60:
-            return "GOOD""
+            return "GOOD"
         elif health_score >= 40:
-            return "MODERATE""
+            return "MODERATE"
         else:
-            return "POOR""
+            return "POOR"
 
 # Export main classes
 __all__ = [
     'AdvancedMarketStructureAnalyzer', 'MarketStructureAnalysis', 'MarketStructureSignal',
     'BreadthAnalyzer', 'SectorRotationAnalyzer', 'InstitutionalFlowAnalyzer',
-    'MarketMicrostructureAnalyzer', 'SectorData', 'BreadthSignal'"
+    'MarketMicrostructureAnalyzer', 'SectorData', 'BreadthSignal'
 ]
 
 logger.info("🏗️ Advanced Market Structure Analysis module loaded successfully")
