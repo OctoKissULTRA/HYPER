@@ -10,6 +10,8 @@ from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Query
+import dateutil.parser
 import uvicorn
 
 # Import configuration and components
@@ -399,9 +401,6 @@ async def run_backtest(days: int = 7):
         return await hyper_state.testing_api.run_quick_backtest(days)
     else:
         raise HTTPException(status_code=503, detail="Testing framework not available")
-
-from fastapi import Query
-import dateutil.parser
 
 @app.get("/api/historical/{symbol}")
 async def get_historical_data(
