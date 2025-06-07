@@ -11,13 +11,14 @@ ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
 DEBUG_MODE = ENVIRONMENT == "development"
 
 # Alpaca API Configuration
+TRADING_MODE = os.getenv("TRADING_MODE", "paper").lower()  # 'paper' or 'live'
 ALPACA_CONFIG = {
-    "api_key": os.getenv("APCA_API_KEY_ID", "PK2AML2QK9VUI5J1G1BC"),
+    "api_key": os.getenv("APCA_API_KEY_ID", ""),
     "secret_key": os.getenv("APCA_API_SECRET_KEY", ""),
-    "base_url": "https://paper-api.alpaca.markets" if os.getenv("USE_SANDBOX", "True").lower() == "true" else "https://api.alpaca.markets",
-    "data_url": "https://data.alpaca.markets",
-    "stream_url": "wss://stream.data.alpaca.markets",
-    "use_sandbox": os.getenv("USE_SANDBOX", "True").lower() == "true"
+    "base_url": "https://api.alpaca.markets/v2" if TRADING_MODE == "live" else "https://paper-api.alpaca.markets/v2",
+    "data_url": "https://data.alpaca.markets/v2",
+    "stream_url": "wss://stream.data.alpaca.markets/v2/sip",
+    "trading_mode": TRADING_MODE,
 }
 
 # List of tracked tickers
@@ -61,7 +62,6 @@ ENABLED_MODULES = {
     "ml_learning": True,
 }
 
-# Check if a feature/module is enabled
 def is_feature_enabled(feature_name: str) -> bool:
     return ENABLED_MODULES.get(feature_name, False)
 
@@ -251,26 +251,18 @@ def get_alpaca_credentials() -> Dict[str, str]:
         "data_url": ALPACA_CONFIG["data_url"],
     }
 
-def has_alpaca_credentials() -> bool:
-    """Check if Alpaca credentials are configured"""
-    return bool(ALPACA_CONFIG["api_key"] and (
-        ALPACA_CONFIG["secret_key"] or ALPACA_CONFIG["use_sandbox"]
-    ))
-
 def get_data_source_status() -> str:
     """Get current data source status"""
-    if has_alpaca_credentials():
-        env_type = "Paper Trading" if ALPACA_CONFIG["use_sandbox"] else "Live Trading"
+    if ALPACA_CONFIG["api_key"] and ALPACA_CONFIG["secret_key"]:
+        env_type = "Live Trading" if TRADING_MODE == "live" else "Paper Trading"
         return f"Alpaca Markets ({env_type})"
     else:
         return "Simulation Mode"
 
 def is_production() -> bool:
-    """Check if running in production"""
     return ENVIRONMENT == "production"
 
 def is_development() -> bool:
-    """Check if running in development"""
     return ENVIRONMENT == "development"
 
 # Initialize logging
