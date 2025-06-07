@@ -28,8 +28,8 @@ from model_testing import ModelTester, TestingAPI
 # ========================================
 
 logging.basicConfig(
-    level=getattr(logging, config.LOGGING_CONFIG.get("level", "INFO")),
-    format=config.LOGGING_CONFIG.get("format", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    level=getattr(logging, getattr(config, "LOG_LEVEL", "INFO")),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
