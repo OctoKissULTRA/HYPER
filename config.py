@@ -23,3 +23,9 @@ ALPACA_CONFIG = {
 
 # List of tracked tickers
 TICKERS = ["QQQ", "SPY", "NVDA", "AAPL", "MSFT"]
+
+def is_development():
+    return ENVIRONMENT == "development"
+
+def is_production():
+    return ENVIRONMENT == "production"
