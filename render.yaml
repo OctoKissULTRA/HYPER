@@ -31,9 +31,9 @@ services:
   - key: APCA_API_KEY_ID
     value: "PK2AML2QK9VUI5J1G1BC"
   - key: APCA_API_SECRET_KEY
-    value: ""
+    value: "3IDsz3oeGliJeBG9h35V8OAAcjDH6hqMLoJDXpif"
   - key: USE_SANDBOX
-    value: "true"
+    value: "false"
 
   # Performance Settings
   - key: WORKERS
