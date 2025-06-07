@@ -1,0 +1,53 @@
+# Python bytecode & cache
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.code-workspace
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Environment and config
+.env
+.env.*
+environment.py
+config.py
+config.py.local
+config_local.py
+
+# Render/Alpaca/API secrets
+render.yaml.local
+apca_*.json
+*alpaca_*.json
+*.secret
+*.token
+*.pem
+*.key
+
+# Data, logs, and DBs
+data/
+*.sqlite3
+*.db
+*.sqlite
+*.log
+logs/
+log/
+
+# Test/output
+htmlcov/
+.coverage
+.cache/
+*.bak
+*.tmp
+*.old
+*.backup
+
+# Node/JS (if any)
+node_modules/
+dist/
+build/
