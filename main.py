@@ -156,7 +156,6 @@ async def background_initialization():
         # Initialize data aggregator
         logger.info("Initializing Alpaca data aggregator...")
         hyper_state.data_aggregator = HYPERDataAggregator()
-        await hyper_state.data_aggregator.initialize()
         
         # Initialize signal engine
         logger.info("Initializing signal engine...")
