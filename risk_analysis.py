@@ -111,7 +111,7 @@ class AdvancedRiskAnalyzer:
         """Complete risk analysis"""
         try:
             # Check cache first
-            cache_key = f"risk_{symbol}_{time.time() // self.cache_duration}""
+            cache_key = f"risk_{symbol}_{time.time() // self.cache_duration}"
             if cache_key in self.risk_cache:
                 logger.debug("📋 Using cached risk analysis")
                 return self.risk_cache[cache_key]
@@ -287,11 +287,11 @@ class AdvancedRiskAnalyzer:
             
             # Concentration risk assessment
             if position_size_recommendation > 0.15:
-                concentration_risk = "HIGH""
+                concentration_risk = "HIGH"
             elif position_size_recommendation > 0.10:
-                concentration_risk = "MODERATE""
+                concentration_risk = "MODERATE"
             else:
-                concentration_risk = "LOW""
+                concentration_risk = "LOW"
             
             return PositionRisk(
                 position_size_recommendation=round(position_size_recommendation, 4),
@@ -320,11 +320,11 @@ class AdvancedRiskAnalyzer:
             
             # Correlation risk
             if abs(risk_metrics.correlation_spy) > 0.8:
-                correlation_risk = "HIGH""
+                correlation_risk = "HIGH"
             elif abs(risk_metrics.correlation_spy) > 0.6:
-                correlation_risk = "MODERATE""
+                correlation_risk = "MODERATE"
             else:
-                correlation_risk = "LOW""
+                correlation_risk = "LOW"
             
             # Sector concentration (simulated)
             sector_concentration = {
@@ -421,13 +421,13 @@ class AdvancedRiskAnalyzer:
         extreme_anomalies = sum(1 for a in anomaly_signals if a.severity == "EXTREME")
         
         if extreme_anomalies > 0 or risk_score >= 85:
-            return "EXTREME""
+            return "EXTREME"
         elif risk_score >= 70:
-            return "HIGH""
+            return "HIGH"
         elif risk_score >= 45:
-            return "MODERATE""
+            return "MODERATE"
         else:
-            return "LOW""
+            return "LOW"
     
     def _generate_risk_warnings(self, risk_metrics: RiskMetrics, 
                                position_risk: PositionRisk,
@@ -678,7 +678,7 @@ class AdvancedRiskAnalyzer:
             probability_of_loss=0.45,
             expected_return=0.08,
             risk_budget_allocation=0.0025,
-            concentration_risk="MODERATE""
+            concentration_risk="MODERATE"
         )
     
     def _generate_fallback_portfolio_risk(self) -> PortfolioRisk:
@@ -759,7 +759,7 @@ class MLAnomalyDetector:
                     description=f"Extreme price movement: {change_percent:+.1f}%",
                     probability=0.02,  # 2% probability of such moves
                     historical_precedent=True,
-                    recommended_action="Monitor closely, consider reducing position""
+                    recommended_action="Monitor closely, consider reducing position"
                 ))
             
             # Volume anomaly detection
@@ -774,7 +774,7 @@ class MLAnomalyDetector:
                     description=f"Extreme volume: {volume_ratio:.1f}x normal",
                     probability=0.05,
                     historical_precedent=True,
-                    recommended_action="Investigate news catalyst""
+                    recommended_action="Investigate news catalyst"
                 ))
             
             return anomalies
