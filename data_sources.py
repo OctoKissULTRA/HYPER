@@ -42,18 +42,19 @@ class AlpacaDataClient:
     def get_historical_bars_fallback(
         self,
         symbol: str,
-        timeframe: str = "1Min",
-        limit: int = 390,  # up to 1 trading day of minute bars
-        days: int = 365    # up to 1 year
+        timeframe: str = "1Day",
+        start: Optional[str] = None,
+        end: Optional[str] = None,
+        limit: int = 100
     ) -> List[Dict[str, Any]]:
-        now = datetime.utcnow()
-        start_date = now - timedelta(days=days)
         params = {
             "timeframe": timeframe,
-            "limit": limit,
-            "start": start_date.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "end": now.strftime("%Y-%m-%dT%H:%M:%SZ")
+            "limit": limit
         }
+        if start:
+            params["start"] = start
+        if end:
+            params["end"] = end
         endpoint = f"{self.data_url}/stocks/{symbol}/bars"
         resp = self.session.get(endpoint, headers=self.headers, params=params)
         if resp.status_code == 200:
@@ -63,57 +64,59 @@ class AlpacaDataClient:
         logger.warning(f"No historical bars for {symbol} using Alpaca fallback!")
         return []
 
+class MockMarketSimulator:
+    def __init__(self, tickers: List[str]):
+        self.tickers = tickers
+
+    def get_historical_data(self, symbol: str, timeframe: str = "1Day", limit: int = 100) -> List[Dict[str, Any]]:
+        bars = []
+        base = round(random.uniform(100, 600), 2)
+        interval = 86400 if timeframe.endswith("Day") else 60
+        for i in range(limit):
+            bars.append({
+                "c": round(base + random.uniform(-2, 2), 2),
+                "t": int(time.time()) - i * interval
+            })
+        return bars
+
 class HYPERDataAggregator:
     def __init__(self, config: Dict[str, Any] = ALPACA_CONFIG):
-        self.client = AlpacaDataClient(config)
+        self.alpaca = AlpacaDataClient(config)
+        self.simulator = MockMarketSimulator(TICKERS)
         self.tickers = TICKERS
 
     async def initialize(self):
-        # No async setup needed for now, but keeps main.py happy
         pass
 
     async def get_comprehensive_data(self, symbol: str) -> dict:
-        """
-        Gathers latest quote, historical bars, and placeholder trends for the given symbol.
-        Returns a dictionary as expected by signal engine.
-        """
-        bar = self.client.get_latest_bar(symbol)
-        quote = self.client.get_latest_quote(symbol)
-        historical = self.client.get_historical_bars_fallback(symbol, timeframe="1Min", limit=390)
-        trends = {}  # Placeholder for trends/news; plug in your real logic here.
+        bar = self.alpaca.get_latest_bar(symbol)
+        quote = self.alpaca.get_latest_quote(symbol)
+        historical = self.alpaca.get_historical_bars_fallback(symbol, timeframe="1Min", limit=390)
+        trends = {}
         return {
             "quote": quote,
             "historical": historical,
             "trends": trends,
         }
 
-    def get_historical_data(self, symbol: str, timeframe: str = "1Min", limit: int = 100) -> List[Dict[str, Any]]:
-        bars = self.client.get_historical_bars_fallback(symbol, timeframe=timeframe, limit=limit)
+    async def get_historical_data_api(self, symbol, timeframe="1Day", start=None, end=None, limit=100):
+        bars = self.alpaca.get_historical_bars_fallback(
+            symbol,
+            timeframe=timeframe,
+            start=start,
+            end=end,
+            limit=limit
+        )
+        if not bars:
+            bars = self.simulator.get_historical_data(symbol, timeframe, limit)
+        return bars
+
+    def get_historical_data(self, symbol: str, timeframe: str = "1Day", limit: int = 100) -> List[Dict[str, Any]]:
+        bars = self.alpaca.get_historical_bars_fallback(symbol, timeframe=timeframe, limit=limit)
         if bars:
             return bars
         logger.warning(f"No historical bars for {symbol}, falling back to simulation")
-        return MockMarketSimulator([symbol]).get_historical_data(symbol, timeframe, limit)
+        return self.simulator.get_historical_data(symbol, timeframe, limit)
 
     async def cleanup(self):
-        # Optional: if you want to close the session or do other cleanup
-        self.client.session.close()
-
-class MockMarketSimulator:
-    def __init__(self, tickers: List[str]):
-        self.tickers = tickers
-
-    def get_historical_data(self, symbol: str, timeframe: str = "1Min", limit: int = 100) -> List[Dict[str, Any]]:
-        bars = []
-        base = round(random.uniform(100, 600), 2)
-        for i in range(limit):
-            bars.append({
-                "c": round(base + random.uniform(-2, 2), 2),
-                "t": int(time.time()) - i*60
-            })
-        return bars
-
-__all__ = [
-    "AlpacaDataClient",
-    "HYPERDataAggregator",
-    "MockMarketSimulator"
-]
+        self.alpaca.session.close()
