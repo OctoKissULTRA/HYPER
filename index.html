@@ -1,8 +1,876 @@
-<html>
-  <head><title>HYPERtrends</title></head>
-  <body>
-    <header>
-      <span id="data-source">ALPACA MATRIX</span>
-    </header>
-  </body>
-</html>
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYPERtrends v4.0 - Neural Trading Matrix</title>
+
+```
+<!-- Chart.js for real-time charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+<!-- Custom Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        /* Cyberpunk Color Palette */
+        --cyber-bg: #0a0a0a;
+        --cyber-surface: #111111;
+        --cyber-card: #1a1a1a;
+        --cyber-cyan: #00ffff;
+        --cyber-purple: #ff00ff;
+        --cyber-blue: #0066ff;
+        --cyber-green: #00ff41;
+        --cyber-red: #ff073a;
+        --cyber-orange: #ff6b00;
+        --cyber-yellow: #ffff00;
+        --cyber-text: #e0e0e0;
+        --cyber-text-dim: #888888;
+        --cyber-border: #333333;
+        --cyber-gradient-primary: linear-gradient(135deg, #00ffff 0%, #0066ff 50%, #ff00ff 100%);
+        --cyber-gradient-danger: linear-gradient(135deg, #ff073a 0%, #ff6b00 100%);
+        --cyber-gradient-success: linear-gradient(135deg, #00ff41 0%, #00ffff 100%);
+        
+        /* Shadows and Effects */
+        --cyber-glow-cyan: 0 0 20px rgba(0, 255, 255, 0.5);
+        --cyber-glow-purple: 0 0 20px rgba(255, 0, 255, 0.5);
+        --cyber-glow-blue: 0 0 20px rgba(0, 102, 255, 0.5);
+        --cyber-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background: var(--cyber-bg);
+        color: var(--cyber-text);
+        font-family: 'Rajdhani', monospace;
+        overflow-x: hidden;
+        min-height: 100vh;
+    }
+
+    /* Animated Grid Background */
+    .cyber-grid {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: gridPulse 4s ease-in-out infinite;
+        z-index: -1;
+    }
+
+    @keyframes gridPulse {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.1; }
+    }
+
+    /* Header */
+    .header {
+        background: rgba(17, 17, 17, 0.95);
+        backdrop-filter: blur(10px);
+        border-bottom: 2px solid var(--cyber-cyan);
+        padding: 1rem 2rem;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        box-shadow: var(--cyber-shadow);
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    .logo {
+        font-family: 'Orbitron', monospace;
+        font-size: 2rem;
+        font-weight: 900;
+        background: var(--cyber-gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: var(--cyber-glow-cyan);
+        animation: logoGlow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes logoGlow {
+        from { filter: drop-shadow(0 0 5px var(--cyber-cyan)); }
+        to { filter: drop-shadow(0 0 15px var(--cyber-cyan)); }
+    }
+
+    .status-bar {
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+    }
+
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--cyber-green);
+        box-shadow: var(--cyber-glow-cyan);
+        animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.2); }
+    }
+
+    /* Main Container */
+    .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 2rem;
+        display: grid;
+        grid-template-columns: 300px 1fr 350px;
+        grid-template-rows: auto 1fr;
+        gap: 2rem;
+        min-height: calc(100vh - 120px);
+    }
+
+    /* Control Panel */
+    .control-panel {
+        grid-row: 1 / -1;
+        background: rgba(26, 26, 26, 0.9);
+        border: 1px solid var(--cyber-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: var(--cyber-shadow);
+    }
+
+    .panel-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--cyber-cyan);
+        margin-bottom: 1.5rem;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Symbol Selector */
+    .symbol-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .symbol-btn {
+        background: var(--cyber-card);
+        border: 1px solid var(--cyber-border);
+        color: var(--cyber-text);
+        padding: 0.75rem;
+        border-radius: 8px;
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+
+    .symbol-btn:hover {
+        border-color: var(--cyber-cyan);
+        box-shadow: var(--cyber-glow-cyan);
+        transform: translateY(-2px);
+    }
+
+    .symbol-btn.active {
+        background: var(--cyber-gradient-primary);
+        color: var(--cyber-bg);
+        box-shadow: var(--cyber-glow-cyan);
+    }
+
+    /* Time Intervals */
+    .time-intervals {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .time-btn {
+        background: var(--cyber-surface);
+        border: 1px solid var(--cyber-border);
+        color: var(--cyber-text);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        flex: 1;
+        text-align: center;
+    }
+
+    .time-btn:hover {
+        border-color: var(--cyber-blue);
+        box-shadow: 0 0 10px rgba(0, 102, 255, 0.3);
+    }
+
+    .time-btn.active {
+        background: var(--cyber-blue);
+        color: white;
+        box-shadow: var(--cyber-glow-blue);
+    }
+
+    /* Component Status */
+    .component-status {
+        margin-bottom: 2rem;
+    }
+
+    .component-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: var(--cyber-surface);
+        border-radius: 6px;
+        border-left: 3px solid var(--cyber-green);
+    }
+
+    .component-name {
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .component-status-indicator {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-active {
+        background: var(--cyber-green);
+        color: var(--cyber-bg);
+    }
+
+    /* Chart Area */
+    .chart-area {
+        background: rgba(26, 26, 26, 0.9);
+        border: 1px solid var(--cyber-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: var(--cyber-shadow);
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .chart-title {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--cyber-cyan);
+    }
+
+    .price-display {
+        text-align: right;
+    }
+
+    .current-price {
+        font-family: 'Orbitron', monospace;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--cyber-green);
+    }
+
+    .price-change {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .price-up { color: var(--cyber-green); }
+    .price-down { color: var(--cyber-red); }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: 1rem;
+    }
+
+    /* Signal Cards */
+    .signals-panel {
+        grid-row: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .signal-card {
+        background: rgba(26, 26, 26, 0.9);
+        border: 1px solid var(--cyber-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        backdrop-filter: blur(10px);
+        box-shadow: var(--cyber-shadow);
+        transition: all 0.3s ease;
+    }
+
+    .signal-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9);
+    }
+
+    .signal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .signal-symbol {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--cyber-cyan);
+    }
+
+    .signal-type {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .signal-HYPER_BUY { background: var(--cyber-gradient-success); color: var(--cyber-bg); }
+    .signal-SOFT_BUY { background: var(--cyber-green); color: var(--cyber-bg); }
+    .signal-HOLD { background: var(--cyber-blue); color: white; }
+    .signal-SOFT_SELL { background: var(--cyber-orange); color: white; }
+    .signal-HYPER_SELL { background: var(--cyber-gradient-danger); color: white; }
+
+    .confidence-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--cyber-surface);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    .confidence-fill {
+        height: 100%;
+        background: var(--cyber-gradient-primary);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .signal-metrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .metric {
+        text-align: center;
+    }
+
+    .metric-label {
+        font-size: 0.8rem;
+        color: var(--cyber-text-dim);
+        margin-bottom: 0.25rem;
+    }
+
+    .metric-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--cyber-cyan);
+    }
+
+    /* Analytics Grid */
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .analytics-card {
+        background: rgba(17, 17, 17, 0.9);
+        border: 1px solid var(--cyber-border);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        backdrop-filter: blur(10px);
+    }
+
+    .analytics-title {
+        font-size: 0.8rem;
+        color: var(--cyber-text-dim);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+    }
+
+    .analytics-value {
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--cyber-cyan);
+    }
+
+    /* Loading Animation */
+    .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--cyber-surface);
+        border-radius: 50%;
+        border-top-color: var(--cyber-cyan);
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* VIX Fear/Greed Meter */
+    .fear-greed-meter {
+        background: var(--cyber-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .meter-title {
+        text-align: center;
+        font-family: 'Orbitron', monospace;
+        font-weight: 700;
+        color: var(--cyber-purple);
+        margin-bottom: 1rem;
+    }
+
+    .meter-gauge {
+        position: relative;
+        width: 200px;
+        height: 100px;
+        margin: 0 auto 1rem;
+    }
+
+    .gauge-bg {
+        width: 100%;
+        height: 50px;
+        background: linear-gradient(to right, var(--cyber-red), var(--cyber-orange), var(--cyber-yellow), var(--cyber-green), var(--cyber-cyan));
+        border-radius: 100px 100px 0 0;
+        position: relative;
+    }
+
+    .gauge-needle {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 4px;
+        height: 60px;
+        background: white;
+        transform-origin: bottom;
+        transform: translateX(-50%) rotate(0deg);
+        transition: transform 0.5s ease;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+    }
+
+    .meter-value {
+        text-align: center;
+        font-family: 'Orbitron', monospace;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--cyber-cyan);
+    }
+
+    /* Options Panel */
+    .options-panel {
+        background: var(--cyber-card);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .options-title {
+        font-family: 'Orbitron', monospace;
+        font-weight: 700;
+        color: var(--cyber-orange);
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    .option-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--cyber-border);
+    }
+
+    .option-item:last-child {
+        border-bottom: none;
+    }
+
+    .option-label {
+        font-size: 0.9rem;
+        color: var(--cyber-text-dim);
+    }
+
+    .option-value {
+        font-family: 'Orbitron', monospace;
+        font-weight: 600;
+        color: var(--cyber-text);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .container {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto auto;
+        }
+        
+        .control-panel,
+        .signals-panel {
+            grid-row: auto;
+        }
+        
+        .analytics-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .container {
+            padding: 1rem;
+            gap: 1rem;
+        }
+        
+        .header-content {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .status-bar {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .analytics-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+```
+
+</head>
+<body>
+    <div class="cyber-grid"></div>
+
+```
+<header class="header">
+    <div class="header-content">
+        <div class="logo">⚡ HYPERTRENDS</div>
+        <div class="status-bar">
+            <div class="status-item">
+                <div class="status-dot"></div>
+                <span id="connection-status">NEURAL LINK ACTIVE</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot" style="background: var(--cyber-purple);"></div>
+                <span id="data-source">ALPACA MATRIX</span>
+            </div>
+            <div class="status-item">
+                <div class="status-dot" style="background: var(--cyber-blue);"></div>
+                <span id="components-count">5 MODULES</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <!-- Control Panel -->
+    <div class="control-panel">
+        <h3 class="panel-title">⚡ NEURAL CONTROL</h3>
+        
+        <!-- Symbol Selection -->
+        <div class="symbol-grid">
+            <button class="symbol-btn active" data-symbol="QQQ">QQQ</button>
+            <button class="symbol-btn" data-symbol="SPY">SPY</button>
+            <button class="symbol-btn" data-symbol="NVDA">NVDA</button>
+            <button class="symbol-btn" data-symbol="AAPL">AAPL</button>
+            <button class="symbol-btn" data-symbol="MSFT">MSFT</button>
+        </div>
+
+        <!-- Time Intervals -->
+        <h4 style="color: var(--cyber-cyan); margin-bottom: 0.5rem; font-size: 0.9rem;">⏱ TIME MATRIX</h4>
+        <div class="time-intervals">
+            <button class="time-btn" data-interval="1m">1M</button>
+            <button class="time-btn" data-interval="5m">5M</button>
+            <button class="time-btn active" data-interval="15m">15M</button>
+            <button class="time-btn" data-interval="1h">1H</button>
+            <button class="time-btn" data-interval="4h">4H</button>
+            <button class="time-btn" data-interval="1d">1D</button>
+        </div>
+
+        <!-- VIX Fear/Greed Meter -->
+        <div class="fear-greed-meter">
+            <div class="meter-title">😱 FEAR/GREED INDEX</div>
+            <div class="meter-gauge">
+                <div class="gauge-bg"></div>
+                <div class="gauge-needle" id="fear-greed-needle"></div>
+            </div>
+            <div class="meter-value" id="fear-greed-value">50</div>
+        </div>
+
+        <!-- Options Panel -->
+        <div class="options-panel">
+            <div class="options-title">📊 OPTIONS FLOW</div>
+            <div class="option-item">
+                <span class="option-label">Call/Put Ratio</span>
+                <span class="option-value" id="call-put-ratio">1.23</span>
+            </div>
+            <div class="option-item">
+                <span class="option-label">IV Rank</span>
+                <span class="option-value" id="iv-rank">45%</span>
+            </div>
+            <div class="option-item">
+                <span class="option-label">Dark Pool Index</span>
+                <span class="option-value" id="dark-pool">38%</span>
+            </div>
+            <div class="option-item">
+                <span class="option-label">Gamma Exposure</span>
+                <span class="option-value" id="gamma-exposure">$2.1B</span>
+            </div>
+        </div>
+
+        <!-- Component Status -->
+        <h4 style="color: var(--cyber-cyan); margin-bottom: 0.5rem; font-size: 0.9rem;">🧠 MODULE STATUS</h4>
+        <div class="component-status" id="component-status">
+            <div class="component-item">
+                <span class="component-name">📊 Technical</span>
+                <span class="component-status-indicator status-active">ACTIVE</span>
+            </div>
+            <div class="component-item">
+                <span class="component-name">💭 Sentiment</span>
+                <span class="component-status-indicator status-active">ACTIVE</span>
+            </div>
+            <div class="component-item">
+                <span class="component-name">😱 VIX Analysis</span>
+                <span class="component-status-indicator status-active">ACTIVE</span>
+            </div>
+            <div class="component-item">
+                <span class="component-name">🏗️ Market Structure</span>
+                <span class="component-status-indicator status-active">ACTIVE</span>
+            </div>
+            <div class="component-item">
+                <span class="component-name">⚠️ Risk Analysis</span>
+                <span class="component-status-indicator status-active">ACTIVE</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Area -->
+    <div class="chart-area">
+        <div class="chart-header">
+            <div>
+                <h2 class="chart-title" id="chart-symbol">QQQ</h2>
+                <div style="font-size: 0.8rem; color: var(--cyber-text-dim);">INVESCO QQQ TRUST</div>
+            </div>
+            <div class="price-display">
+                <div class="current-price" id="current-price">$435.50</div>
+                <div class="price-change price-up" id="price-change">+1.25 (+0.29%)</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="priceChart"></canvas>
+        </div>
+
+        <!-- Analytics Grid -->
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <div class="analytics-title">CONFIDENCE</div>
+                <div class="analytics-value" id="avg-confidence">72%</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-title">SIGNALS TODAY</div>
+                <div class="analytics-value" id="signals-today">47</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-title">ACCURACY</div>
+                <div class="analytics-value" id="accuracy">74%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signals Panel -->
+    <div class="signals-panel" id="signals-panel">
+        <!-- Signal cards will be populated by JavaScript -->
+    </div>
+</div>
+
+<script>
+    // Global state
+    let websocket = null;
+    let currentSymbol = 'QQQ';
+    let currentInterval = '15m';
+    let priceChart = null;
+    let signals = {};
+    let fearGreedValue = 50;
+    
+    // Chart configuration
+    const chartConfig = {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Price',
+                data: [],
+                borderColor: '#00ffff',
+                backgroundColor: 'rgba(0, 255, 255, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#00ffff',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: 'minute'
+                    },
+                    grid: {
+                        color: 'rgba(0, 255, 255, 0.1)',
+                        borderColor: '#333333'
+                    },
+                    ticks: {
+                        color: '#888888',
+                        font: {
+                            family: 'Rajdhani'
+                        }
+                    }
+                },
+                y: {
+                    grid: {
+                        color: 'rgba(0, 255, 255, 0.1)',
+                        borderColor: '#333333'
+                    },
+                    ticks: {
+                        color: '#888888',
+                        font: {
+                            family: 'Rajdhani'
+                        }
+                    }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            },
+            animation: {
+                duration: 750,
+                easing: 'easeInOutQuart'
+            }
+        }
+    };
+
+    // Initialize application
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeChart();
+        initializeWebSocket();
+        bindEventListeners();
+        startDataUpdate();
+        generateInitialSignals();
+    });
+
+    function updatePriceDisplay(price, change, changePercent) {
+        const priceElement = document.getElementById('current-price');
+        const changeElement = document.getElementById('price-change');
+        
+        priceElement.textContent = `$${parseFloat(price).toFixed(2)}`;
+        
+        const changeText = `${change >= 0 ? '+' : ''}${change.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent}%)`;
+        changeElement.textContent = changeText;
+        changeElement.className = `price-change ${change >= 0 ? 'price-up' : 'price-down'}`;
+    }
+
+    function initializeWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        
+        try {
+            websocket = new WebSocket(wsUrl);
+            
+            websocket.onopen = function() {
+                console.log('WebSocket connected');
+                updateConnectionStatus('NEURAL LINK ACTIVE', 'connected');
+            };
+            
+            websocket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            websocket.onclose = function() {
+                console.log('WebSocket disconnected');
+                updateConnectionStatus('RECONNECTING...', 'disconnected');
+                setTimeout(initializeWebSocket, 3000);
+            };
+            
+            websocket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                updateConnectionStatus('CONNECTION ERROR', 'error');
+            };
+        } catch (error) {
+            console.log('WebSocket not available, using polling');
+            startPolling();
+        }
+    }
+
+    function handle
+```
