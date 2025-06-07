@@ -27,13 +27,22 @@ services:
   - key: HOST
     value: "0.0.0.0"
 
-  # Alpaca API Configuration
+  # ==== Alpaca API Keys and TRADING MODE ====
+  # --------- PAPER (default) ---------
+  - key: TRADING_MODE
+    value: "paper"
   - key: APCA_API_KEY_ID
     value: "PK2AML2QK9VUI5J1G1BC"
   - key: APCA_API_SECRET_KEY
     value: "3IDsz3oeGliJeBG9h35V8OAAcjDH6hqMLoJDXpif"
-  - key: USE_SANDBOX
-    value: "false"
+
+  # --------- LIVE (comment out paper above, uncomment below to use live trading) ---------
+  # - key: TRADING_MODE
+  #   value: "live"
+  # - key: APCA_API_KEY_ID
+  #   value: "<YOUR_LIVE_KEY_ID>"
+  # - key: APCA_API_SECRET_KEY
+  #   value: "<YOUR_LIVE_SECRET_KEY>"
 
   # Performance Settings
   - key: WORKERS
