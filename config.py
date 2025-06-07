@@ -24,6 +24,19 @@ ALPACA_CONFIG = {
 # List of tracked tickers
 TICKERS = ["QQQ", "SPY", "NVDA", "AAPL", "MSFT"]
 
+# Feature Flags for Module Enable/Disable
+ENABLED_MODULES = {
+    "technical_indicators": True,
+    "sentiment_analysis": True,
+    "vix_analysis": True,
+    "market_structure": True,
+    "risk_analysis": True,
+    "ml_learning": True,
+}
+
+def is_feature_enabled(feature_name: str) -> bool:
+    return ENABLED_MODULES.get(feature_name, False)
+
 def is_development():
     return ENVIRONMENT == "development"
 
