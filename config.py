@@ -30,6 +30,9 @@ def is_development():
 def is_production():
     return ENVIRONMENT == "production"
 
+def has_alpaca_credentials():
+    return bool(ALPACA_CONFIG.get("api_key") and ALPACA_CONFIG.get("secret_key"))
+
 SECURITY_CONFIG = {
     "cors_origins": os.getenv("CORS_ORIGINS", "*").split(","),
     "require_https": ENVIRONMENT == "production",
