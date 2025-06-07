@@ -79,17 +79,17 @@ class PredictionTracker:
                         was_correct INTEGER,
                         evaluation_timestamp TEXT
                     )
-                """)"
+                """)
                 
                 conn.execute("""
                     CREATE INDEX IF NOT EXISTS idx_symbol_timestamp 
                     ON predictions(symbol, timestamp)
-                """)"
+                """)
                 
                 conn.execute("""
                     CREATE INDEX IF NOT EXISTS idx_evaluation 
                     ON predictions(evaluation_timestamp)
-                """)"
+                """)
                 
             logger.info("✅ Prediction database initialized")
             
@@ -99,7 +99,7 @@ class PredictionTracker:
     def record_prediction(self, signal) -> str:
         """Record a new prediction"""
         try:
-            prediction_id = f"{signal.symbol}_{signal.timestamp}_{signal.signal_type}""
+            prediction_id = f"{signal.symbol}_{signal.timestamp}_{signal.signal_type}"
             
             prediction = PredictionRecord(
                 prediction_id=prediction_id,
@@ -119,7 +119,7 @@ class PredictionTracker:
                     (prediction_id, timestamp, symbol, signal_type, confidence, direction, 
                      price, technical_score, sentiment_score, prediction_horizon)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, ("
+                """, (
                     prediction.prediction_id,
                     prediction.timestamp.isoformat(),
                     prediction.symbol,
@@ -137,7 +137,7 @@ class PredictionTracker:
             
         except Exception as e:
             logger.error(f"❌ Failed to record prediction: {e}")
-            return """
+            return ""
     
     def evaluate_prediction(self, prediction_id: str, actual_price: float, actual_direction: str):
         """Evaluate a prediction against actual outcome"""
@@ -146,7 +146,7 @@ class PredictionTracker:
                 # Get original prediction
                 cursor = conn.execute("""
                     SELECT * FROM predictions WHERE prediction_id = ?
-                """, (prediction_id,))"
+                """, (prediction_id,))
                 
                 row = cursor.fetchone()
                 if not row:
@@ -177,7 +177,7 @@ class PredictionTracker:
                     SET actual_price_change = ?, actual_direction = ?, 
                         was_correct = ?, evaluation_timestamp = ?
                     WHERE prediction_id = ?
-                """, ("
+                """, (
                     price_change,
                     actual_direction,
                     1 if was_correct else 0,
@@ -200,7 +200,7 @@ class PredictionTracker:
                     SELECT * FROM predictions 
                     WHERE timestamp >= ? 
                     ORDER BY timestamp DESC
-                """, (since_date.isoformat(),))"
+                """, (since_date.isoformat(),))
                 
                 predictions = []
                 for row in cursor.fetchall():
@@ -248,7 +248,7 @@ class ModelTester:
             if not predictions:
                 return {
                     "status": "no_data",
-                    "message": f"No predictions found for the last {days} days""
+                    "message": f"No predictions found for the last {days} days"
                 }
             
             # Calculate basic metrics
@@ -336,7 +336,7 @@ class ModelTester:
                     "correct_predictions": correct_count,
                     "best_performing_symbol": max(symbol_performance.items(), key=lambda x: x[1]["accuracy"])[0] if symbol_performance else None,
                     "sharpe_ratio": round(sharpe_ratio, 2),
-                    "max_drawdown": f"{max_drawdown:.1%}""
+                    "max_drawdown": f"{max_drawdown:.1%}"
                 }
             }
             

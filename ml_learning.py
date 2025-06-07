@@ -118,7 +118,7 @@ class MLEnhancedSignalEngine:
         """Generate ML predictions using enhanced features"""
         try:
             # Check cache first
-            cache_key = f"{symbol}_{hash(str(features))}""
+            cache_key = f"{symbol}_{hash(str(features))}"
             if cache_key in self.prediction_cache:
                 cache_entry = self.prediction_cache[cache_key]
                 if (datetime.now() - cache_entry['timestamp']).seconds < self.cache_duration:
@@ -304,7 +304,7 @@ class MLEnhancedSignalEngine:
                 "QQQ": "MEDIUM_HIGH", 
                 "SPY": "MEDIUM",
                 "AAPL": "MEDIUM",
-                "MSFT": "MEDIUM_LOW""
+                "MSFT": "MEDIUM_LOW"
             }
             
             base_vol = symbol_volatility.get(symbol, "MEDIUM")
@@ -316,20 +316,20 @@ class MLEnhancedSignalEngine:
             # Market hours effect
             market_hours = robinhood_features.get("market_hours", "UNKNOWN")
             if market_hours in ["PRE_MARKET", "AFTER_HOURS"]:
-                vol_adjustment = "HIGHER""
+                vol_adjustment = "HIGHER"
             else:
-                vol_adjustment = "NORMAL""
+                vol_adjustment = "NORMAL"
             
             # VIX sentiment effect
             sentiment_features = features.get("sentiment_features", {})
             vix_sentiment = sentiment_features.get("vix_sentiment", "NEUTRAL")
             
             if vix_sentiment == "EXTREME_FEAR":
-                predicted_vol = "HIGH""
+                predicted_vol = "HIGH"
             elif vix_sentiment == "FEAR":
-                predicted_vol = "MEDIUM_HIGH""
+                predicted_vol = "MEDIUM_HIGH"
             elif vix_sentiment == "COMPLACENCY":
-                predicted_vol = "LOW""
+                predicted_vol = "LOW"
             else:
                 predicted_vol = base_vol
             
@@ -476,17 +476,17 @@ class MLEnhancedSignalEngine:
             ml_agreement_score = ml_predictions.get("direction", {}).get("agreement", 0.5)
             
             if base_direction == ml_direction and ml_agreement_score > 0.7:
-                return "STRONG_AGREEMENT""
+                return "STRONG_AGREEMENT"
             elif base_direction == ml_direction:
-                return "AGREEMENT""
+                return "AGREEMENT"
             elif ml_agreement_score < 0.4:
-                return "UNCERTAIN""
+                return "UNCERTAIN"
             else:
-                return "DISAGREEMENT""
+                return "DISAGREEMENT"
                 
         except Exception as e:
             logger.error(f"ML agreement determination error: {e}")
-            return "UNCERTAIN""
+            return "UNCERTAIN"
     
     def _generate_enhanced_reasoning(self, base_signal, ml_predictions: Dict[str, Any], features: Dict[str, Any]) -> List[str]:
         """Generate enhanced reasoning with Robinhood insights"""
@@ -564,26 +564,26 @@ class MLEnhancedSignalEngine:
             
             # Determine quality rating
             if quality_score >= 80:
-                return "excellent""
+                return "excellent"
             elif quality_score >= 65:
-                return "good""
+                return "good"
             elif quality_score >= 50:
-                return "fair""
+                return "fair"
             elif quality_score >= 35:
-                return "acceptable""
+                return "acceptable"
             else:
-                return "poor""
+                return "poor"
                 
         except Exception as e:
             logger.error(f"Prediction quality assessment error: {e}")
-            return "unknown""
+            return "unknown"
     
     def _serialize_signal(self, signal) -> Dict[str, Any]:
         """Safely serialize signal object"""
         try:
             if hasattr(signal, '__dict__'):
                 return {k: v for k, v in signal.__dict__.items() 
-                       if not k.startswith('_') and not callable(v)}:
+                       if not k.startswith('_') and not callable(v)}
             elif isinstance(signal, dict):
                 return signal
             else:
@@ -671,12 +671,12 @@ class LearningAPI:
                 "robinhood_primary",
                 "enhanced_fallback",
                 "technical_analysis",
-                "sentiment_analysis""
+                "sentiment_analysis"
             ],
             "robinhood_integration": {
                 "enabled": True,
                 "features_available": ["retail_sentiment", "popularity_rank", "market_hours"],
-                "data_quality_improvement": "15-20%""
+                "data_quality_improvement": "15-20%"
             }
         }
     
@@ -695,7 +695,7 @@ class LearningAPI:
                 "accuracy_improvement": "+8%",
                 "confidence_improvement": "+12%", 
                 "data_quality_score": "excellent",
-                "retail_sentiment_value": "high""
+                "retail_sentiment_value": "high"
             }
         }
     
@@ -709,18 +709,18 @@ class LearningAPI:
                 "enhanced_random_forest", 
                 "robinhood_sentiment_model",
                 "popularity_momentum_model", 
-                "ensemble_voter""
+                "ensemble_voter"
             ],
             "new_features": [
                 "retail_sentiment_score",
                 "popularity_momentum", 
                 "market_hours_volatility",
-                "data_source_quality""
+                "data_source_quality"
             ],
             "expected_improvements": {
                 "accuracy": "+3-5%",
                 "robinhood_feature_impact": "+2-4%",
-                "overall_confidence": "+5-8%""
+                "overall_confidence": "+5-8%"
             },
             "timestamp": datetime.now().isoformat()
         }
@@ -742,7 +742,7 @@ class LearningAPI:
             "model_adjustments": [
                 "retail_sentiment_weight_updated",
                 "popularity_factor_calibrated", 
-                "data_quality_scoring_improved""
+                "data_quality_scoring_improved"
             ]
         }
     
@@ -852,7 +852,7 @@ class RobinhoodMLFeatureExtractor:
             'sentiment_score', 'momentum_score', 'market_hour',
             # Enhanced Robinhood features
             'retail_sentiment_score', 'popularity_momentum', 'market_hours_volatility',
-            'data_freshness_score', 'retail_contrarian_signal'"
+            'data_freshness_score', 'retail_contrarian_signal'
         ]
     
     def extract_enhanced_features(self, signal_data: Dict, robinhood_data: Dict = None) -> Dict[str, float]:
@@ -938,7 +938,7 @@ __all__ = [
     'MLEnhancedSignalEngine', 
     'LearningAPI', 
     'EnhancedMLUtilities',
-    'RobinhoodMLFeatureExtractor'"
+    'RobinhoodMLFeatureExtractor'
 ]
 
 logger.info("🧠 Enhanced ML Learning module loaded successfully")
