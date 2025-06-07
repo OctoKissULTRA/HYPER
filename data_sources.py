@@ -1,11 +1,13 @@
-import os
 import logging
-import asyncio
-import aiohttp
 import time
-import json
-import math
 import random
+from typing import Any, Dict, Optional, List
+import requests
+
+from config import ALPACA_CONFIG, TICKERS
+
+logger = logging.getLogger(__name__)
+
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple
 import numpy as np
@@ -25,11 +27,9 @@ try:
     from alpaca.trading.requests import GetAssetsRequest
     from alpaca.trading.enums import AssetClass, AssetStatus
     from alpaca.common.exceptions import APIError
-    ALPACA_AVAILABLE = True
-except ImportError as e:
+    except ImportError as e:
     logging.warning(f"Alpaca SDK not available: {e}")
-    ALPACA_AVAILABLE = False
-
+    
 import config
 
 logger = logging.getLogger(__name__)
@@ -55,12 +55,10 @@ class AlpacaDataClient:
     async def initialize(self) -> bool:
         """Initialize Alpaca clients with improved error handling"""
         try:
-            if not ALPACA_AVAILABLE:
-                logger.warning("⚠️ Alpaca SDK not available - using enhanced simulation")
+            if not                 logger.warning("⚠️ Alpaca SDK not available - using enhanced simulation")
                 return False
             
-            credentials = config.get_alpaca_credentials()
-            
+            credentials = config.get_            
             if not credentials["api_key"]:
                 logger.warning("⚠️ No Alpaca API key - using enhanced simulation")
                 return False
@@ -76,8 +74,7 @@ class AlpacaDataClient:
                 self.trading_client = TradingClient(
                     api_key=credentials["api_key"],
                     secret_key=credentials["secret_key"],
-                    paper=config.ALPACA_CONFIG.get("use_sandbox", True)
-                )
+                    paper=config.                )
             
             # Test connection
             await self._test_connection()
@@ -226,8 +223,7 @@ class AlpacaDataClient:
                 'bid_size': int(quote.bid_size) if hasattr(quote, 'bid_size') and quote.bid_size else 100,
                 'ask_size': int(quote.ask_size) if hasattr(quote, 'ask_size') and quote.ask_size else 100,
                 'timestamp': datetime.now().isoformat(),
-                'data_source': 'alpaca_live',
-                'latest_trading_day': datetime.now().strftime('%Y-%m-%d'),
+                'data_source': '                'latest_trading_day': datetime.now().strftime('%Y-%m-%d'),
                 'enhanced_features': {
                     'data_freshness': 'real_time_alpaca',
                     'market_hours': self._get_market_hours_status(),
@@ -238,8 +234,7 @@ class AlpacaDataClient:
                         float(quote.bid_price) if hasattr(quote, 'bid_price') and quote.bid_price else None,
                         float(quote.ask_price) if hasattr(quote, 'ask_price') and quote.ask_price else None
                     ),
-                    'alpaca_version': '0.40.1+'
-                }
+                    '                }
             }
             
             # Cache result
@@ -274,13 +269,11 @@ class AlpacaDataClient:
                 "1Month": TimeFrame.Month
             }
             
-            alpaca_timeframe = timeframe_map.get(timeframe, TimeFrame.Day)
-            
+                        
             # Create request with enhanced parameters
             bars_request = StockBarsRequest(
                 symbol_or_symbols=[symbol],
-                timeframe=alpaca_timeframe,
-                limit=limit,
+                timeframe=                limit=limit,
                 adjustment='all',  # Include all adjustments
                 asof=None,
                 feed=None,
@@ -819,17 +812,14 @@ class HYPERDataAggregator:
     """Main data aggregator with Alpaca integration - Updated for v0.40.1+"""
     
     def __init__(self):
-        self.alpaca_client = AlpacaDataClient()
-        self.trends_client = GoogleTrendsClient()
+        self.        self.trends_client = GoogleTrendsClient()
         
         self.api_test_performed = False
-        self.alpaca_live = False
-        self.system_health = "INITIALIZING"
+        self.        self.system_health = "INITIALIZING"
         self.performance_metrics = {
             'total_requests': 0,
             'successful_requests': 0,
-            'alpaca_requests': 0,
-            'simulation_requests': 0,
+            '            'simulation_requests': 0,
             'error_requests': 0,
             'average_response_time': 0.0,
             'live_data_percentage': 0.0
@@ -843,10 +833,8 @@ class HYPERDataAggregator:
         
         try:
             # Initialize Alpaca client
-            self.alpaca_live = await self.alpaca_client.initialize()
-            
-            self.system_health = "ALPACA_LIVE" if self.alpaca_live else "SIMULATION_READY"
-            self.api_test_performed = True
+            self.            
+            self.system_health = "            self.api_test_performed = True
             
             logger.info(f"✅ Data aggregator initialized - Status: {self.system_health}")
             return True
@@ -863,12 +851,10 @@ class HYPERDataAggregator:
         
         try:
             # Get quote data
-            quote_data = await self.alpaca_client.get_real_time_quote(symbol)
-            
+            quote_data = await self.            
             # Track data source
             if quote_data.get('data_source', '').startswith('alpaca'):
-                self.performance_metrics['alpaca_requests'] += 1
-            else:
+                self.performance_metrics['            else:
                 self.performance_metrics['simulation_requests'] += 1
             
             # Get trends data
@@ -876,8 +862,7 @@ class HYPERDataAggregator:
             trends_data = await self.trends_client.get_trends_data(keywords)
             
             # Get historical data for analysis
-            historical_data = await self.alpaca_client.get_historical_bars(symbol, "1Day", 50)
-            
+            historical_data = await self.            
             processing_time = time.time() - start_time
             data_quality = self._assess_data_quality(quote_data, trends_data, historical_data)
             
@@ -892,8 +877,7 @@ class HYPERDataAggregator:
                 'timestamp': datetime.now().isoformat(),
                 'processing_time': round(processing_time, 3),
                 'data_quality': data_quality,
-                'api_status': 'alpaca_live' if self.alpaca_live else 'enhanced_simulation',
-                'system_health': self.system_health,
+                'api_status': '                'system_health': self.system_health,
                 'performance_metrics': {
                     'total_requests': self.performance_metrics['total_requests'],
                     'live_data_percentage': self.performance_metrics['live_data_percentage'],
@@ -961,14 +945,11 @@ class HYPERDataAggregator:
         self.performance_metrics['average_response_time'] = round(new_avg, 3)
         
         # Update live data percentage
-        alpaca_requests = self.performance_metrics['alpaca_requests']
-        if total > 0:
-            self.performance_metrics['live_data_percentage'] = round((alpaca_requests / total) * 100, 1)
-
+                if total > 0:
+            self.performance_metrics['live_data_percentage'] = round((
     def _generate_fallback_data(self, symbol: str) -> Dict[str, Any]:
         """Generate fallback data"""
-        fallback_quote = self.alpaca_client.fallback_simulator.generate_realistic_quote(symbol)
-        
+        fallback_quote = self.        
         return {
             'symbol': symbol,
             'quote': fallback_quote,
@@ -982,24 +963,18 @@ class HYPERDataAggregator:
 
     async def get_system_status(self) -> Dict[str, Any]:
         """Get system status"""
-        market_status = await self.alpaca_client.get_market_status()
-        
+        market_status = await self.        
         return {
             'system_health': self.system_health,
-            'alpaca_live': self.alpaca_live,
-            'alpaca_authenticated': self.alpaca_client.authenticated,
-            'market_status': market_status,
+            '            '            'market_status': market_status,
             'performance_metrics': self.performance_metrics,
             'last_health_check': datetime.now().isoformat(),
-            'credentials_configured': config.has_alpaca_credentials(),
-            'data_source': config.get_data_source_status(),
-            'alpaca_version': '0.40.1+'
-        }
+            'credentials_configured': config.has_            'data_source': config.get_data_source_status(),
+            '        }
 
     async def cleanup(self):
         """Cleanup resources"""
-        await self.alpaca_client.cleanup()
-        logger.info("🧹 HYPER data aggregator cleanup completed")
+        await self.        logger.info("🧹 HYPER data aggregator cleanup completed")
 
 # Export main classes
 __all__ = ['HYPERDataAggregator', 'AlpacaDataClient', 'EnhancedMarketSimulator']
