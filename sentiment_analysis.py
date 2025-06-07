@@ -9,6 +9,7 @@ from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 import numpy as np
 import aiohttp
+import random
 
 # Optional sentiment analysis libraries
 try:
@@ -749,4 +750,307 @@ class AdvancedSentimentAnalyzer:
         
         if total_volume > 100 or high_intensity_signals > 2:
             return "HIGH"
-        elif total_volume > 50 or high_intensity
+        elif total_volume > 50 or high_intensity_signals > 0:
+            return "MEDIUM"
+        else:
+            return "LOW"
+    
+    def _generate_fallback_sentiment(self, symbol: str) -> SentimentAnalysis:
+        """Generate fallback sentiment analysis"""
+        fallback_signal = SentimentSignal(
+            source="fallback",
+            sentiment_score=0.0,
+            confidence=0.5,
+            volume=0,
+            keywords=[],
+            timestamp=datetime.now(),
+            trend_direction="NEUTRAL",
+            emotional_intensity="LOW"
+        )
+        
+        return SentimentAnalysis(
+            overall_sentiment=0.0,
+            confidence=0.5,
+            trend_momentum=0.0,
+            signals=[fallback_signal],
+            key_themes=[],
+            retail_sentiment="NEUTRAL",
+            institutional_sentiment="NEUTRAL",
+            social_buzz_level="LOW",
+            fear_greed_indicator="NEUTRAL",
+            contrarian_signals=[]
+        )
+
+# Supporting simulator classes for sentiment data
+class NewsSimulator:
+    """Simulate news sentiment data"""
+    
+    def __init__(self):
+        self.news_cache = {}
+        logger.info("📰 News Simulator initialized")
+    
+    async def get_news_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate simulated news sentiment"""
+        try:
+            change_percent = float(quote_data.get('change_percent', 0))
+            
+            # Generate articles based on price movement
+            articles = []
+            num_articles = random.randint(3, 12)
+            
+            for i in range(num_articles):
+                # Sentiment correlation with price movement
+                if abs(change_percent) > 3:
+                    sentiment_bias = 1 if change_percent > 0 else -1
+                else:
+                    sentiment_bias = random.choice([-1, 0, 1])
+                
+                headline = self._generate_headline(symbol, sentiment_bias)
+                
+                articles.append({
+                    'headline': headline,
+                    'summary': f"Analysis of {symbol} market movement and outlook.",
+                    'relevance_score': random.uniform(0.7, 1.0),
+                    'hours_old': random.randint(1, 24),
+                    'sentiment_bias': sentiment_bias
+                })
+            
+            return {'articles': articles}
+            
+        except Exception as e:
+            logger.error(f"News simulation error: {e}")
+            return {'articles': []}
+    
+    def _generate_headline(self, symbol: str, sentiment_bias: int) -> str:
+        """Generate realistic news headlines"""
+        positive_templates = [
+            f"{symbol} Surges on Strong Earnings Beat",
+            f"Analysts Upgrade {symbol} Price Target",
+            f"{symbol} Reports Record Revenue Growth",
+            f"Bullish Outlook for {symbol} This Quarter"
+        ]
+        
+        negative_templates = [
+            f"{symbol} Falls on Disappointing Guidance",
+            f"Concerns Mount Over {symbol} Valuation",
+            f"{symbol} Faces Regulatory Headwinds",
+            f"Analysts Lower {symbol} Expectations"
+        ]
+        
+        neutral_templates = [
+            f"{symbol} Trading Sideways Ahead of Earnings",
+            f"Mixed Signals for {symbol} Investors",
+            f"{symbol} Maintains Steady Performance",
+            f"Market Watches {symbol} for Direction"
+        ]
+        
+        if sentiment_bias > 0:
+            return random.choice(positive_templates)
+        elif sentiment_bias < 0:
+            return random.choice(negative_templates)
+        else:
+            return random.choice(neutral_templates)
+
+class SocialMediaSimulator:
+    """Simulate general social media sentiment"""
+    
+    def __init__(self):
+        logger.info("📱 Social Media Simulator initialized")
+    
+    async def get_social_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate simulated social media posts"""
+        try:
+            change_percent = float(quote_data.get('change_percent', 0))
+            
+            posts = []
+            num_posts = random.randint(10, 30)
+            
+            for i in range(num_posts):
+                sentiment_direction = self._determine_post_sentiment(change_percent)
+                text = self._generate_post_text(symbol, sentiment_direction)
+                
+                posts.append({
+                    'text': text,
+                    'engagement': random.randint(1, 500),
+                    'platform': random.choice(['general', 'forums', 'blogs']),
+                    'sentiment_direction': sentiment_direction
+                })
+            
+            return {'posts': posts}
+            
+        except Exception as e:
+            logger.error(f"Social media simulation error: {e}")
+            return {'posts': []}
+    
+    def _determine_post_sentiment(self, change_percent: float) -> str:
+        """Determine post sentiment based on price movement"""
+        if change_percent > 2:
+            return random.choices(['positive', 'neutral'], weights=[0.7, 0.3])[0]
+        elif change_percent < -2:
+            return random.choices(['negative', 'neutral'], weights=[0.7, 0.3])[0]
+        else:
+            return random.choices(['positive', 'neutral', 'negative'], weights=[0.3, 0.4, 0.3])[0]
+    
+    def _generate_post_text(self, symbol: str, sentiment: str) -> str:
+        """Generate social media post text"""
+        if sentiment == 'positive':
+            templates = [
+                f"{symbol} looking strong today!",
+                f"Bullish on {symbol} long term",
+                f"{symbol} breakout incoming?",
+                f"Love the momentum on {symbol}"
+            ]
+        elif sentiment == 'negative':
+            templates = [
+                f"{symbol} taking a hit today",
+                f"Concerned about {symbol} outlook",
+                f"{symbol} looks weak here",
+                f"Time to take profits on {symbol}?"
+            ]
+        else:
+            templates = [
+                f"{symbol} trading sideways",
+                f"Watching {symbol} for direction",
+                f"{symbol} holding support levels",
+                f"Mixed signals on {symbol}"
+            ]
+        
+        return random.choice(templates)
+
+class RedditSimulator:
+    """Simulate Reddit sentiment data"""
+    
+    def __init__(self):
+        logger.info("🤖 Reddit Simulator initialized")
+    
+    async def get_reddit_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate simulated Reddit posts"""
+        try:
+            change_percent = float(quote_data.get('change_percent', 0))
+            
+            posts = []
+            num_posts = random.randint(5, 20)
+            
+            for i in range(num_posts):
+                # Reddit tends to be more extreme and meme-driven
+                if abs(change_percent) > 1:
+                    sentiment_intensity = random.choice(['high', 'medium'])
+                else:
+                    sentiment_intensity = random.choice(['medium', 'low'])
+                
+                text = self._generate_reddit_text(symbol, change_percent, sentiment_intensity)
+                
+                posts.append({
+                    'text': text,
+                    'engagement': random.randint(10, 1000),  # Higher engagement on Reddit
+                    'subreddit': random.choice(['wallstreetbets', 'stocks', 'investing']),
+                    'intensity': sentiment_intensity
+                })
+            
+            return {'posts': posts}
+            
+        except Exception as e:
+            logger.error(f"Reddit simulation error: {e}")
+            return {'posts': []}
+    
+    def _generate_reddit_text(self, symbol: str, change_percent: float, intensity: str) -> str:
+        """Generate Reddit-style post text"""
+        if change_percent > 1 and intensity == 'high':
+            templates = [
+                f"{symbol} to the moon! 🚀🚀🚀",
+                f"YOLO all in on {symbol}",
+                f"{symbol} printing money today",
+                f"Diamond hands on {symbol} 💎🙌"
+            ]
+        elif change_percent < -1 and intensity == 'high':
+            templates = [
+                f"{symbol} drilling to earth's core",
+                f"My {symbol} calls are dead",
+                f"{symbol} rug pull in progress",
+                f"Stop the count on {symbol}"
+            ]
+        else:
+            templates = [
+                f"What's everyone's thoughts on {symbol}?",
+                f"{symbol} DD needed",
+                f"Holding {symbol} through this",
+                f"{symbol} chart looking interesting"
+            ]
+        
+        return random.choice(templates)
+
+class TwitterSimulator:
+    """Simulate Twitter sentiment data"""
+    
+    def __init__(self):
+        logger.info("🐦 Twitter Simulator initialized")
+    
+    async def get_twitter_sentiment(self, symbol: str, quote_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate simulated Twitter posts"""
+        try:
+            change_percent = float(quote_data.get('change_percent', 0))
+            
+            posts = []
+            num_posts = random.randint(8, 25)
+            
+            for i in range(num_posts):
+                # Twitter sentiment often follows price movement
+                sentiment_correlation = random.uniform(0.6, 0.9)  # High correlation
+                
+                if change_percent > 0 and random.random() < sentiment_correlation:
+                    sentiment_direction = 'positive'
+                elif change_percent < 0 and random.random() < sentiment_correlation:
+                    sentiment_direction = 'negative'
+                else:
+                    sentiment_direction = random.choice(['positive', 'neutral', 'negative'])
+                
+                text = self._generate_twitter_text(symbol, sentiment_direction)
+                
+                posts.append({
+                    'text': text,
+                    'engagement': random.randint(5, 200),
+                    'retweets': random.randint(0, 50),
+                    'sentiment_direction': sentiment_direction
+                })
+            
+            return {'posts': posts}
+            
+        except Exception as e:
+            logger.error(f"Twitter simulation error: {e}")
+            return {'posts': []}
+    
+    def _generate_twitter_text(self, symbol: str, sentiment: str) -> str:
+        """Generate Twitter-style post text"""
+        if sentiment == 'positive':
+            templates = [
+                f"${symbol} looking bullish 📈",
+                f"Buying the dip on ${symbol}",
+                f"${symbol} breakout confirmed ✅",
+                f"${symbol} strength continues"
+            ]
+        elif sentiment == 'negative':
+            templates = [
+                f"${symbol} weakness showing 📉",
+                f"Selling ${symbol} on this bounce",
+                f"${symbol} breakdown in progress",
+                f"Avoiding ${symbol} for now"
+            ]
+        else:
+            templates = [
+                f"${symbol} consolidating here",
+                f"Watching ${symbol} for entry",
+                f"${symbol} at key levels",
+                f"${symbol} decision time"
+            ]
+        
+        return random.choice(templates)
+
+# Export main classes
+__all__ = [
+    'AdvancedSentimentAnalyzer', 'SentimentAnalysis', 'SentimentSignal',
+    'NewsSimulator', 'SocialMediaSimulator', 'RedditSimulator', 'TwitterSimulator'
+]
+
+logger.info("💭 Advanced Sentiment Analysis module loaded successfully")
+logger.info("📊 Multi-source sentiment fusion with NLP processing enabled")
+logger.info("🎯 Contrarian signal detection and retail vs institutional analysis active")
