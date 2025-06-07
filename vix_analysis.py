@@ -83,7 +83,7 @@ class AdvancedVIXAnalyzer:
         """Complete VIX fear/greed analysis"""
         try:
             # Check cache first
-            cache_key = f"vix_{time.time() // self.cache_duration}""
+            cache_key = f"vix_{time.time() // self.cache_duration}"
             if cache_key in self.vix_cache:
                 logger.debug("📋 Using cached VIX analysis")
                 return self.vix_cache[cache_key]
