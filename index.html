@@ -872,5 +872,349 @@
         }
     }
 
-    function handle
+    function handleWebSocketMessage(data) {
+        if (data.type === 'modular_signal_update' || data.type === 'signal_update') {
+            signals = data.signals || {};
+            updateSignalsPanel();
+            updateFearGreedMeter(data);
+            updateAnalytics(data);
+            
+            // Update chart if current symbol has new data
+            if (signals[currentSymbol]) {
+                updateChart(signals[currentSymbol]);
+            }
+        }
+    }
+
+    function bindEventListeners() {
+        // Symbol selection
+        document.querySelectorAll('.symbol-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const symbol = this.dataset.symbol;
+                selectSymbol(symbol);
+            });
+        });
+        
+        // Time interval selection
+        document.querySelectorAll('.time-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const interval = this.dataset.interval;
+                selectTimeInterval(interval);
+            });
+        });
+    }
+
+    function selectSymbol(symbol) {
+        currentSymbol = symbol;
+        
+        // Update UI
+        document.querySelectorAll('.symbol-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-symbol="${symbol}"]`).classList.add('active');
+        
+        // Update chart title
+        document.getElementById('chart-symbol').textContent = symbol;
+        
+        // Update chart description
+        const descriptions = {
+            'QQQ': 'INVESCO QQQ TRUST',
+            'SPY': 'SPDR S&P 500 ETF',
+            'NVDA': 'NVIDIA CORPORATION',
+            'AAPL': 'APPLE INC',
+            'MSFT': 'MICROSOFT CORPORATION'
+        };
+        document.querySelector('.chart-title').nextElementSibling.textContent = descriptions[symbol];
+        
+        // Regenerate chart data
+        generateChartData();
+    }
+
+    function selectTimeInterval(interval) {
+        currentInterval = interval;
+        
+        // Update UI
+        document.querySelectorAll('.time-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-interval="${interval}"]`).classList.add('active');
+        
+        // Update chart
+        generateChartData();
+    }
+
+    function updateConnectionStatus(status, type) {
+        const statusElement = document.getElementById('connection-status');
+        if (statusElement) {
+            statusElement.textContent = status;
+        }
+    }
+
+    function updateChart(signalData) {
+        if (!priceChart || !signalData) return;
+        
+        const now = new Date();
+        const newPrice = parseFloat(signalData.price || 0);
+        
+        // Add new data point
+        priceChart.data.labels.push(now);
+        priceChart.data.datasets[0].data.push(newPrice);
+        
+        // Keep only last 50 points
+        if (priceChart.data.labels.length > 50) {
+            priceChart.data.labels.shift();
+            priceChart.data.datasets[0].data.shift();
+        }
+        
+        priceChart.update('none');
+        
+        // Update price display
+        const change = signalData.change || 0;
+        const changePercent = signalData.change_percent || 0;
+        updatePriceDisplay(newPrice, change, changePercent);
+    }
+
+    function updateSignalsPanel() {
+        const panel = document.getElementById('signals-panel');
+        if (!panel) return;
+        
+        panel.innerHTML = '';
+        
+        // Generate signal cards
+        Object.entries(signals).forEach(([symbol, signal]) => {
+            const card = createSignalCard(symbol, signal);
+            panel.appendChild(card);
+        });
+    }
+
+    function createSignalCard(symbol, signal) {
+        const card = document.createElement('div');
+        card.className = 'signal-card';
+        
+        const confidence = signal.confidence || 50;
+        const signalType = signal.signal_type || 'HOLD';
+        const price = signal.price || 0;
+        const technicalScore = signal.technical_score || 50;
+        const sentimentScore = signal.sentiment_score || 50;
+        const vixScore = signal.vix_score || 50;
+        const riskScore = signal.risk_score || 50;
+        
+        card.innerHTML = `
+            <div class="signal-header">
+                <div class="signal-symbol">${symbol}</div>
+                <div class="signal-type signal-${signalType}">${signalType.replace('_', ' ')}</div>
+            </div>
+            
+            <div class="confidence-bar">
+                <div class="confidence-fill" style="width: ${confidence}%"></div>
+            </div>
+            
+            <div class="signal-metrics">
+                <div class="metric">
+                    <div class="metric-label">Price</div>
+                    <div class="metric-value">$${parseFloat(price).toFixed(2)}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Confidence</div>
+                    <div class="metric-value">${confidence.toFixed(0)}%</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Technical</div>
+                    <div class="metric-value">${technicalScore.toFixed(0)}/100</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Sentiment</div>
+                    <div class="metric-value">${sentimentScore.toFixed(0)}/100</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">VIX</div>
+                    <div class="metric-value">${vixScore.toFixed(0)}/100</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Risk</div>
+                    <div class="metric-value">${riskScore.toFixed(0)}/100</div>
+                </div>
+            </div>
+        `;
+        
+        return card;
+    }
+
+    function updateFearGreedMeter(data) {
+        // Extract fear/greed value from VIX or sentiment data
+        let fearGreedValue = 50; // Default neutral
+        
+        if (data.signals && Object.keys(data.signals).length > 0) {
+            const firstSignal = Object.values(data.signals)[0];
+            if (firstSignal.vix_score) {
+                fearGreedValue = firstSignal.vix_score;
+            }
+        }
+        
+        // Update needle rotation (-90 to +90 degrees)
+        const needle = document.getElementById('fear-greed-needle');
+        const rotation = (fearGreedValue - 50) * 1.8; // Scale to -90 to +90
+        if (needle) {
+            needle.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
+        }
+        
+        // Update value display
+        const valueElement = document.getElementById('fear-greed-value');
+        if (valueElement) {
+            valueElement.textContent = fearGreedValue.toFixed(0);
+        }
+        
+        // Update options flow data
+        updateOptionsFlow();
+    }
+
+    function updateOptionsFlow() {
+        // Simulate options flow data
+        const callPutRatio = (0.8 + Math.random() * 0.8).toFixed(2);
+        const ivRank = Math.floor(20 + Math.random() * 60);
+        const darkPool = Math.floor(25 + Math.random() * 30);
+        const gammaExposure = (1.5 + Math.random() * 2).toFixed(1);
+        
+        document.getElementById('call-put-ratio').textContent = callPutRatio;
+        document.getElementById('iv-rank').textContent = `${ivRank}%`;
+        document.getElementById('dark-pool').textContent = `${darkPool}%`;
+        document.getElementById('gamma-exposure').textContent = `$${gammaExposure}B`;
+    }
+
+    function updateAnalytics(data) {
+        // Calculate average confidence
+        let totalConfidence = 0;
+        let signalCount = 0;
+        
+        if (data.signals) {
+            Object.values(data.signals).forEach(signal => {
+                if (signal.confidence) {
+                    totalConfidence += signal.confidence;
+                    signalCount++;
+                }
+            });
+        }
+        
+        const avgConfidence = signalCount > 0 ? (totalConfidence / signalCount) : 72;
+        
+        // Update analytics display
+        document.getElementById('avg-confidence').textContent = `${avgConfidence.toFixed(0)}%`;
+        document.getElementById('signals-today').textContent = Math.floor(40 + Math.random() * 20);
+        document.getElementById('accuracy').textContent = `${Math.floor(70 + Math.random() * 10)}%`;
+    }
+
+    function generateInitialSignals() {
+        // Generate some initial signals for display
+        const symbols = ['QQQ', 'SPY', 'NVDA', 'AAPL', 'MSFT'];
+        const signalTypes = ['HYPER_BUY', 'SOFT_BUY', 'HOLD', 'SOFT_SELL', 'HYPER_SELL'];
+        
+        symbols.forEach(symbol => {
+            const basePrice = symbol === 'QQQ' ? 435.50 : 
+                           symbol === 'SPY' ? 525.25 :
+                           symbol === 'NVDA' ? 892.75 :
+                           symbol === 'AAPL' ? 198.80 : 452.90;
+            
+            signals[symbol] = {
+                symbol: symbol,
+                signal_type: signalTypes[Math.floor(Math.random() * signalTypes.length)],
+                confidence: 60 + Math.random() * 30,
+                price: basePrice + (Math.random() - 0.5) * 10,
+                technical_score: 40 + Math.random() * 40,
+                sentiment_score: 40 + Math.random() * 40,
+                vix_score: 40 + Math.random() * 40,
+                risk_score: 40 + Math.random() * 40,
+                change: (Math.random() - 0.5) * 4,
+                change_percent: (Math.random() - 0.5) * 2
+            };
+        });
+        
+        updateSignalsPanel();
+        updateFearGreedMeter({ signals });
+        updateAnalytics({ signals });
+    }
+
+    function startDataUpdate() {
+        // Update data every 30 seconds
+        setInterval(() => {
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                fetchDataPoll();
+            }
+            
+            // Update chart with new data point
+            if (signals[currentSymbol]) {
+                const signal = signals[currentSymbol];
+                signal.price += (Math.random() - 0.5) * 2;
+                updateChart(signal);
+            }
+            
+            // Update fear/greed meter
+            updateFearGreedMeter({ signals });
+        }, 30000);
+    }
+
+    function startPolling() {
+        // Fallback polling when WebSocket is not available
+        setInterval(fetchDataPoll, 5000);
+    }
+
+    async function fetchDataPoll() {
+        try {
+            const response = await fetch('/api/signals');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.signals) {
+                    signals = data.signals;
+                    updateSignalsPanel();
+                    updateFearGreedMeter(data);
+                    updateAnalytics(data);
+                }
+            }
+        } catch (error) {
+            console.log('Polling failed:', error);
+        }
+    }
+
+    function initializeChart() {
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        priceChart = new Chart(ctx, chartConfig);
+        
+        // Generate initial chart data
+        generateChartData();
+    }
+
+    function generateChartData() {
+        const now = new Date();
+        const labels = [];
+        const data = [];
+        const basePrice = currentSymbol === 'QQQ' ? 435.50 : 
+                       currentSymbol === 'SPY' ? 525.25 :
+                       currentSymbol === 'NVDA' ? 892.75 :
+                       currentSymbol === 'AAPL' ? 198.80 : 452.90;
+        
+        for (let i = 50; i >= 0; i--) {
+            const time = new Date(now.getTime() - i * 60000); // 1 minute intervals
+            const volatility = 0.02;
+            const change = (Math.random() - 0.5) * volatility;
+            const price = basePrice * (1 + change * (i / 50));
+            
+            labels.push(time);
+            data.push(price.toFixed(2));
+        }
+        
+        priceChart.data.labels = labels;
+        priceChart.data.datasets[0].data = data;
+        priceChart.update('none');
+        
+        // Update current price display
+        const lastPrice = data[data.length - 1];
+        const prevPrice = data[data.length - 2];
+        const change = lastPrice - prevPrice;
+        const changePercent = (change / prevPrice * 100).toFixed(2);
+        
+        updatePriceDisplay(lastPrice, change, changePercent);
+    }
+</script>
 ```
+
+</body>
+</html>
