@@ -1,28 +1,6 @@
 # signal_engine.py - HYPERtrends v4.0 Signal Engine with Alpaca Integration
 
 import logging
-import os
-import requests
-
-DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1381403158907060304/4-wDpJTQ7kPHyOFCxydfGSD5E-AY9mThcBDPbpDW6a8KqFEN9A9003hpOepb7qoFaYQi"
-
-if confidence >= 70:
-    def send_discord_alert(symbol: str, signal: str, confidence: float):
-    if not DISCORD_WEBHOOK:
-        return
-    try:
-        requests.post(DISCORD_WEBHOOK, json={
-            "username": "HYPERtrends Bot",
-            "embeds": [{
-                "title": f"📡 Signal Alert: {symbol}",
-                "description": f"**Signal:** `{signal}`\n**Confidence:** `{confidence:.1f}%`",
-                "color": 3066993 if "BUY" in signal else 15158332,
-                "footer": { "text": "HYPERtrends v4.0" }
-            }]
-        })
-    except Exception as e:
-        print(f"❌ Discord alert failed: {e}")
-
 import asyncio
 import time
 from datetime import datetime
