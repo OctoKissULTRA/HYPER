@@ -1,3 +1,4 @@
+
 import logging
 import time
 import random
@@ -47,22 +48,40 @@ class AlpacaDataClient:
         end: Optional[str] = None,
         limit: int = 100
     ) -> List[Dict[str, Any]]:
+        """
+        Try to fetch bars for the last 3 days. If empty, try last 7 days.
+        Returns empty list if nothing is found.
+        """
         params = {
             "timeframe": timeframe,
             "limit": limit
         }
-        if start:
+        # If start and end are not provided, fetch recent bars (3 days), then expand to 7 days
+        if not start or not end:
+            end_dt = datetime.utcnow()
+            for days in [3, 7]:
+                start_dt = end_dt - timedelta(days=days)
+                params["start"] = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+                params["end"] = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+                endpoint = f"{self.data_url}/stocks/{symbol}/bars"
+                resp = self.session.get(endpoint, headers=self.headers, params=params)
+                if resp.status_code == 200:
+                    bars = resp.json().get("bars", [])
+                    if bars:
+                        return bars
+                logger.warning(f"No historical bars for {symbol} in last {days} days using Alpaca fallback!")
+            return []
+        else:
             params["start"] = start
-        if end:
             params["end"] = end
-        endpoint = f"{self.data_url}/stocks/{symbol}/bars"
-        resp = self.session.get(endpoint, headers=self.headers, params=params)
-        if resp.status_code == 200:
-            bars = resp.json().get("bars", [])
-            if bars:
-                return bars
-        logger.warning(f"No historical bars for {symbol} using Alpaca fallback!")
-        return []
+            endpoint = f"{self.data_url}/stocks/{symbol}/bars"
+            resp = self.session.get(endpoint, headers=self.headers, params=params)
+            if resp.status_code == 200:
+                bars = resp.json().get("bars", [])
+                if bars:
+                    return bars
+            logger.warning(f"No historical bars for {symbol} using Alpaca fallback!")
+            return []
 
 class MockMarketSimulator:
     def __init__(self, tickers: List[str]):
