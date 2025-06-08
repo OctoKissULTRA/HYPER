@@ -21,6 +21,20 @@ from data_sources import HYPERDataAggregator
 from signal_engine import HYPERSignalEngine
 from ml_learning import integrate_ml_learning
 from model_testing import ModelTester, TestingAPI
+from fastapi.responses import HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
+async def get_dashboard():
+    try:
+        with open("index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        return HTMLResponse(f"<h1>Dashboard not found</h1><p>{e}</p>", status_code=500)
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
 
 # ========================================
 # LOGGING SETUP
