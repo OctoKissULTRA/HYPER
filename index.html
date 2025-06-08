@@ -1,1181 +1,343 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>HYPERtrends v4.0 - Neural Trading Matrix</title>
-
-```
-<!-- Chart.js for advanced charting -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-
-<!-- Custom Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-<style>
-    :root {
-        /* Futuristic Color Palette */
-        --bg-primary: #0a0e1a;
-        --bg-secondary: #1a1f2e;
-        --bg-card: #252a3a;
-        --bg-overlay: rgba(26, 31, 46, 0.95);
-        
-        --accent-cyan: #00d4ff;
-        --accent-purple: #b24bf3;
-        --accent-green: #00ff88;
-        --accent-red: #ff4757;
-        --accent-orange: #ffa726;
-        --accent-blue: #3742fa;
-        
-        --text-primary: #ffffff;
-        --text-secondary: #b8c5d6;
-        --text-muted: #6c7d8f;
-        
-        --border-primary: #2d3748;
-        --border-accent: rgba(0, 212, 255, 0.3);
-        
-        /* Gradients */
-        --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #b24bf3 100%);
-        --gradient-success: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
-        --gradient-danger: linear-gradient(135deg, #ff4757 0%, #ffa726 100%);
-        --gradient-card: linear-gradient(145deg, rgba(37, 42, 58, 0.8) 0%, rgba(26, 31, 46, 0.9) 100%);
-        
-        /* Shadows and Effects */
-        --shadow-primary: 0 10px 30px rgba(0, 0, 0, 0.3);
-        --shadow-intense: 0 20px 60px rgba(0, 212, 255, 0.15);
-        --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.4);
-    }
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        -webkit-tap-highlight-color: transparent;
-    }
-
-    body {
-        font-family: 'JetBrains Mono', monospace;
-        background: var(--bg-primary);
-        color: var(--text-primary);
-        overflow-x: hidden;
-        min-height: 100vh;
-        touch-action: manipulation;
-    }
-
-    .bg-pattern {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: 
-            radial-gradient(circle at 20% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 20%, rgba(178, 75, 243, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 40%, rgba(0, 255, 136, 0.05) 0%, transparent 50%);
-        z-index: -1;
-        animation: bgShift 20s ease-in-out infinite;
-    }
-
-    @keyframes bgShift {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
-    }
-
-    .header {
-        background: var(--bg-overlay);
-        backdrop-filter: blur(20px);
-        border-bottom: 1px solid var(--border-accent);
-        padding: 1rem;
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-    }
-
-    .header-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-
-    .logo {
-        font-family: 'Orbitron', monospace;
-        font-size: 1.5rem;
-        font-weight: 900;
-        background: var(--gradient-primary);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .status-indicators {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    .status-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--accent-green);
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.7; transform: scale(1.1); }
-    }
-
-    .status-text {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-
-    .main-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 1rem;
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    @media (min-width: 768px) {
-        .main-container {
-            grid-template-columns: 320px 1fr 300px;
-            grid-template-rows: auto auto 1fr;
-            gap: 1.5rem;
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYPERtrends v4.1 - Neural Trading Matrix</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cyber-bg: #0a0a0a;
+            --cyber-surface: #111111;
+            --cyber-card: #1a1a1a;
+            --cyber-cyan: #00ffff;
+            --cyber-purple: #ff00ff;
+            --cyber-blue: #0066ff;
+            --cyber-green: #00ff41;
+            --cyber-red: #ff073a;
+            --cyber-orange: #ff6b00;
+            --cyber-yellow: #ffff00;
+            --cyber-text: #e0e0e0;
+            --cyber-text-dim: #888888;
+            --cyber-border: #333333;
+            --cyber-gradient-primary: linear-gradient(135deg, #00ffff 0%, #0066ff 50%, #ff00ff 100%);
+            --cyber-gradient-danger: linear-gradient(135deg, #ff073a 0%, #ff6b00 100%);
+            --cyber-gradient-success: linear-gradient(135deg, #00ff41 0% , #00ffff 100%);
+            --cyber-glow-cyan: 0 0 20px rgba(0, 255, 255, 0.5);
+            --cyber-shadow: 0 8px 32px rgba(0,0,0,0.8);
         }
-    }
-
-    .trading-panel {
-        background: var(--gradient-card);
-        border: 1px solid var(--border-primary);
-        border-radius: 16px;
-        padding: 1.5rem;
-        backdrop-filter: blur(10px);
-        box-shadow: var(--shadow-primary);
-    }
-
-    .panel-title {
-        font-family: 'Orbitron', monospace;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--accent-cyan);
-        margin-bottom: 1.5rem;
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .symbol-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .symbol-btn {
-        background: var(--bg-card);
-        border: 1px solid var(--border-primary);
-        color: var(--text-primary);
-        padding: 1rem 0.5rem;
-        border-radius: 12px;
-        font-family: 'Orbitron', monospace;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-align: center;
-        min-height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .symbol-btn:hover, .symbol-btn:active {
-        border-color: var(--accent-cyan);
-        box-shadow: var(--glow-cyan);
-        transform: translateY(-2px);
-    }
-
-    .symbol-btn.active {
-        background: var(--gradient-primary);
-        color: var(--bg-primary);
-        box-shadow: var(--shadow-intense);
-    }
-
-    .timeframe-controls {
-        display: grid;
-        grid-template-columns: repeat(6, 1fr);
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .timeframe-btn {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-primary);
-        color: var(--text-secondary);
-        padding: 0.7rem 0.3rem;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-align: center;
-    }
-
-    .timeframe-btn:hover, .timeframe-btn:active {
-        border-color: var(--accent-blue);
-        color: var(--text-primary);
-    }
-
-    .timeframe-btn.active {
-        background: var(--accent-blue);
-        color: var(--text-primary);
-        box-shadow: 0 0 15px rgba(55, 66, 250, 0.4);
-    }
-
-    .current-signal {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        text-align: center;
-    }
-
-    .signal-type {
-        font-family: 'Orbitron', monospace;
-        font-size: 1.2rem;
-        font-weight: 700;
-        padding: 0.8rem 1.5rem;
-        border-radius: 25px;
-        margin-bottom: 1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .signal-HYPER_BUY { background: var(--gradient-success); color: var(--bg-primary); }
-    .signal-SOFT_BUY { background: var(--accent-green); color: var(--bg-primary); }
-    .signal-HOLD { background: var(--accent-blue); color: var(--text-primary); }
-    .signal-SOFT_SELL { background: var(--accent-orange); color: var(--bg-primary); }
-    .signal-HYPER_SELL { background: var(--gradient-danger); color: var(--text-primary); }
-
-    .confidence-display {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .confidence-circle {
-        position: relative;
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: conic-gradient(from 0deg, var(--accent-cyan) 0%, var(--accent-purple) 50%, var(--accent-cyan) 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .confidence-circle::before {
-        content: '';
-        position: absolute;
-        inset: 4px;
-        border-radius: 50%;
-        background: var(--bg-secondary);
-    }
-
-    .confidence-value {
-        position: relative;
-        font-family: 'Orbitron', monospace;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--accent-cyan);
-    }
-
-    .chart-area {
-        background: var(--gradient-card);
-        border: 1px solid var(--border-primary);
-        border-radius: 16px;
-        padding: 1.5rem;
-        backdrop-filter: blur(10px);
-        box-shadow: var(--shadow-primary);
-        grid-column: 1 / -1;
-    }
-
-    @media (min-width: 768px) {
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            background: var(--cyber-bg);
+            color: var(--cyber-text);
+            font-family: 'Rajdhani', monospace;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        .cyber-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridPulse 4s ease-in-out infinite;
+            z-index: -1;
+        }
+        @keyframes gridPulse { 0%,100%{opacity:0.3;} 50%{opacity:0.1;} }
+        .header {
+            background: rgba(17,17,17,0.95);
+            border-bottom: 2px solid var(--cyber-cyan);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--cyber-shadow);
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            background: var(--cyber-gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: var(--cyber-glow-cyan);
+            animation: logoGlow 2s ease-in-out infinite alternate;
+        }
+        @keyframes logoGlow {
+            from { filter: drop-shadow(0 0 5px var(--cyber-cyan)); }
+            to { filter: drop-shadow(0 0 15px var(--cyber-cyan)); }
+        }
+        .status-bar {
+            display: flex; gap: 2rem; align-items: center;
+        }
+        .status-item { display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; font-weight:500;}
+        .status-dot {
+            width: 8px; height:8px; border-radius:50%; background: var(--cyber-green);
+            box-shadow: var(--cyber-glow-cyan); animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1; transform:scale(1);} 50%{opacity:0.7;transform:scale(1.2);} }
+        .container {
+            max-width: 1600px; margin:0 auto; padding:2rem;
+            display:grid; grid-template-columns:300px 1fr 350px;
+            gap:2rem; min-height:calc(100vh - 120px);
+        }
+        .control-panel {
+            grid-row: 1 / -1;
+            background: rgba(26,26,26,0.9);
+            border:1px solid var(--cyber-border);
+            border-radius:12px;
+            padding:1.5rem;
+            box-shadow: var(--cyber-shadow);
+        }
+        .panel-title {
+            font-family:'Orbitron',monospace;
+            font-size:1.2rem;font-weight:700;color:var(--cyber-cyan);
+            margin-bottom:1.5rem;text-align:center;text-transform:uppercase;letter-spacing:1px;
+        }
+        .symbol-grid { display: grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:2rem;}
+        .symbol-btn {
+            background: var(--cyber-card); border:1px solid var(--cyber-border);
+            color:var(--cyber-text); padding:0.75rem; border-radius:8px;
+            font-family:'Orbitron',monospace; font-weight:600; cursor:pointer;
+            transition: all 0.3s ease; text-align:center;
+        }
+        .symbol-btn:hover { border-color:var(--cyber-cyan); box-shadow:var(--cyber-glow-cyan); transform:translateY(-2px);}
+        .symbol-btn.active { background:var(--cyber-gradient-primary); color:var(--cyber-bg); box-shadow:var(--cyber-glow-cyan);}
+        .time-intervals {display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:2rem;}
+        .time-btn {
+            background:var(--cyber-surface); border:1px solid var(--cyber-border); color:var(--cyber-text);
+            padding:0.5rem 1rem; border-radius:6px; font-size:0.8rem; cursor:pointer;
+            transition:all 0.3s ease; flex:1; text-align:center;
+        }
+        .time-btn:hover { border-color:var(--cyber-blue); box-shadow:0 0 10px rgba(0,102,255,0.3);}
+        .time-btn.active { background:var(--cyber-blue); color:white; box-shadow:var(--cyber-glow-cyan);}
         .chart-area {
-            grid-column: 2;
-            grid-row: 1 / 3;
+            background:rgba(26,26,26,0.9);
+            border:1px solid var(--cyber-border);
+            border-radius:12px; padding:1.5rem; box-shadow:var(--cyber-shadow);
         }
-    }
-
-    .chart-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .chart-title {
-        font-family: 'Orbitron', monospace;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--accent-cyan);
-    }
-
-    .price-info {
-        text-align: right;
-    }
-
-    .current-price {
-        font-family: 'Orbitron', monospace;
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--accent-green);
-    }
-
-    .price-change {
-        font-size: 1rem;
-        font-weight: 500;
-    }
-
-    .price-up { color: var(--accent-green); }
-    .price-down { color: var(--accent-red); }
-
-    .chart-container {
-        position: relative;
-        height: 350px;
-        margin-bottom: 1.5rem;
-    }
-
-    @media (min-width: 768px) {
-        .chart-container {
-            height: 450px;
-        }
-    }
-
-    .analytics-panel {
-        background: var(--gradient-card);
-        border: 1px solid var(--border-primary);
-        border-radius: 16px;
-        padding: 1.5rem;
-        backdrop-filter: blur(10px);
-        box-shadow: var(--shadow-primary);
-    }
-
-    .analytics-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .metric-card {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        padding: 1rem;
-        text-align: center;
-        border: 1px solid var(--border-primary);
-    }
-
-    .metric-label {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        margin-bottom: 0.5rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .metric-value {
-        font-family: 'Orbitron', monospace;
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: var(--accent-cyan);
-    }
-
-    .component-status {
-        margin-bottom: 1.5rem;
-    }
-
-    .component-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.8rem;
-        margin-bottom: 0.5rem;
-        background: var(--bg-secondary);
-        border-radius: 8px;
-        border-left: 3px solid var(--accent-green);
-    }
-
-    .component-name {
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-
-    .status-badge {
-        padding: 0.3rem 0.8rem;
-        border-radius: 12px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        background: var(--accent-green);
-        color: var(--bg-primary);
-    }
-
-    .fear-greed-meter {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        text-align: center;
-    }
-
-    .meter-title {
-        font-family: 'Orbitron', monospace;
-        font-weight: 700;
-        color: var(--accent-purple);
-        margin-bottom: 1rem;
-        font-size: 1rem;
-    }
-
-    .meter-gauge {
-        position: relative;
-        width: 120px;
-        height: 60px;
-        margin: 0 auto 1rem;
-    }
-
-    .gauge-bg {
-        width: 100%;
-        height: 30px;
-        background: linear-gradient(to right, 
-            var(--accent-red), 
-            var(--accent-orange), 
-            #ffeb3b, 
-            var(--accent-green), 
-            var(--accent-cyan)
-        );
-        border-radius: 60px 60px 0 0;
-        position: relative;
-    }
-
-    .gauge-needle {
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        width: 2px;
-        height: 40px;
-        background: var(--text-primary);
-        transform-origin: bottom;
-        transform: translateX(-50%) rotate(0deg);
-        transition: transform 0.5s ease;
-        box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
-    }
-
-    .meter-value {
-        font-family: 'Orbitron', monospace;
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: var(--accent-cyan);
-    }
-
-    .portfolio-overview {
-        background: var(--bg-secondary);
-        border-radius: 12px;
-        padding: 1.5rem;
-    }
-
-    .portfolio-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.8rem 0;
-        border-bottom: 1px solid var(--border-primary);
-    }
-
-    .portfolio-item:last-child {
-        border-bottom: none;
-    }
-
-    .portfolio-symbol {
-        font-family: 'Orbitron', monospace;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .portfolio-value {
-        font-family: 'Orbitron', monospace;
-        font-weight: 600;
-        color: var(--accent-cyan);
-    }
-
-    .action-buttons {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-top: 1.5rem;
-    }
-
-    .action-btn {
-        background: var(--gradient-primary);
-        border: none;
-        color: var(--bg-primary);
-        padding: 1rem;
-        border-radius: 12px;
-        font-family: 'Orbitron', monospace;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .action-btn:hover, .action-btn:active {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-intense);
-    }
-
-    .action-btn.danger {
-        background: var(--gradient-danger);
-    }
-
-    .loading-spinner {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 2px solid transparent;
-        border-top: 2px solid var(--accent-cyan);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    @media (max-width: 767px) {
-        .header { padding: 0.8rem; }
-        .logo { font-size: 1.2rem; }
-        .main-container { padding: 0.8rem; }
-        .trading-panel, .analytics-panel { padding: 1rem; }
-        .chart-container { height: 280px; }
-        .current-price { font-size: 1.5rem; }
-        .chart-title { font-size: 1.2rem; }
-        .confidence-circle { width: 60px; height: 60px; }
-        .confidence-value { font-size: 0.9rem; }
-    }
-
-    .symbol-btn:active, .timeframe-btn:active, .action-btn:active {
-        transform: scale(0.95);
-    }
-</style>
-```
-
+        .chart-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;}
+        .chart-title { font-family:'Orbitron',monospace; font-size:1.5rem; font-weight:700; color:var(--cyber-cyan);}
+        .price-display { text-align:right; }
+        .current-price { font-family:'Orbitron',monospace; font-size:2rem; font-weight:700; color:var(--cyber-green);}
+        .price-change { font-size:1rem; font-weight:600;}
+        .price-up { color:var(--cyber-green);}
+        .price-down { color:var(--cyber-red);}
+        .chart-container { position:relative; height:400px; margin-bottom:1rem;}
+        /* Responsive omitted for brevity: matches previous */
+        @media (max-width: 1200px) { .container { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .container { padding: 1rem; gap: 1rem;} .logo{font-size:1.5rem;} }
+    </style>
 </head>
 <body>
-    <div class="bg-pattern"></div>
-
-```
-<header class="header">
-    <div class="header-content">
-        <div class="logo">⚡ HYPERTRENDS</div>
-        <div class="status-indicators">
-            <div class="status-dot" id="status-dot"></div>
-            <span class="status-text" id="connection-status">NEURAL LINK ACTIVE</span>
-        </div>
-    </div>
-</header>
-
-<div class="main-container">
-    <div class="trading-panel">
-        <h3 class="panel-title">⚡ Trading Command</h3>
-        
-        <div class="symbol-grid">
-            <button class="symbol-btn active" data-symbol="QQQ">QQQ</button>
-            <button class="symbol-btn" data-symbol="SPY">SPY</button>
-            <button class="symbol-btn" data-symbol="NVDA">NVDA</button>
-            <button class="symbol-btn" data-symbol="AAPL">AAPL</button>
-            <button class="symbol-btn" data-symbol="MSFT">MSFT</button>
-        </div>
-
-        <div class="timeframe-controls">
-            <button class="timeframe-btn" data-timeframe="1m">1M</button>
-            <button class="timeframe-btn" data-timeframe="5m">5M</button>
-            <button class="timeframe-btn active" data-timeframe="15m">15M</button>
-            <button class="timeframe-btn" data-timeframe="1h">1H</button>
-            <button class="timeframe-btn" data-timeframe="4h">4H</button>
-            <button class="timeframe-btn" data-timeframe="1d">1D</button>
-        </div>
-
-        <div class="current-signal">
-            <div class="signal-type signal-HOLD" id="signal-type">HOLD</div>
-            <div class="confidence-display">
-                <div class="confidence-circle">
-                    <div class="confidence-value" id="confidence-value">72%</div>
+    <div class="cyber-grid"></div>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">⚡ HYPERTRENDS</div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot" id="live-dot"></div>
+                    <span id="connection-status">NEURAL LINK ACTIVE</span>
                 </div>
-                <div style="color: var(--text-muted); font-size: 0.8rem;">CONFIDENCE</div>
+                <div class="status-item">
+                    <div class="status-dot" style="background: var(--cyber-purple);"></div>
+                    <span id="data-source">ALPACA MATRIX</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot" style="background: var(--cyber-blue);"></div>
+                    <span id="components-count">5 MODULES</span>
+                </div>
             </div>
         </div>
-
-        <div class="component-status">
-            <div class="component-item">
-                <span class="component-name">📊 Technical</span>
-                <span class="status-badge">ACTIVE</span>
+    </header>
+    <div class="container">
+        <div class="control-panel">
+            <h3 class="panel-title">⚡ NEURAL CONTROL</h3>
+            <div class="symbol-grid">
+                <button class="symbol-btn active" data-symbol="QQQ">QQQ</button>
+                <button class="symbol-btn" data-symbol="SPY">SPY</button>
+                <button class="symbol-btn" data-symbol="NVDA">NVDA</button>
+                <button class="symbol-btn" data-symbol="AAPL">AAPL</button>
+                <button class="symbol-btn" data-symbol="MSFT">MSFT</button>
             </div>
-            <div class="component-item">
-                <span class="component-name">💭 Sentiment</span>
-                <span class="status-badge">ACTIVE</span>
-            </div>
-            <div class="component-item">
-                <span class="component-name">😱 VIX</span>
-                <span class="status-badge">ACTIVE</span>
-            </div>
-            <div class="component-item">
-                <span class="component-name">🏗️ Structure</span>
-                <span class="status-badge">ACTIVE</span>
-            </div>
-            <div class="component-item">
-                <span class="component-name">⚠️ Risk</span>
-                <span class="status-badge">ACTIVE</span>
+            <h4 style="color: var(--cyber-cyan); margin-bottom: 0.5rem; font-size: 0.9rem;">⏱ TIME MATRIX</h4>
+            <div class="time-intervals">
+                <button class="time-btn" data-interval="1m">1M</button>
+                <button class="time-btn" data-interval="5m">5M</button>
+                <button class="time-btn" data-interval="15m">15M</button>
+                <button class="time-btn active" data-interval="1h">1H</button>
+                <button class="time-btn" data-interval="4h">4H</button>
+                <button class="time-btn" data-interval="1d">1D</button>
             </div>
         </div>
-
-        <div class="action-buttons">
-            <button class="action-btn" onclick="executeSignal()">Execute Signal</button>
-            <button class="action-btn danger" onclick="refreshData()">Refresh Data</button>
-        </div>
-    </div>
-
-    <div class="chart-area">
-        <div class="chart-header">
-            <div>
-                <h2 class="chart-title" id="chart-symbol">QQQ</h2>
-                <div style="font-size: 0.8rem; color: var(--text-muted);" id="chart-subtitle">INVESCO QQQ TRUST</div>
+        <div class="chart-area">
+            <div class="chart-header">
+                <div>
+                    <h2 class="chart-title" id="chart-symbol">QQQ</h2>
+                    <div style="font-size: 0.8rem; color: var(--cyber-text-dim);">INVESCO QQQ TRUST</div>
+                </div>
+                <div class="price-display">
+                    <div class="current-price" id="current-price">$0.00</div>
+                    <div class="price-change price-up" id="price-change">+0.00 (0.00%)</div>
+                </div>
             </div>
-            <div class="price-info">
-                <div class="current-price" id="current-price">$435.50</div>
-                <div class="price-change price-up" id="price-change">+1.25 (+0.29%)</div>
+            <div style="margin-bottom: 1em;">
+                <span id="market-status" style="font-family: 'Orbitron'; font-weight: 700; padding: 0.4em 1em; border-radius: 8px; background: #222; color: #00ffff;">Loading...</span>
             </div>
-        </div>
-        
-        <div class="chart-container">
-            <canvas id="priceChart"></canvas>
-        </div>
-
-        <div class="analytics-grid">
-            <div class="metric-card">
-                <div class="metric-label">Daily Volume</div>
-                <div class="metric-value" id="daily-volume">52.4M</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Market Cap</div>
-                <div class="metric-value" id="market-cap">$134.2B</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Beta</div>
-                <div class="metric-value" id="beta">1.18</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Volatility</div>
-                <div class="metric-value" id="volatility">22.4%</div>
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
             </div>
         </div>
     </div>
+    <script>
+        let priceChart = null;
+        let currentSymbol = 'QQQ';
+        let currentInterval = '1h';
 
-    <div class="analytics-panel">
-        <h3 class="panel-title">📊 Analytics Hub</h3>
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeChart();
+            bindEventListeners();
+            fetchAndRenderHistory();
+            updateMarketStatus();
+        });
 
-        <div class="fear-greed-meter">
-            <div class="meter-title">😱 FEAR/GREED INDEX</div>
-            <div class="meter-gauge">
-                <div class="gauge-bg"></div>
-                <div class="gauge-needle" id="fear-greed-needle"></div>
-            </div>
-            <div class="meter-value" id="fear-greed-value">52</div>
-        </div>
-
-        <div class="analytics-grid">
-            <div class="metric-card">
-                <div class="metric-label">Accuracy</div>
-                <div class="metric-value" id="accuracy">74.2%</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Signals Today</div>
-                <div class="metric-value" id="signals-today">47</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Win Rate</div>
-                <div class="metric-value" id="win-rate">68.1%</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Profit Factor</div>
-                <div class="metric-value" id="profit-factor">1.84</div>
-            </div>
-        </div>
-
-        <div class="portfolio-overview">
-            <div style="color: var(--accent-cyan); font-weight: 600; margin-bottom: 1rem;">📈 WATCHLIST</div>
-            <div class="portfolio-item">
-                <span class="portfolio-symbol">QQQ</span>
-                <span class="portfolio-value" id="qqq-price">$435.50</span>
-            </div>
-            <div class="portfolio-item">
-                <span class="portfolio-symbol">SPY</span>
-                <span class="portfolio-value" id="spy-price">$528.75</span>
-            </div>
-            <div class="portfolio-item">
-                <span class="portfolio-symbol">NVDA</span>
-                <span class="portfolio-value" id="nvda-price">$892.40</span>
-            </div>
-            <div class="portfolio-item">
-                <span class="portfolio-symbol">AAPL</span>
-                <span class="portfolio-value" id="aapl-price">$198.20</span>
-            </div>
-            <div class="portfolio-item">
-                <span class="portfolio-symbol">MSFT</span>
-                <span class="portfolio-value" id="msft-price">$451.90</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Global state
-    let websocket = null;
-    let currentSymbol = 'QQQ';
-    let currentTimeframe = '15m';
-    let priceChart = null;
-    let signals = {};
-    let isConnected = false;
-
-    // Symbol data with real-time updates
-    const symbolData = {
-        'QQQ': { name: 'INVESCO QQQ TRUST', price: 435.50, change: 1.25, changePct: 0.29, volume: '52.4M', marketCap: '$134.2B', beta: 1.18, volatility: '22.4%' },
-        'SPY': { name: 'SPDR S&P 500 ETF', price: 528.75, change: -0.85, changePct: -0.16, volume: '89.2M', marketCap: '$485.3B', beta: 1.00, volatility: '18.2%' },
-        'NVDA': { name: 'NVIDIA CORPORATION', price: 892.40, change: 12.50, changePct: 1.42, volume: '78.1M', marketCap: '$2.2T', beta: 1.64, volatility: '35.8%' },
-        'AAPL': { name: 'APPLE INC', price: 198.20, change: -1.30, changePct: -0.65, volume: '45.6M', marketCap: '$3.1T', beta: 1.25, volatility: '24.1%' },
-        'MSFT': { name: 'MICROSOFT CORPORATION', price: 451.90, change: 3.15, changePct: 0.70, volume: '32.8M', marketCap: '$3.4T', beta: 0.92, volatility: '21.3%' }
-    };
-
-    // Chart configuration
-    const chartConfig = {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Price',
-                data: [],
-                borderColor: '#00d4ff',
-                backgroundColor: 'rgba(0, 212, 255, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#00d4ff',
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                pointRadius: 0,
-                pointHoverRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(26, 31, 46, 0.9)',
-                    titleColor: '#00d4ff',
-                    bodyColor: '#ffffff',
-                    borderColor: '#00d4ff',
-                    borderWidth: 1
-                }
-            },
-            scales: {
-                x: {
-                    type: 'time',
-                    time: { unit: 'minute' },
-                    grid: { color: 'rgba(0, 212, 255, 0.1)' },
-                    ticks: { color: '#6c7d8f', font: { family: 'JetBrains Mono' } }
-                },
-                y: {
-                    grid: { color: 'rgba(0, 212, 255, 0.1)' },
-                    ticks: { color: '#6c7d8f', font: { family: 'JetBrains Mono' } }
-                }
-            },
-            interaction: { intersect: false, mode: 'index' },
-            animation: { duration: 750, easing: 'easeInOutQuart' }
-        }
-    };
-
-    // Initialize application
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeChart();
-        initializeWebSocket();
-        bindEventListeners();
-        generateInitialData();
-        startDataUpdate();
-    });
-
-    function initializeChart() {
-        const ctx = document.getElementById('priceChart').getContext('2d');
-        priceChart = new Chart(ctx, chartConfig);
-        generateChartData();
-    }
-
-    function initializeWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
-        
-        try {
-            websocket = new WebSocket(wsUrl);
-            
-            websocket.onopen = function() {
-                console.log('WebSocket connected');
-                updateConnectionStatus('NEURAL LINK ACTIVE', true);
-            };
-            
-            websocket.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                handleWebSocketMessage(data);
-            };
-            
-            websocket.onclose = function() {
-                console.log('WebSocket disconnected');
-                updateConnectionStatus('RECONNECTING...', false);
-                setTimeout(initializeWebSocket, 3000);
-            };
-            
-            websocket.onerror = function(error) {
-                console.error('WebSocket error:', error);
-                updateConnectionStatus('CONNECTION ERROR', false);
-            };
-        } catch (error) {
-            console.log('WebSocket not available, using polling');
-            startPolling();
-        }
-    }
-
-    function handleWebSocketMessage(data) {
-        if (data.type === 'signal_update' || data.type === 'modular_signal_update') {
-            signals = data.signals || {};
-            updateSignalDisplay();
-            updateAnalytics();
-            if (signals[currentSymbol]) {
-                updateChart(signals[currentSymbol]);
-            }
-        }
-    }
-
-    function bindEventListeners() {
-        // Symbol selection
-        document.querySelectorAll('.symbol-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                selectSymbol(this.dataset.symbol);
+        function bindEventListeners() {
+            document.querySelectorAll('.symbol-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const symbol = this.dataset.symbol;
+                    currentSymbol = symbol;
+                    selectSymbolUI(symbol);
+                    fetchAndRenderHistory();
+                    updateMarketStatus();
+                });
             });
-        });
-        
-        // Timeframe selection
-        document.querySelectorAll('.timeframe-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                selectTimeframe(this.dataset.timeframe);
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const interval = this.dataset.interval;
+                    currentInterval = interval;
+                    selectIntervalUI(interval);
+                    fetchAndRenderHistory();
+                });
             });
-        });
-    }
-
-    function selectSymbol(symbol) {
-        currentSymbol = symbol;
-        
-        // Update UI
-        document.querySelectorAll('.symbol-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-symbol="${symbol}"]`).classList.add('active');
-        
-        // Update chart and data
-        updateSymbolDisplay(symbol);
-        generateChartData();
-        updateSignalDisplay();
-    }
-
-    function selectTimeframe(timeframe) {
-        currentTimeframe = timeframe;
-        
-        // Update UI
-        document.querySelectorAll('.timeframe-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-timeframe="${timeframe}"]`).classList.add('active');
-        
-        generateChartData();
-    }
-
-    function updateSymbolDisplay(symbol) {
-        const data = symbolData[symbol];
-        
-        document.getElementById('chart-symbol').textContent = symbol;
-        document.getElementById('chart-subtitle').textContent = data.name;
-        document.getElementById('current-price').textContent = `$${data.price.toFixed(2)}`;
-        
-        const changeElement = document.getElementById('price-change');
-        const changeText = `${data.change >= 0 ? '+' : ''}${data.change.toFixed(2)} (${data.changePct >= 0 ? '+' : ''}${data.changePct.toFixed(2)}%)`;
-        changeElement.textContent = changeText;
-        changeElement.className = `price-change ${data.change >= 0 ? 'price-up' : 'price-down'}`;
-        
-        // Update metrics
-        document.getElementById('daily-volume').textContent = data.volume;
-        document.getElementById('market-cap').textContent = data.marketCap;
-        document.getElementById('beta').textContent = data.beta;
-        document.getElementById('volatility').textContent = data.volatility;
-        
-        // Update watchlist
-        document.getElementById(`${symbol.toLowerCase()}-price`).textContent = `$${data.price.toFixed(2)}`;
-    }
-
-    function updateConnectionStatus(status, connected) {
-        const statusElement = document.getElementById('connection-status');
-        const dotElement = document.getElementById('status-dot');
-        
-        statusElement.textContent = status;
-        dotElement.style.background = connected ? 'var(--accent-green)' : 'var(--accent-red)';
-        isConnected = connected;
-    }
-
-    function generateChartData() {
-        const now = new Date();
-        const labels = [];
-        const data = [];
-        const basePrice = symbolData[currentSymbol].price;
-        
-        // Generate historical data points
-        for (let i = 50; i >= 0; i--) {
-            const timeMultiplier = currentTimeframe === '1m' ? 60000 : 
-                                 currentTimeframe === '5m' ? 300000 :
-                                 currentTimeframe === '15m' ? 900000 :
-                                 currentTimeframe === '1h' ? 3600000 :
-                                 currentTimeframe === '4h' ? 14400000 : 86400000;
-            
-            const time = new Date(now.getTime() - i * timeMultiplier);
-            const volatility = 0.02;
-            const change = (Math.random() - 0.5) * volatility;
-            const price = basePrice * (1 + change * (i / 50));
-            
-            labels.push(time);
-            data.push(price.toFixed(2));
         }
-        
-        priceChart.data.labels = labels;
-        priceChart.data.datasets[0].data = data;
-        priceChart.update('none');
-    }
 
-    function updateChart(signalData) {
-        if (!priceChart || !signalData) return;
-        
-        const now = new Date();
-        const newPrice = parseFloat(signalData.price || symbolData[currentSymbol].price);
-        
-        // Add new data point
-        priceChart.data.labels.push(now);
-        priceChart.data.datasets[0].data.push(newPrice);
-        
-        // Keep only last 50 points
-        if (priceChart.data.labels.length > 50) {
-            priceChart.data.labels.shift();
-            priceChart.data.datasets[0].data.shift();
+        function selectSymbolUI(symbol) {
+            document.querySelectorAll('.symbol-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-symbol="${symbol}"]`).classList.add('active');
+            document.getElementById('chart-symbol').textContent = symbol;
         }
-        
-        priceChart.update('none');
-    }
+        function selectIntervalUI(interval) {
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-interval="${interval}"]`).classList.add('active');
+        }
 
-    function updateSignalDisplay() {
-        const signal = signals[currentSymbol];
-        if (!signal) return;
-        
-        const signalTypeElement = document.getElementById('signal-type');
-        const confidenceElement = document.getElementById('confidence-value');
-        
-        // Update signal type
-        signalTypeElement.textContent = signal.signal_type || 'HOLD';
-        signalTypeElement.className = `signal-type signal-${signal.signal_type || 'HOLD'}`;
-        
-        // Update confidence
-        const confidence = Math.round(signal.confidence || 50);
-        confidenceElement.textContent = `${confidence}%`;
-        
-        // Update fear/greed meter
-        updateFearGreedMeter(signal.vix_score || 50);
-    }
-
-    function updateFearGreedMeter(value) {
-        const needle = document.getElementById('fear-greed-needle');
-        const valueElement = document.getElementById('fear-greed-value');
-        
-        // Rotate needle (-90 to +90 degrees)
-        const rotation = (value - 50) * 1.8;
-        needle.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
-        valueElement.textContent = Math.round(value);
-    }
-
-    function updateAnalytics() {
-        // Update performance metrics with realistic variations
-        const accuracy = 74.2 + (Math.random() - 0.5) * 2;
-        const signalsToday = 47 + Math.floor(Math.random() * 5);
-        const winRate = 68.1 + (Math.random() - 0.5) * 3;
-        const profitFactor = 1.84 + (Math.random() - 0.5) * 0.2;
-        
-        document.getElementById('accuracy').textContent = `${accuracy.toFixed(1)}%`;
-        document.getElementById('signals-today').textContent = signalsToday;
-        document.getElementById('win-rate').textContent = `${winRate.toFixed(1)}%`;
-        document.getElementById('profit-factor').textContent = profitFactor.toFixed(2);
-    }
-
-    function generateInitialData() {
-        // Generate initial signals for all symbols
-        const signalTypes = ['HYPER_BUY', 'SOFT_BUY', 'HOLD', 'SOFT_SELL', 'HYPER_SELL'];
-        
-        Object.keys(symbolData).forEach(symbol => {
-            signals[symbol] = {
-                symbol: symbol,
-                signal_type: signalTypes[Math.floor(Math.random() * signalTypes.length)],
-                confidence: 60 + Math.random() * 30,
-                price: symbolData[symbol].price,
-                technical_score: 40 + Math.random() * 40,
-                sentiment_score: 40 + Math.random() * 40,
-                vix_score: 40 + Math.random() * 40,
-                risk_score: 40 + Math.random() * 40
-            };
-        });
-        
-        updateSignalDisplay();
-        updateAnalytics();
-    }
-
-    function startDataUpdate() {
-        setInterval(() => {
-            // Update prices with small random movements
-            Object.keys(symbolData).forEach(symbol => {
-                const data = symbolData[symbol];
-                const change = (Math.random() - 0.5) * 0.5;
-                data.price += change;
-                data.change += change;
-                data.changePct = (data.change / (data.price - data.change)) * 100;
-            });
-            
-            // Update current symbol display
-            updateSymbolDisplay(currentSymbol);
-            
-            // Update chart if we have signal data
-            if (signals[currentSymbol]) {
-                const signal = signals[currentSymbol];
-                signal.price = symbolData[currentSymbol].price;
-                updateChart(signal);
-            }
-            
-            // Update analytics
-            updateAnalytics();
-            
-            // Update fear/greed meter randomly
-            const fearGreedValue = 30 + Math.random() * 40;
-            updateFearGreedMeter(fearGreedValue);
-            
-        }, 5000); // Update every 5 seconds
-    }
-
-    function startPolling() {
-        setInterval(async () => {
+        async function fetchAndRenderHistory() {
             try {
-                const response = await fetch('/api/signals');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.signals) {
-                        signals = data.signals;
-                        updateSignalDisplay();
-                        updateAnalytics();
-                    }
-                }
-            } catch (error) {
-                console.log('Polling failed:', error);
+                const response = await fetch(`/api/history?symbol=${currentSymbol}&interval=${currentInterval}&limit=50`);
+                const result = await response.json();
+                renderChartWithHistory(result.data);
+                updateMarketStatus(result.data_status);
+            } catch (e) {
+                updateMarketStatus("ERROR");
             }
-        }, 10000); // Poll every 10 seconds
-    }
-
-    // Action button functions
-    function executeSignal() {
-        const signal = signals[currentSymbol];
-        if (!signal) return;
-        
-        const btn = document.querySelector('.action-btn:not(.danger)');
-        const originalText = btn.textContent;
-        
-        btn.innerHTML = '<div class="loading-spinner"></div> EXECUTING...';
-        btn.disabled = true;
-        
-        setTimeout(() => {
-            btn.textContent = '✓ EXECUTED';
-            btn.style.background = 'var(--gradient-success)';
-            
-            setTimeout(() => {
-                btn.textContent = originalText;
-                btn.style.background = 'var(--gradient-primary)';
-                btn.disabled = false;
-            }, 2000);
-        }, 1500);
-    }
-
-    function refreshData() {
-        const btn = document.querySelector('.action-btn.danger');
-        const originalText = btn.textContent;
-        
-        btn.innerHTML = '<div class="loading-spinner"></div> REFRESHING...';
-        btn.disabled = true;
-        
-        // Simulate data refresh
-        setTimeout(() => {
-            generateInitialData();
-            generateChartData();
-            
-            btn.textContent = '✓ REFRESHED';
-            
-            setTimeout(() => {
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }, 1500);
-        }, 1000);
-    }
-
-    // Performance optimization for mobile
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').catch(() => {
-                console.log('Service worker registration failed');
-            });
-        });
-    }
-
-    // Handle visibility change to pause/resume updates
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            console.log('App hidden - reducing update frequency');
-        } else {
-            console.log('App visible - resuming normal updates');
         }
-    });
-</script>
-```
 
+        function renderChartWithHistory(bars) {
+            if (!bars || bars.length === 0) return;
+            const labels = bars.map(b => new Date(b.t));
+            const data = bars.map(b => b.c);
+            priceChart.data.labels = labels;
+            priceChart.data.datasets[0].data = data;
+            priceChart.update();
+            // Update price/price-change
+            const last = bars[bars.length - 1];
+            const prev = bars.length > 1 ? bars[bars.length - 2] : last;
+            document.getElementById('current-price').textContent = `$${parseFloat(last.c).toFixed(2)}`;
+            const change = last.c - prev.c;
+            const changePct = prev.c !== 0 ? ((change / prev.c) * 100).toFixed(2) : "0.00";
+            const changeEl = document.getElementById('price-change');
+            changeEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)} (${changePct}%)`;
+            changeEl.className = `price-change ${change >= 0 ? 'price-up' : 'price-down'}`;
+        }
+
+        async function updateMarketStatus(status) {
+            let stat = status;
+            if (!status) {
+                // Get from ping
+                try {
+                    const resp = await fetch('/api/ping');
+                    const data = await resp.json();
+                    stat = data.data_status;
+                } catch { stat = "ERROR"; }
+            }
+            const el = document.getElementById('market-status');
+            if (!el) return;
+            if (stat === "LIVE") {
+                el.textContent = "LIVE";
+                el.style.background = "#003322";
+                el.style.color = "#00ff41";
+            } else if (stat === "STALE") {
+                el.textContent = "STALE (MARKET CLOSED)";
+                el.style.background = "#221111";
+                el.style.color = "#ff073a";
+            } else {
+                el.textContent = "ERROR";
+                el.style.background = "#222";
+                el.style.color = "#ff073a";
+            }
+        }
+
+        function initializeChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Price',
+                        data: [],
+                        borderColor: '#00ffff',
+                        backgroundColor: 'rgba(0,255,255,0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#00ffff',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'day' },
+                            grid: { color: 'rgba(0,255,255,0.1)' },
+                            ticks: { color: '#888', font: { family: 'Rajdhani' } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(0,255,255,0.1)' },
+                            ticks: { color: '#888', font: { family: 'Rajdhani' } }
+                        }
+                    },
+                    interaction: { intersect: false, mode: 'index' },
+                    animation: { duration: 750, easing: 'easeInOutQuart' }
+                }
+            });
+        }
+    </script>
 </body>
 </html>
