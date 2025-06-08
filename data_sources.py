@@ -1,145 +1,132 @@
-# data_sources.py - HYPERtrends v4.1 - Robust Data Aggregator (Alpaca + yfinance + Status)
-import os
 import logging
-import datetime as dt
-import pandas as pd
-from typing import List, Dict, Any, Optional
+import time
+import random
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, List
+import requests
 
-from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.requests import StockBarsRequest
-from alpaca.data.timeframe import TimeFrame, TimeFrameUnit
-from alpaca.data.models import BarSet
-from alpaca.data.enums import DataFeed
-import yfinance as yf
+from config import ALPACA_CONFIG, TICKERS
 
 logger = logging.getLogger(__name__)
 
-# Alpaca config (paper/live mode auto detected from env)
-ALPACA_API_KEY = os.getenv("APCA_API_KEY_ID", "")
-ALPACA_SECRET_KEY = os.getenv("APCA_API_SECRET_KEY", "")
-ALPACA_USE_PAPER = os.getenv("TRADING_MODE", "paper") == "paper"
-ALPACA_BASE_URL = (
-    "https://paper-api.alpaca.markets" if ALPACA_USE_PAPER
-    else "https://api.alpaca.markets"
-)
+class AlpacaDataClient:
+    def __init__(self, config: Dict[str, Any]):
+        self.api_key = config["api_key"]
+        self.secret_key = config["secret_key"]
+        self.base_url = config["base_url"]
+        self.data_url = config["data_url"]
+        self.session = requests.Session()
+        self.headers = {
+            "APCA-API-KEY-ID": self.api_key,
+            "APCA-API-SECRET-KEY": self.secret_key,
+        }
+        self.session.headers.update(self.headers)
+        logger.info(f"Initialized AlpacaDataClient with endpoint: {self.base_url}")
 
-SUPPORTED_SYMBOLS = ["QQQ", "SPY", "NVDA", "AAPL", "MSFT"]
-DEFAULT_INTERVAL = "1d"
-INTERVAL_MAP = {
-    "1m": (TimeFrame.Minute, 1),
-    "5m": (TimeFrame.Minute, 5),
-    "15m": (TimeFrame.Minute, 15),
-    "1h": (TimeFrame.Hour, 1),
-    "4h": (TimeFrame.Hour, 4),
-    "1d": (TimeFrame.Day, 1)
-}
+    def get_latest_bar(self, symbol: str) -> Optional[Dict[str, Any]]:
+        endpoint = f"{self.data_url}/stocks/{symbol}/bars?timeframe=1Min&limit=1"
+        response = self.session.get(endpoint)
+        if response.status_code == 200:
+            bars = response.json().get('bars', [])
+            if bars:
+                return bars[0]
+        return None
 
-# Market hours
-MARKET_OPEN = dt.time(9, 30)
-MARKET_CLOSE = dt.time(16, 0)
+    def get_latest_quote(self, symbol: str) -> Optional[Dict[str, Any]]:
+        endpoint = f"{self.data_url}/stocks/{symbol}/quotes/latest"
+        response = self.session.get(endpoint)
+        if response.status_code == 200:
+            return response.json().get('quote', None)
+        return None
 
-def is_market_open(now: Optional[dt.datetime] = None):
-    now = now or dt.datetime.now(dt.timezone.utc)
-    # Alpaca and US exchanges are closed on weekends
-    if now.weekday() >= 5:  # Saturday/Sunday
-        return False
-    return MARKET_OPEN <= now.time() <= MARKET_CLOSE
+    def get_historical_bars_fallback(
+        self,
+        symbol: str,
+        timeframe: str = "1Day",
+        start: Optional[str] = None,
+        end: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        params = {"timeframe": timeframe, "limit": limit}
+        if not start or not end:
+            end_dt = datetime.utcnow()
+            for days in [3, 7]:
+                start_dt = end_dt - timedelta(days=days)
+                params["start"] = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+                params["end"] = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+                endpoint = f"{self.data_url}/stocks/{symbol}/bars"
+                resp = self.session.get(endpoint, headers=self.headers, params=params)
+                if resp.status_code == 200:
+                    bars = resp.json().get("bars", [])
+                    if bars:
+                        return bars
+                logger.warning(f"No historical bars for {symbol} in last {days} days using Alpaca fallback!")
+            return []
+        else:
+            params["start"] = start
+            params["end"] = end
+            endpoint = f"{self.data_url}/stocks/{symbol}/bars"
+            resp = self.session.get(endpoint, headers=self.headers, params=params)
+            if resp.status_code == 200:
+                bars = resp.json().get("bars", [])
+                if bars:
+                    return bars
+            logger.warning(f"No historical bars for {symbol} using Alpaca fallback!")
+            return []
 
-def get_market_status():
-    if is_market_open():
-        return "LIVE"
-    else:
-        return "STALE"  # "SIMULATED" if you use fake data
+class MockMarketSimulator:
+    def __init__(self, tickers: List[str]):
+        self.tickers = tickers
 
-class HYPERDataAggregator:
-    alpaca_client = StockHistoricalDataClient(ALPACA_API_KEY, ALPACA_SECRET_KEY)
-
-    @staticmethod
-    def get_current_price(symbol: str) -> Dict[str, Any]:
-        # Try Alpaca first
-        try:
-            bars = HYPERDataAggregator.alpaca_client.get_stock_bars(
-                StockBarsRequest(
-                    symbol_or_symbols=symbol,
-                    timeframe=TimeFrame.Minute,
-                    limit=1,
-                    feed=DataFeed.IEX
-                )
-            )
-            if bars and bars.data.get(symbol):
-                price = bars.data[symbol][0].close
-                ts = bars.data[symbol][0].timestamp
-                return {
-                    "price": price,
-                    "timestamp": str(ts),
-                    "status": get_market_status()
-                }
-        except Exception as e:
-            logger.warning(f"Alpaca price fetch failed ({symbol}): {e}")
-
-        # Fallback to yfinance
-        try:
-            ticker = yf.Ticker(symbol)
-            price = ticker.history(period="1d")["Close"].iloc[-1]
-            return {
-                "price": float(price),
-                "timestamp": str(dt.datetime.now()),
-                "status": "STALE"
-            }
-        except Exception as e:
-            logger.error(f"yfinance price fetch failed ({symbol}): {e}")
-        return {"price": None, "timestamp": None, "status": "ERROR"}
-
-    @staticmethod
-    def get_historical_bars(symbol: str, interval: str, limit: int = 30) -> List[Dict[str, Any]]:
-        # Convert interval to Alpaca/YF compatible
+    def get_historical_data(self, symbol: str, timeframe: str = "1Day", limit: int = 100) -> List[Dict[str, Any]]:
         bars = []
-        alpaca_tf, mult = INTERVAL_MAP.get(interval, (TimeFrame.Day, 1))
-        try:
-            req = StockBarsRequest(
-                symbol_or_symbols=symbol,
-                timeframe=alpaca_tf,
-                limit=limit,
-                feed=DataFeed.IEX
-            )
-            alpaca_bars = HYPERDataAggregator.alpaca_client.get_stock_bars(req)
-            if alpaca_bars and alpaca_bars.data.get(symbol):
-                for b in alpaca_bars.data[symbol]:
-                    bars.append({
-                        "t": str(b.timestamp),
-                        "o": float(b.open),
-                        "h": float(b.high),
-                        "l": float(b.low),
-                        "c": float(b.close),
-                        "v": int(b.volume)
-                    })
-                return bars
-        except Exception as e:
-            logger.warning(f"Alpaca historical fetch failed ({symbol}): {e}")
-
-        # Fallback to yfinance
-        try:
-            yf_interval = interval if interval in ["1m", "5m", "15m", "1h", "1d"] else "1d"
-            hist = yf.Ticker(symbol).history(period=f"{limit}d", interval=yf_interval)
-            for idx, row in hist.iterrows():
-                bars.append({
-                    "t": str(idx),
-                    "o": float(row["Open"]),
-                    "h": float(row["High"]),
-                    "l": float(row["Low"]),
-                    "c": float(row["Close"]),
-                    "v": int(row["Volume"])
-                })
-            return bars
-        except Exception as e:
-            logger.error(f"yfinance historical fetch failed ({symbol}): {e}")
-
+        base = round(random.uniform(100, 600), 2)
+        interval = 86400 if timeframe.endswith("Day") else 60
+        for i in range(limit):
+            bars.append({
+                "c": round(base + random.uniform(-2, 2), 2),
+                "t": int(time.time()) - i * interval
+            })
         return bars
 
-    @staticmethod
-    def get_all_status() -> Dict[str, Any]:
-        status = {}
-        for symbol in SUPPORTED_SYMBOLS:
-            price = HYPERDataAggregator.get_current_price(symbol)
-            status[symbol] = price["status"]
-        return status
+class HYPERDataAggregator:
+    def __init__(self, config: Dict[str, Any] = ALPACA_CONFIG):
+        self.alpaca = AlpacaDataClient(config)
+        self.simulator = MockMarketSimulator(TICKERS)
+        self.tickers = TICKERS
+
+    async def initialize(self):
+        pass
+
+    async def get_comprehensive_data(self, symbol: str) -> dict:
+        bar = self.alpaca.get_latest_bar(symbol)
+        quote = self.alpaca.get_latest_quote(symbol)
+        historical = self.alpaca.get_historical_bars_fallback(symbol, timeframe="1Min", limit=390)
+        trends = {}
+        return {
+            "quote": quote or {"price": 100.0, "data_source": "fallback"},
+            "historical": historical,
+            "trends": trends,
+        }
+
+    async def get_historical_data_api(self, symbol, timeframe="1Day", start=None, end=None, limit=100):
+        bars = self.alpaca.get_historical_bars_fallback(
+            symbol,
+            timeframe=timeframe,
+            start=start,
+            end=end,
+            limit=limit
+        )
+        if not bars:
+            bars = self.simulator.get_historical_data(symbol, timeframe, limit)
+        return bars
+
+    def get_historical_data(self, symbol: str, timeframe: str = "1Day", limit: int = 100) -> List[Dict[str, Any]]:
+        bars = self.alpaca.get_historical_bars_fallback(symbol, timeframe=timeframe, limit=limit)
+        if bars:
+            return bars
+        logger.warning(f"No historical bars for {symbol}, falling back to simulation")
+        return self.simulator.get_historical_data(symbol, timeframe, limit)
+
+    async def cleanup(self):
+        self.alpaca.session.close()
