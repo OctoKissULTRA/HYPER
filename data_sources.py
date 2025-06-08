@@ -1,3 +1,4 @@
+
 import logging
 import time
 import random
@@ -47,7 +48,15 @@ class AlpacaDataClient:
         end: Optional[str] = None,
         limit: int = 100
     ) -> List[Dict[str, Any]]:
-        params = {"timeframe": timeframe, "limit": limit}
+        """
+        Try to fetch bars for the last 3 days. If empty, try last 7 days.
+        Returns empty list if nothing is found.
+        """
+        params = {
+            "timeframe": timeframe,
+            "limit": limit
+        }
+        # If start and end are not provided, fetch recent bars (3 days), then expand to 7 days
         if not start or not end:
             end_dt = datetime.utcnow()
             for days in [3, 7]:
@@ -104,7 +113,7 @@ class HYPERDataAggregator:
         historical = self.alpaca.get_historical_bars_fallback(symbol, timeframe="1Min", limit=390)
         trends = {}
         return {
-            "quote": quote or {"price": 100.0, "data_source": "fallback"},
+            "quote": quote,
             "historical": historical,
             "trends": trends,
         }

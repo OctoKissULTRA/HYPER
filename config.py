@@ -1,13 +1,16 @@
 import os
 from typing import Dict, List
-from dotenv import load_dotenv
 
-load_dotenv()
+# ========================================
+# HYPERTRENDS v4.0 - ALPACA CONFIGURATION
+# ========================================
 
+# Environment Detection
 ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
 DEBUG_MODE = ENVIRONMENT == "development"
 
-TRADING_MODE = os.getenv("TRADING_MODE", "paper").lower()
+# Alpaca API Configuration
+TRADING_MODE = os.getenv("TRADING_MODE", "paper").lower()  # 'paper' or 'live'
 ALPACA_CONFIG = {
     "api_key": os.getenv("APCA_API_KEY_ID", ""),
     "secret_key": os.getenv("APCA_API_SECRET_KEY", ""),
@@ -17,8 +20,10 @@ ALPACA_CONFIG = {
     "trading_mode": TRADING_MODE,
 }
 
+# List of tracked tickers
 TICKERS = ["QQQ", "SPY", "NVDA", "AAPL", "MSFT"]
 
+# Confidence thresholds
 CONFIDENCE_THRESHOLDS = {
     "HYPER_BUY": 85,
     "SOFT_BUY": 65,
@@ -27,16 +32,18 @@ CONFIDENCE_THRESHOLDS = {
     "HYPER_SELL": 15,
 }
 
+# Signal component weights (must sum to ~1.0)
 SIGNAL_WEIGHTS = {
-    "technical": 0.40,  # Increased due to disabled modules
-    "sentiment": 0.30,
-    "momentum": 0.20,
-    "ml_prediction": 0.10,
-    "vix_sentiment": 0.0,
-    "market_structure": 0.0,
-    "risk_adjusted": 0.0,
+    "technical": 0.25,
+    "sentiment": 0.20,
+    "momentum": 0.15,
+    "ml_prediction": 0.15,
+    "vix_sentiment": 0.10,
+    "market_structure": 0.10,
+    "risk_adjusted": 0.05,
 }
 
+# Update intervals (seconds)
 UPDATE_INTERVALS = {
     "signal_generation": 30,
     "data_refresh": 15,
@@ -71,7 +78,7 @@ SENTIMENT_CONFIG: Dict = {
         "reddit": 0.35,
         "twitter": 0.25,
     },
-    "use_vader": False,  # Disabled due to optional import
+    "use_vader": True,
     "use_textblob": True,
     "normalize_scores": True,
 }
@@ -129,9 +136,9 @@ ML_CONFIG: Dict = {
 ENABLED_MODULES = {
     "technical_indicators": True,
     "sentiment_analysis": True,
-    "vix_analysis": False,  # Disabled due to missing module
-    "market_structure": False,  # Disabled due to missing module
-    "risk_analysis": False,  # Disabled due to missing module
+    "vix_analysis": True,
+    "market_structure": True,
+    "risk_analysis": True,
     "ml_learning": True,
 }
 
