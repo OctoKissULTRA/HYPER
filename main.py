@@ -1,4 +1,4 @@
-# main.py - HYPERtrends v4.0 - Production Alpaca Edition
+# main.py - HYPERtrends v4.0 - Optimized Production Ready
 
 import os
 import asyncio
@@ -7,35 +7,22 @@ import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Query
-import dateutil.parser
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 
-# Import configuration and components
+# Import core modules
 import config
-
 from data_sources import HYPERDataAggregator
 from signal_engine import HYPERSignalEngine
-from ml_learning import integrate_ml_learning
-from model_testing import ModelTester, TestingAPI
 
 # ========================================
 # LOGGING SETUP
 # ========================================
 logging.basicConfig(
-    level=getattr(logging, getattr(config, "LOG_LEVEL", "INFO")),
+    level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
@@ -47,14 +34,14 @@ app = FastAPI(
     title="HYPERtrends v4.0 - Alpaca Edition",
     description="AI-powered trading signals with Alpaca Markets integration",
     version="4.0.0-ALPACA",
-    docs_url="/docs" if config.is_development() else None,
-    redoc_url="/redoc" if config.is_development() else None
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=config.SECURITY_CONFIG["cors_origins"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -75,9 +62,6 @@ class HYPERState:
         # Components (lazy loaded)
         self.data_aggregator = None
         self.signal_engine = None
-        self.ml_engine = None
-        self.model_tester = None
-        self.testing_api = None
         
         self.stats = {
             "status": "starting",
@@ -86,11 +70,10 @@ class HYPERState:
             "data_source_status": config.get_data_source_status(),
             "initialization_complete": False,
             "signals_generated": 0,
-            "ml_predictions": 0,
             "accuracy_rate": 0.0
         }
         
-        logger.info("HYPER state initialized")
+        logger.info("🚀 HYPER state initialized")
 
 hyper_state = HYPERState()
 
@@ -105,7 +88,7 @@ class ConnectionManager:
         await websocket.accept()
         self.active_connections.append(websocket)
         hyper_state.connected_clients = self.active_connections
-        logger.info(f"WebSocket connected. Total: {len(self.active_connections)}")
+        logger.info(f"📡 WebSocket connected. Total: {len(self.active_connections)}")
 
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
@@ -137,42 +120,36 @@ manager = ConnectionManager()
 async def startup_event():
     """Fast startup with background initialization"""
     try:
-        logger.info("Starting HYPERtrends v4.0 - Alpaca Edition")
-
+        logger.info("🚀 Starting HYPERtrends v4.0 - Alpaca Edition")
+        
+        # Print startup banner
+        print_startup_info()
+        
         hyper_state.stats["status"] = "online"
         asyncio.create_task(background_initialization())
-        logger.info("Server started - Background initialization in progress")
+        logger.info("✅ Server started - Background initialization in progress")
         
     except Exception as e:
-        logger.error(f"Startup error: {e}")
+        logger.error(f"❌ Startup error: {e}")
         hyper_state.stats["status"] = "error"
 
 async def background_initialization():
     """Initialize components in background"""
     try:
-        logger.info("Starting background initialization...")
+        logger.info("🔧 Starting background initialization...")
 
         # Initialize data aggregator
-        logger.info("Initializing Alpaca data aggregator...")
+        logger.info("📊 Initializing Alpaca data aggregator...")
         hyper_state.data_aggregator = HYPERDataAggregator()
         await hyper_state.data_aggregator.initialize()
         
         # Initialize signal engine
-        logger.info("Initializing signal engine...")
+        logger.info("🧠 Initializing signal engine...")
         hyper_state.signal_engine = HYPERSignalEngine()
-        
-        # Initialize ML components
-        logger.info("Initializing ML components...")
-        hyper_state.ml_engine, _ = integrate_ml_learning(hyper_state.signal_engine)
-        
-        # Initialize testing framework
-        if hyper_state.signal_engine:
-            hyper_state.model_tester = ModelTester(hyper_state.signal_engine)
-            hyper_state.testing_api = TestingAPI(hyper_state.model_tester)
         
         # Generate initial signals
         if hyper_state.signal_engine and hyper_state.data_aggregator:
-            logger.info("Generating initial signals...")
+            logger.info("🎯 Generating initial signals...")
             initial_signals = await generate_all_signals()
             hyper_state.current_signals = initial_signals
             hyper_state.last_update = datetime.now()
@@ -183,11 +160,13 @@ async def background_initialization():
         hyper_state.stats["initialization_complete"] = True
         hyper_state.stats["status"] = "fully_operational"
         
-        logger.info("Background initialization complete - System fully operational!")
+        logger.info("✅ Background initialization complete - System fully operational!")
+        
+        # Start signal generation loop
         asyncio.create_task(signal_generation_loop())
         
     except Exception as e:
-        logger.error(f"Background initialization failed: {e}")
+        logger.error(f"❌ Background initialization failed: {e}")
         hyper_state.stats["status"] = "initialization_error"
         await create_fallback_signals()
 
@@ -216,22 +195,18 @@ async def generate_all_signals() -> Dict[str, Any]:
                 # Convert signal to serializable format
                 signals[symbol] = serialize_signal(signal)
                 
-                # Track predictions if model tester available
-                if hyper_state.model_tester:
-                    hyper_state.model_tester.tracker.record_prediction(signal)
-                
             except Exception as e:
-                logger.error(f"Signal generation error for {symbol}: {e}")
+                logger.error(f"❌ Signal generation error for {symbol}: {e}")
                 signals[symbol] = create_fallback_signal(symbol)
         
         # Update stats
         hyper_state.stats["signals_generated"] += len(signals)
         
-        logger.info(f"Generated {len(signals)} signals")
+        logger.info(f"✅ Generated {len(signals)} signals")
         return signals
         
     except Exception as e:
-        logger.error(f"Generate all signals error: {e}")
+        logger.error(f"❌ Generate all signals error: {e}")
         return await create_fallback_signals()
 
 async def create_fallback_signals() -> Dict[str, Any]:
@@ -245,7 +220,7 @@ async def create_fallback_signals() -> Dict[str, Any]:
     hyper_state.last_update = datetime.now()
     hyper_state.is_running = True
 
-    logger.info("Fallback signals created")
+    logger.info("✅ Fallback signals created")
     return signals
 
 def create_fallback_signal(symbol: str) -> Dict[str, Any]:
@@ -266,7 +241,10 @@ def create_fallback_signal(symbol: str) -> Dict[str, Any]:
         "sentiment_score": 50.0,
         "ml_score": 50.0,
         "vix_score": 50.0,
-        "data_source": "fallback"
+        "data_source": "fallback",
+        "reasons": ["System initializing"],
+        "warnings": [],
+        "recommendations": ["Wait for full system initialization"]
     }
 
 def serialize_signal(signal) -> Dict[str, Any]:
@@ -277,7 +255,8 @@ def serialize_signal(signal) -> Dict[str, Any]:
             for key, value in signal.__dict__.items():
                 if not key.startswith("_") and not callable(value):
                     if hasattr(value, "__dict__"):
-                        result[key] = {k: v for k, v in value.__dict__.items() if not k.startswith("_") and not callable(v)}
+                        result[key] = {k: v for k, v in value.__dict__.items() 
+                                     if not k.startswith("_") and not callable(v)}
                     else:
                         result[key] = value
             return result
@@ -286,25 +265,27 @@ def serialize_signal(signal) -> Dict[str, Any]:
         else:
             return {"error": "unable_to_serialize", "type": str(type(signal))}
     except Exception as e:
-        logger.error(f"Signal serialization error: {e}")
+        logger.error(f"❌ Signal serialization error: {e}")
         return {"error": str(e)}
 
 async def signal_generation_loop():
     """Background signal generation loop"""
     while hyper_state.is_running:
         try:
-            await asyncio.sleep(30)
+            await asyncio.sleep(30)  # Update every 30 seconds
             if hyper_state.signal_engine and hyper_state.data_aggregator:
                 new_signals = await generate_all_signals()
                 hyper_state.current_signals = new_signals
                 hyper_state.last_update = datetime.now()
+                
+                # Broadcast to connected clients
                 await manager.broadcast({
                     "type": "signal_update",
                     "signals": new_signals,
                     "timestamp": datetime.now().isoformat()
                 })
         except Exception as e:
-            logger.error(f"Signal generation loop error: {e}")
+            logger.error(f"❌ Signal generation loop error: {e}")
             await asyncio.sleep(30)
 
 # ========================================
@@ -312,14 +293,147 @@ async def signal_generation_loop():
 # ========================================
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
-    try:
-        with open("index.html", "r") as f:
-            return HTMLResponse(f.read())
-    except FileNotFoundError:
-        return HTMLResponse("<h1>HYPERtrends v4.0</h1><p>Dashboard loading...</p>")
+    """Main dashboard"""
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>HYPERtrends v4.0 - Alpaca Edition</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #0a0e1a; color: #ffffff; }
+            .container { max-width: 1200px; margin: 0 auto; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .title { color: #00d4ff; font-size: 2.5em; margin: 0; }
+            .subtitle { color: #888; margin: 10px 0; }
+            .status { display: flex; justify-content: space-around; margin: 30px 0; }
+            .status-card { background: #1a1f2e; padding: 20px; border-radius: 10px; min-width: 200px; }
+            .signals { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+            .signal-card { background: #1a1f2e; padding: 20px; border-radius: 10px; border-left: 4px solid #00d4ff; }
+            .signal-type { font-size: 1.2em; font-weight: bold; margin-bottom: 10px; }
+            .confidence { font-size: 1.5em; margin: 10px 0; }
+            .buy { color: #00ff88; }
+            .sell { color: #ff4444; }
+            .hold { color: #ffaa00; }
+            .loading { text-align: center; padding: 50px; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1 class="title">⚡ HYPERtrends v4.0</h1>
+                <p class="subtitle">AI-Powered Trading Signals with Alpaca Markets Integration</p>
+            </div>
+            
+            <div class="status" id="status">
+                <div class="status-card">
+                    <h3>System Status</h3>
+                    <div id="system-status">Loading...</div>
+                </div>
+                <div class="status-card">
+                    <h3>Data Source</h3>
+                    <div id="data-source">Loading...</div>
+                </div>
+                <div class="status-card">
+                    <h3>Last Update</h3>
+                    <div id="last-update">Loading...</div>
+                </div>
+            </div>
+            
+            <div id="signals" class="signals">
+                <div class="loading">🔄 Loading signals...</div>
+            </div>
+        </div>
+        
+        <script>
+            let ws = null;
+            
+            function connectWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = function() {
+                    console.log('WebSocket connected');
+                };
+                
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'signal_update') {
+                        updateSignals(data.signals);
+                    }
+                };
+                
+                ws.onclose = function() {
+                    console.log('WebSocket disconnected, reconnecting...');
+                    setTimeout(connectWebSocket, 5000);
+                };
+            }
+            
+            function updateSignals(signals) {
+                const container = document.getElementById('signals');
+                container.innerHTML = '';
+                
+                for (const [symbol, signal] of Object.entries(signals)) {
+                    const card = document.createElement('div');
+                    card.className = 'signal-card';
+                    
+                    const typeClass = signal.signal_type.includes('BUY') ? 'buy' : 
+                                     signal.signal_type.includes('SELL') ? 'sell' : 'hold';
+                    
+                    card.innerHTML = `
+                        <div class="signal-type ${typeClass}">${symbol} - ${signal.signal_type}</div>
+                        <div class="confidence ${typeClass}">${signal.confidence.toFixed(1)}% Confidence</div>
+                        <div>Direction: ${signal.direction}</div>
+                        <div>Price: $${signal.price}</div>
+                        <div>Technical: ${signal.technical_score.toFixed(1)}</div>
+                        <div>Sentiment: ${signal.sentiment_score.toFixed(1)}</div>
+                        <div>Updated: ${new Date(signal.timestamp).toLocaleTimeString()}</div>
+                    `;
+                    
+                    container.appendChild(card);
+                }
+            }
+            
+            async function loadInitialData() {
+                try {
+                    const response = await fetch('/api/signals');
+                    const data = await response.json();
+                    
+                    if (data.status === 'success') {
+                        updateSignals(data.signals);
+                        document.getElementById('last-update').textContent = 
+                            new Date(data.timestamp).toLocaleTimeString();
+                    }
+                    
+                    const healthResponse = await fetch('/health');
+                    const healthData = await healthResponse.json();
+                    
+                    document.getElementById('system-status').textContent = healthData.system_status;
+                    document.getElementById('data-source').textContent = 'Alpaca Markets';
+                    
+                } catch (error) {
+                    console.error('Failed to load initial data:', error);
+                }
+            }
+            
+            // Initialize
+            loadInitialData();
+            connectWebSocket();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadInitialData, 30000);
+        </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(html_content)
 
 @app.get("/health")
 async def health_check():
+    """Health check endpoint"""
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
@@ -327,11 +441,14 @@ async def health_check():
         "initialization_complete": hyper_state.initialization_complete,
         "uptime_seconds": (datetime.now() - hyper_state.startup_time).total_seconds(),
         "connected_clients": len(hyper_state.connected_clients),
-        "signals_available": len(hyper_state.current_signals)
+        "signals_available": len(hyper_state.current_signals),
+        "data_source": config.get_data_source_status(),
+        "version": "4.0.0-ALPACA"
     }
 
 @app.get("/api/signals")
 async def get_signals():
+    """Get current trading signals"""
     return {
         "status": "success",
         "signals": hyper_state.current_signals,
@@ -342,6 +459,7 @@ async def get_signals():
 
 @app.get("/api/signals/{symbol}")
 async def get_signal(symbol: str):
+    """Get signal for specific symbol"""
     symbol = symbol.upper()
     if symbol in hyper_state.current_signals:
         return {
@@ -355,6 +473,7 @@ async def get_signal(symbol: str):
 
 @app.post("/api/signals/refresh")
 async def refresh_signals():
+    """Manually refresh all signals"""
     try:
         if hyper_state.signal_engine and hyper_state.data_aggregator:
             new_signals = await generate_all_signals()
@@ -373,6 +492,7 @@ async def refresh_signals():
 
 @app.get("/api/system/status")
 async def system_status():
+    """Get detailed system status"""
     return {
         "status": hyper_state.stats["status"],
         "initialization_complete": hyper_state.initialization_complete,
@@ -385,88 +505,28 @@ async def system_status():
         "components": {
             "data_aggregator": hyper_state.data_aggregator is not None,
             "signal_engine": hyper_state.signal_engine is not None,
-            "ml_engine": hyper_state.ml_engine is not None,
-            "model_tester": hyper_state.model_tester is not None
-        }
+        },
+        "tickers": config.TICKERS,
+        "version": "4.0.0-ALPACA"
     }
-
-@app.get("/api/ml/status")
-async def ml_status():
-    if hyper_state.ml_engine:
-        return {"status": "active", "message": "ML system operational"}
-    else:
-        return {"status": "inactive", "message": "ML system not available"}
-
-@app.get("/api/testing/status")
-async def testing_status():
-    if hyper_state.testing_api:
-        return await hyper_state.testing_api.get_test_status()
-    else:
-        return {"status": "inactive", "message": "Testing framework not available"}
-
-@app.get("/api/testing/backtest")
-async def run_backtest(days: int = 7):
-    if hyper_state.testing_api:
-        return await hyper_state.testing_api.run_quick_backtest(days)
-    else:
-        raise HTTPException(status_code=503, detail="Testing framework not available")
-
-@app.get("/api/historical/{symbol}")
-async def get_historical_data(
-    symbol: str,
-    timeframe: str = Query("1Day", description="Bar size (e.g. 1Min, 5Min, 15Min, 1Day)"),
-    start: Optional[str] = Query(None, description="Start datetime (ISO 8601, e.g. 2024-01-01T00:00:00Z)"),
-    end: Optional[str] = Query(None, description="End datetime (ISO 8601, e.g. 2024-01-31T23:59:00Z)"),
-    limit: int = Query(100, description="Maximum bars (default 100)")
-):
-    """
-    Returns historical OHLCV bars for a symbol using Alpaca (or fallback).
-    """
-    try:
-        start_dt = dateutil.parser.isoparse(start) if start else None
-        end_dt = dateutil.parser.isoparse(end) if end else None
-
-        if not hyper_state.data_aggregator:
-            return {"status": "error", "message": "Data aggregator unavailable"}
-
-        # Format as ISO8601 strings for Alpaca API
-        start_iso = start_dt.strftime("%Y-%m-%dT%H:%M:%SZ") if start_dt else None
-        end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%SZ") if end_dt else None
-
-        bars = await hyper_state.data_aggregator.get_historical_data_api(
-            symbol.upper(),
-            timeframe=timeframe,
-            start=start_iso,
-            end=end_iso,
-            limit=limit
-        )
-        return {
-            "status": "success",
-            "symbol": symbol.upper(),
-            "bars": bars,
-            "count": len(bars)
-        }
-    except Exception as e:
-        logger.error(f"Error in get_historical_data: {e}")
-        return {
-            "status": "error",
-            "message": str(e),
-            "bars": []
-        }
 
 # ========================================
 # WEBSOCKET ENDPOINT
 # ========================================
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time updates"""
     await manager.connect(websocket)
     try:
+        # Send initial data
         await websocket.send_text(json.dumps({
             "type": "initial_data",
             "signals": hyper_state.current_signals,
             "timestamp": datetime.now().isoformat(),
             "status": hyper_state.stats["status"]
         }, default=str))
+        
+        # Keep connection alive
         while True:
             try:
                 await asyncio.sleep(30)
@@ -480,7 +540,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
     except Exception as e:
-        logger.error(f"WebSocket error: {e}")
+        logger.error(f"❌ WebSocket error: {e}")
         manager.disconnect(websocket)
 
 # ========================================
@@ -488,20 +548,40 @@ async def websocket_endpoint(websocket: WebSocket):
 # ========================================
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("Shutting down HYPERtrends...")
+    """Cleanup on shutdown"""
+    logger.info("🛑 Shutting down HYPERtrends...")
     hyper_state.is_running = False
     if hyper_state.data_aggregator and hasattr(hyper_state.data_aggregator, "cleanup"):
         await hyper_state.data_aggregator.cleanup()
-    logger.info("Shutdown complete")
+    logger.info("✅ Shutdown complete")
 
 # ========================================
-# MAIN
+# UTILITY FUNCTIONS
+# ========================================
+def print_startup_info():
+    """Print startup information"""
+    print("\n" + "="*60)
+    print("⚡ HYPERtrends v4.0 - ALPACA EDITION ⚡")
+    print("="*60)
+    print(f"🕐 Startup Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"🌍 Environment: {os.getenv('ENVIRONMENT', 'production')}")
+    print(f"🔧 Python: {os.sys.version.split()[0]}")
+    print(f"📍 Port: {os.getenv('PORT', '8000')}")
+    print(f"📊 Data Source: {config.get_data_source_status()}")
+    print(f"📈 Tracking: {', '.join(config.TICKERS)}")
+    print("="*60 + "\n")
+
+# ========================================
+# MAIN ENTRY POINT
 # ========================================
 if __name__ == "__main__":
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("HOST", "0.0.0.0")
+    
     uvicorn.run(
         app,
-        host=config.SERVER_CONFIG["host"],
-        port=config.SERVER_CONFIG["port"],
-        reload=config.SERVER_CONFIG["reload"],
-        log_level="info"
+        host=host,
+        port=port,
+        log_level="info",
+        access_log=True
     )

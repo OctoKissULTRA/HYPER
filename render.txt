@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: hypertrends-v4-optimized
+    env: python
+    plan: starter
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app --bind 0.0.0.0:$PORT --worker-class uvicorn.workers.UvicornWorker --workers 1 --timeout 120 --keep-alive 65 --preload
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Core Configuration
+      - key: ENVIRONMENT
+        value: "production"
+      - key: LOG_LEVEL
+        value: "INFO"
+      - key: PYTHON_VERSION
+        value: "3.11"
+
+      # Port Configuration (Critical for Render)
+      - key: PORT
+        value: "10000"
+      - key: HOST
+        value: "0.0.0.0"
+
+      # ==== Alpaca API Keys ====
+      # Paper Trading (Safe for testing)
+      - key: TRADING_MODE
+        value: "paper"
+      - key: APCA_API_KEY_ID
+        value: "PK2AML2QK9VUI5J1G1BC"
+      - key: APCA_API_SECRET_KEY
+        value: "3IDsz3oeGliJeBG9h35V8OAAcjDH6hqMLoJDXpif"
+
+      # Performance Settings
+      - key: WORKERS
+        value: "1"
+      - key: MAX_CONNECTIONS
+        value: "100"
+      - key: KEEPALIVE_TIMEOUT
+        value: "65"
+
+      # Security Settings
+      - key: CORS_ORIGINS
+        value: "*"
+
+      # Feature Flags (Optimized for stability)
+      - key: ENABLE_ML_LEARNING
+        value: "false"
+      - key: ENABLE_ADVANCED_FEATURES
+        value: "false"
+
+    disk:
+      name: hyper-data
+      mountPath: /app/data
+      sizeGB: 1

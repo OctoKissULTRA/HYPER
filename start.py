@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-HYPERtrends v4.0 - Production Startup Script
-Alpaca Markets Integration Edition
+HYPERtrends v4.0 - Optimized Production Startup Script
 """
 
 import os
@@ -14,60 +13,44 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def setup_logging():
-    """Setup production logging"""
+    """Setup optimized logging"""
     log_level = os.getenv("LOG_LEVEL", "INFO")
     
     logging.basicConfig(
         level=getattr(logging, log_level),
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler("hypertrends.log") if os.getenv("LOG_TO_FILE") else logging.NullHandler()
-        ]
+        handlers=[logging.StreamHandler(sys.stdout)]
     )
     
-    # Suppress noisy third-party logs in production
-    if log_level != "DEBUG":
-        logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
-        logging.getLogger("httpx").setLevel(logging.WARNING)
-        logging.getLogger("urllib3").setLevel(logging.WARNING)
+    # Suppress noisy third-party logs
+    logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-def check_dependencies():
-    """Check critical dependencies"""
+def check_critical_dependencies():
+    """Check only critical dependencies"""
     critical_imports = [
         ("fastapi", "FastAPI web framework"),
         ("uvicorn", "ASGI server"),
         ("pandas", "Data processing"),
         ("numpy", "Numerical computing"),
-        ("aiohttp", "Async HTTP client")
+        ("aiohttp", "Async HTTP client"),
+        ("requests", "HTTP client")
     ]
     
-    optional_imports = [
-        ("alpaca", "Alpaca Markets SDK"),
-        ("textblob", "Sentiment analysis"),
-        ("sklearn", "Machine learning")
-    ]
+    print("🔍 Checking critical dependencies...")
     
-    print("🔍 Checking dependencies...")
-    
-    missing_critical = []
+    missing = []
     for module, description in critical_imports:
         try:
             __import__(module)
             print(f"✅ {description}")
         except ImportError:
             print(f"❌ {description} - MISSING")
-            missing_critical.append(module)
+            missing.append(module)
     
-    for module, description in optional_imports:
-        try:
-            __import__(module)
-            print(f"✅ {description}")
-        except ImportError:
-            print(f"⚠️ {description} - Optional (using fallback)")
-    
-    if missing_critical:
-        print(f"\n❌ Critical dependencies missing: {', '.join(missing_critical)}")
+    if missing:
+        print(f"\n❌ Critical dependencies missing: {', '.join(missing)}")
         print("Run: pip install -r requirements.txt")
         return False
     
@@ -81,15 +64,10 @@ def check_configuration():
     try:
         import config
         
-        # Check Alpaca credentials
-        if config.has_alpaca_credentials():
-            print("✅ Alpaca credentials configured")
-            print(f"📊 Data source: {config.get_data_source_status()}")
-        else:
-            print("⚠️ No Alpaca credentials - using simulation mode")
-        
-        # Check tickers
+        # Check basic configuration
         print(f"📈 Tracking {len(config.TICKERS)} symbols: {', '.join(config.TICKERS)}")
+        print(f"🔧 Environment: {config.ENVIRONMENT}")
+        print(f"📊 Data source: {config.get_data_source_status()}")
         
         # Check feature flags
         enabled_features = [name for name, enabled in config.ENABLED_MODULES.items() if enabled]
@@ -108,24 +86,25 @@ def check_configuration():
         return False
 
 def print_startup_banner():
-    """Print startup banner"""
+    """Print optimized startup banner"""
     banner = """
 ⚡ ████████████████████████████████████████ ⚡
 ⚡                                          ⚡
-⚡        HYPERtrends v4.0 - ALPACA         ⚡
-⚡     AI-Powered Trading Signal Engine     ⚡
+⚡     HYPERtrends v4.0 - OPTIMIZED        ⚡
+⚡   AI-Powered Trading Signal Engine      ⚡
+⚡         Production Ready Edition         ⚡
 ⚡                                          ⚡
 ⚡ ████████████████████████████████████████ ⚡
 
-🚀 Production-Grade Features:
+🚀 Core Features:
 📈 Alpaca Markets Live Data Integration
-🧠 Advanced Machine Learning Predictions  
-📊 25+ Professional Technical Indicators
+🧠 Advanced Signal Generation Engine
+📊 25+ Technical Indicators
 💭 Multi-Source Sentiment Analysis
-😱 VIX Fear/Greed Contrarian Signals
-🏗️ Market Structure & Breadth Analysis
-⚠️ Advanced Risk Management & Position Sizing
-🎯 Real-Time WebSocket Signal Broadcasting
+😱 VIX Fear/Greed Analysis
+🏗️ Market Structure Analysis
+⚠️ Risk Management System
+🎯 Real-Time WebSocket Broadcasting
 
 """
     
@@ -136,9 +115,9 @@ def print_startup_banner():
     print(f"    📍 Port: {os.getenv('PORT', '8000')}")
     print()
 
-async def test_system_components():
-    """Test critical system components"""
-    print("🧪 Testing system components...")
+async def test_core_components():
+    """Test core system components"""
+    print("🧪 Testing core components...")
     
     try:
         # Test data aggregator
@@ -172,10 +151,10 @@ def main():
     setup_logging()
     logger = logging.getLogger(__name__)
     
-    logger.info("🚀 Starting HYPERtrends v4.0 Production System")
+    logger.info("🚀 Starting HYPERtrends v4.0 Optimized Production System")
     
     # Check dependencies
-    if not check_dependencies():
+    if not check_critical_dependencies():
         sys.exit(1)
     
     # Check configuration
@@ -183,12 +162,12 @@ def main():
         sys.exit(1)
     
     # Test components
-    print("\n🧪 Testing system components...")
+    print("\n🧪 Testing core components...")
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
-        component_test = loop.run_until_complete(test_system_components())
+        component_test = loop.run_until_complete(test_core_components())
         loop.close()
         
         if not component_test:
